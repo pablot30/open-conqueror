@@ -5,6 +5,9 @@ For the ESP32-S3-WROOM-1 version. Sources: its schematic, the stock firmware sou
 ## Hardware
 
 - **USB:** USB-C wired directly to GPIO19 and GPIO20, with no USB-serial chip.
+- **USB power:** the USB-C port's 5 V connects straight to the shield link's 5 V, with no diode. With the 4-pin cable connected, USB-C would power the whole robot's 5 V rail and tie it to any other supply. Unplug the cable before connecting USB-C, as ELEGOO's camera FAQ also advises.
+- **USB-C cable:** the port's CC pins aren't connected, so a USB-C to USB-C cable doesn't supply power. Use a USB-A to USB-C cable. *(Schematic, confirmed on our robot.)*
+- **Chip and memory, measured on our robot:** ESP32-S3 revision v0.2, 8 MB PSRAM and 8 MB GigaDevice flash. To enter the bootloader, hold BOOT, press RESET, then release BOOT, because esptool's automatic reset didn't work. See the [backup notes](../notebook/2026-11-06-backing-up-the-camera-board.md).
 - **Link to the shield:** a 4-pin cable carrying RX on GPIO3, TX on GPIO40, ground and 5 V.
 - **Camera:** 24-pin DVP ribbon connector. The sensor on our robot is an OV3660, as reported by the maintainer. A retailer guide lists an OV2640, so other units may differ.
 - **Other:** green LED on GPIO46, boot and reset buttons. Spare GPIOs reach only module pads and test points, not a header.

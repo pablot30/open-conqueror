@@ -4,7 +4,7 @@ Sources: the shield's schematic and the TB6612FNG datasheet.
 
 ## Wiring
 
-- Channel A drives the right track and channel B the left, according to the schematic. See the [open questions](README.md#open-questions).
+- Channel A drives the right track and channel B the left, as the schematic says. We [confirmed this on our robot](../notebook/2026-11-06-motor-channels.md), along with the stock firmware's forward direction.
 - An inverter ties IN2 to the inverse of IN1, so each motor has one direction pin.
 - VM is the battery voltage after the input diode, and VCC is 5 V.
 - Bulk capacitance on VM is 10 µF plus 100 nF, with 100 nF across each motor header.

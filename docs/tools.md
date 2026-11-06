@@ -27,11 +27,24 @@ The core lives in `~/Library/Arduino15` on macOS, `~/.arduino15` on Linux and `%
 
 We've only used the macOS commands so far.
 
+### esptool
+
+Reads and writes the camera board's flash. We use it for firmware backups, and in stage 3 for flashing. **Needed since:** stage 1, and through stage 3 at least.
+
+| | macOS | Linux | Windows |
+|---|---|---|---|
+| Install | `brew install esptool` | distro package if there is one, such as `esptool` on Debian, Ubuntu and Fedora; otherwise a Python virtual environment | `pip install esptool` inside a Python virtual environment |
+| Update | `brew upgrade esptool` | same as install method | `pip install --upgrade esptool` in the environment |
+| Uninstall | `brew uninstall esptool`, then `brew autoremove` | same as install method | delete the virtual environment |
+
+On macOS, Homebrew also installs `cffi`, `cryptography` and `libyaml` for it if they aren't already there. `brew autoremove` removes them again once nothing else needs them.
+
+We've only used the macOS commands so far.
+
 ## Planned
 
 | Tool | For | Install on macOS | Uninstall on macOS | When |
 |---|---|---|---|---|
-| esptool | Backing up the camera board's firmware | `brew install esptool` | `brew uninstall esptool` | When the camera board is plugged in, in stage 1 |
 | Python packages for the computer tool | Stage 2 control and testing | A virtual environment in `.venv/`, added to `.gitignore` | Delete `.venv/` | Stage 2 |
 
 Stage 1's sensor checks need neither: they're throwaway scripts using only Python's standard library, and they aren't part of the repo.

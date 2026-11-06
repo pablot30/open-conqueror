@@ -17,7 +17,7 @@ Speeds are 0 to 255.
 
 | N | Purpose | Parameters | Reply |
 |---|---|---|---|
-| 1 | Run motors | D1: 0 both, 1 and 2 one motor. D2: speed. D3: 0 stop, 1 forward, 2 reverse | `{H_ok}` |
+| 1 | Run motors | D1: 0 both, 1 right track, 2 left track ([measured](../notebook/2026-11-06-motor-channels.md)). D2: speed. D3: 0 stop, 1 forward, 2 reverse. A single-motor command also runs the other motor forward at its last speed | `{H_ok}` |
 | 2 | Drive for a time | D1: 1 left, 2 right, 3 forward, 4 backward. D2: speed. T: duration | `{H_ok}` when finished |
 | 3 | Drive until told otherwise | D1: as N:2. D2: speed | `{H_ok}` |
 | 4 | Set both track speeds, forward only | D1 and D2: speeds. Both 0 stops | `{H_ok}` |
@@ -25,7 +25,7 @@ Speeds are 0 to 255.
 | 7 | Set LED for a time | D1: position. D2, D3, D4: red, green, blue. T: duration | `{H_ok}` when finished |
 | 8 | Set LED | D1: position. D2, D3, D4: red, green, blue | `{H_ok}` |
 | 21 | Ultrasonic | D1: 1 obstacle within 20 cm, 2 distance in cm, capped at 150. Measured on our robot, it reads short | `{H_true}`, `{H_false}` or `{H_<cm>}` |
-| 22 | Line sensor | D1: 0 "left" (A2, which is really the robot's right), 1 middle, 2 "right" (A0, the robot's left). Higher means darker | `{H_<raw value>}` |
+| 22 | Line sensor | D1: 0 left (A2), 1 middle (A1), 2 right (A0), as the robot sees them. Higher means darker | `{H_<raw value>}` |
 | 23 | Lifted off the ground? | None. Measured: `true` means lifted | `{H_true}` or `{H_false}` |
 | 100 | Stop everything, go to standby | None | `{ok}` |
 | 101 | Select mode | D1: 1 line tracking, 2 obstacle avoidance, 3 auto follow | `{ok}` |
@@ -40,5 +40,5 @@ The PDF also lists commands 6, 9, 10, 103 and 104, which this firmware doesn't i
 
 ## Things to confirm in stage 1
 
-- Which track N:1's D1=1 and N:4's D1 drive. See the [open questions](README.md#open-questions).
+- Which track N:4's D1 drives. N:1's D1=1 [drives the right track](../notebook/2026-11-06-motor-channels.md).
 - That the commands and replies match this table on the real robot.

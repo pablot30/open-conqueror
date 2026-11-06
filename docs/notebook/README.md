@@ -7,3 +7,5 @@ Each entry should say how we know something: measured on the robot, compiled, or
 - [2026-11-03: First look at the stock firmware](2026-11-03-first-look-at-stock-firmware.md)
 - [2026-11-04: Backing up the UNO](2026-11-04-backing-up-the-uno.md)
 - [2026-11-06: First sensor readings](2026-11-06-first-sensor-readings.md)
+- [2026-11-06: Backing up the camera board](2026-11-06-backing-up-the-camera-board.md)
+- [2026-11-06: Motor channels](2026-11-06-motor-channels.md)

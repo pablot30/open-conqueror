@@ -4,7 +4,7 @@ For the TB6612 shield (V1.1). Source: the shield's schematic, cross-checked with
 
 **All 20 UNO I/O pins are in use.** Adding anything means freeing a pin first.
 
-Left and right here mean the robot's own, looking the way it drives. The motor track sides still come from the schematic, so they may turn out to be swapped like the line sensors were.
+Left and right here mean the robot's own, looking the way it drives. The line sensor and motor track sides have both been checked on our robot.
 
 | Pin | Use | Notes |
 |---|---|---|
@@ -22,9 +22,9 @@ Left and right here mean the robot's own, looking the way it drives. The motor t
 | D11 | Tilt servo | Header P1 |
 | D12 | Ultrasonic echo | Header P9 |
 | D13 | Ultrasonic trigger | Header P9 |
-| A0 | Line sensor, robot's left | Header P7. The schematic and firmware call it right ([measured](../notebook/2026-11-06-first-sensor-readings.md#left-and-right-are-swapped)) |
+| A0 | Line sensor, right | Header P7 ([checked on our robot](../notebook/2026-11-06-first-sensor-readings.md#left-and-right-match-elegoos-naming)) |
 | A1 | Line sensor, middle | Header P7 |
-| A2 | Line sensor, robot's right | Header P7. The schematic and firmware call it left |
+| A2 | Line sensor, left | Header P7 |
 | A3 | Battery voltage | 10 kΩ and 1.5 kΩ divider, measured after the input diode |
 | A4 | I2C SDA | GY-521 |
 | A5 | I2C SCL | GY-521 |

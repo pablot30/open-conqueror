@@ -10,16 +10,16 @@
 | Gyro | Answers on I2C with the MPU6050's usual ID (0x68), but the stock firmware can't report motion data |
 | Ultrasonic | Steady to ±1 cm, but **reads short**: 22 to 23 cm for a target at 30 cm, and 6 to 7 cm at 10 cm. A book and a black board gave the same results |
 | Line sensors | Higher readings mean less light reflected. White paper reads 90 to 240, our wooden table 370 to 480, and nothing underneath 940 to 970 |
-| Line sensor order | **Left and right are swapped**: see below |
+| Line sensor order | Matches ELEGOO's naming, after a false alarm: see below |
 | Lift detection | Works, but with little margin: see below |
 
-## Left and right are swapped
+## Left and right match ELEGOO's naming
 
-Standing behind the robot and looking the way it drives, the sensor on the robot's **left** is the one on A0, which the schematic and the firmware call **right**. The firmware still has the opposite pin mapping, commented out, so ELEGOO probably changed it at some point.
+At first we concluded that left and right were swapped. They weren't: the maintainer had been facing the robot's front during the test, so their left was the robot's right. With that corrected, the sensors match the schematic and the firmware: A2 is the robot's left, A1 the middle and A0 the robot's right.
 
-A likely explanation is that ELEGOO names left and right as seen when facing the robot. If so, the motor channels may be named the same way. We'll check when we run the motors.
+The firmware still contains the opposite pin mapping, commented out. That shows the naming changed at some point, which is one more reason to check it on the robot.
 
-From now on, **left and right mean the robot's own left and right**, looking the way it drives.
+From now on, **left and right always mean the robot's own**, looking the way it drives.
 
 ## The ultrasonic reads short
 
@@ -35,7 +35,7 @@ N:23 answers `true` when the tank is lifted, even though the firmware's internal
 
 ## Other things to note
 
-- **One sensor reads low:** on every surface, the robot's left sensor (A0) reads about 100 to 120 lower than the other two: 374 against about 470 on the table, and about 90 against about 210 on white paper. The difference stayed with that sensor when we turned the robot round, so it doesn't come from lighting or the robot's shadow. Each sensor needs its own calibration.
+- **One sensor reads low:** on every surface, the robot's right sensor (A0) reads about 100 to 120 lower than the other two: 374 against about 470 on the table, and about 90 against about 210 on white paper. The difference stayed with that sensor when we turned the robot round, so it doesn't come from lighting or the robot's shadow. Each sensor needs its own calibration.
 - **Room light barely matters, at least in our room:** the maintainer noticed that the robot casts a shadow right under its sensors. The sensors measure the reflection of their own infrared LEDs, but the stock firmware doesn't separate that from ambient light, so we tested it. Covering the front with a cloth changed the readings by no more than 5 counts. The room was lit by an old fluorescent tube lamp, which gives off little infrared, and no flicker showed in the readings. Daylight or an incandescent bulb could behave differently, and we haven't tested either.
 - **Soft targets look like empty space:** with a cloth just in front of the ultrasonic sensor, it read 150 cm, its maximum. A missing echo looks the same as nothing in range, so obstacle avoidance can't see soft objects.
 - **Our table may count as a line:** by our reading of the code, stock line tracking treats readings between 250 and 850 as being on the line. Our table reads inside that range, so the stock line-tracking mode might treat the whole table as a line. We'll see when we record the modes.
@@ -45,3 +45,4 @@ N:23 answers `true` when the tank is lifted, even though the firmware's internal
 - **Give a clear start signal:** our first recording missed everything because the test started without one. Now the maintainer replies "go" and waits 15 seconds, which covers the board's reset and the gyro calibration.
 - **Keep hands and other objects away from the sensor being tested:** a helper's hand under the line sensors spoiled the lift test.
 - **Hold things still:** a target held still for ten seconds is far easier to read than one being moved.
+- **Agree on left and right before testing:** say "the robot's own left, looking the way it drives", and have the tester stand behind the robot. Facing its front swaps the two sides, and that cost us a wrong conclusion.

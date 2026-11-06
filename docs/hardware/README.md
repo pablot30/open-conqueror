@@ -8,7 +8,7 @@ Facts about the stock robot, in our own words. They come from ELEGOO's schematic
 |---|---|
 | Controller | UNO R3-compatible board: ATmega328P at 16 MHz, 32 KB flash, 2 KB RAM. CH340-family USB-serial chip and Optiboot 4.4 bootloader ([measured on our robot](../notebook/2026-11-04-backing-up-the-uno.md)) |
 | Motor shield | "Conqueror Car V1.1" with a TB6612FNG driver |
-| Camera board | ESP32-S3-WROOM-1 with Wi-Fi, USB-C and an OV3660 camera on a DVP connector (sensor reported by the maintainer; a retailer guide lists an OV2640, so units may differ) |
+| Camera board | ESP32-S3-WROOM-1 with 8 MB flash and 8 MB PSRAM ([measured](../notebook/2026-11-06-backing-up-the-camera-board.md)), Wi-Fi, USB-C and an OV3660 camera on a DVP connector (sensor reported by the maintainer; a retailer guide lists an OV2640, so units may differ) |
 | Drive | Two yellow TT-style gearmotors with a 1:48 gearbox (ratio from retailer listings), tracks, eight road wheels on sprung rocker arms, skid steering, no encoders |
 | Motion sensing | GY-521 module (MPU6050) |
 | Distance | Ultrasonic sensor on a pan/tilt mount with two SG90 servos |
@@ -33,7 +33,6 @@ The UNO's USB port and the camera board share its only UART, so set the **Upload
 To answer in stage 1:
 
 - What are the motors' voltage and current ratings? ELEGOO doesn't publish them. See [Motors](motor-driver.md#motors).
-- Which track does motor channel A drive? The shield's schematic and the driver code say right, but the source comments on stock commands N:1 and N:4 treat the first motor as left. The line sensors' left and right turned out to be [swapped](../notebook/2026-11-06-first-sensor-readings.md#left-and-right-are-swapped), probably because ELEGOO names them as seen when facing the robot, so the motors may be swapped too. We'll run each channel with the tracks off the ground to find out.
 - Why does the ultrasonic sensor [read 25 to 35% short](../notebook/2026-11-06-first-sensor-readings.md#the-ultrasonic-reads-short)? We suspect the stock code's timing method, which we can test in stage 2.
 - What voltage does the ESP32's GPIO3 really see from the UNO's TX pin? See [5 V on the UART](camera-board.md#5-v-on-the-uart).
 - How noisy are the 5 V rail and I2C bus while the motors run? The stock firmware pauses the motors around gyro and ultrasonic readings. This one waits for an oscilloscope, as the [roadmap](../roadmap.md#stage-1-order) explains.
