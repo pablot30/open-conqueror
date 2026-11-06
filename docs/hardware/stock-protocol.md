@@ -24,9 +24,9 @@ Speeds are 0 to 255.
 | 5 | Move servos | D1: 1 pan, 2 tilt, 3 both. D2: angle 0 to 180 | `{H_ok}` |
 | 7 | Set LED for a time | D1: position. D2, D3, D4: red, green, blue. T: duration | `{H_ok}` when finished |
 | 8 | Set LED | D1: position. D2, D3, D4: red, green, blue | `{H_ok}` |
-| 21 | Ultrasonic | D1: 1 obstacle within 20 cm, 2 distance in cm | `{H_true}`, `{H_false}` or `{H_<cm>}` |
-| 22 | Line sensor | D1: 0 left, 1 middle, 2 right | `{H_<raw value>}` |
-| 23 | Lifted off the ground? | None | `{H_true}` or `{H_false}` |
+| 21 | Ultrasonic | D1: 1 obstacle within 20 cm, 2 distance in cm, capped at 150. Measured on our robot, it reads short | `{H_true}`, `{H_false}` or `{H_<cm>}` |
+| 22 | Line sensor | D1: 0 "left" (A2, which is really the robot's right), 1 middle, 2 "right" (A0, the robot's left). Higher means darker | `{H_<raw value>}` |
+| 23 | Lifted off the ground? | None. Measured: `true` means lifted | `{H_true}` or `{H_false}` |
 | 100 | Stop everything, go to standby | None | `{ok}` |
 | 101 | Select mode | D1: 1 line tracking, 2 obstacle avoidance, 3 auto follow | `{ok}` |
 | 102 | Joystick | D1: 1 forward, 2 backward, 3 left, 4 right, 5 left forward, 6 left backward, 7 right forward, 8 right backward, 9 stop. D2: speed | None |

@@ -16,6 +16,7 @@ Stage 0, organizing. Don't write firmware until the roadmap reaches that stage a
 - **The robot is physical.** Don't flash it or run its motors without the maintainer's OK.
 - **Cross-platform.** Everything must work on macOS, Linux and Windows. Use each language's path APIs and avoid bash-only scripts.
 - **No secrets.** Wi-Fi credentials and personal data stay out of the repo.
+- **Keep computers clean.** Install with the system package manager or a project virtual environment, and only when a step needs it. List every tool in `docs/tools.md` with how to remove it, and remove what we stop needing.
 
 ## Git
 

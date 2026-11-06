@@ -33,7 +33,8 @@ The UNO's USB port and the camera board share its only UART, so set the **Upload
 To answer in stage 1:
 
 - What are the motors' voltage and current ratings? ELEGOO doesn't publish them. See [Motors](motor-driver.md#motors).
-- Which track does motor channel A drive? The shield's schematic and the driver code say right, but the source comments on stock commands N:1 and N:4 treat the first motor as left. The two may simply be describing left and right from different viewpoints. We'll run each channel with the tracks off the ground and define left and right from the robot's own point of view.
+- Which track does motor channel A drive? The shield's schematic and the driver code say right, but the source comments on stock commands N:1 and N:4 treat the first motor as left. The line sensors' left and right turned out to be [swapped](../notebook/2026-11-06-first-sensor-readings.md#left-and-right-are-swapped), probably because ELEGOO names them as seen when facing the robot, so the motors may be swapped too. We'll run each channel with the tracks off the ground to find out.
+- Why does the ultrasonic sensor [read 25 to 35% short](../notebook/2026-11-06-first-sensor-readings.md#the-ultrasonic-reads-short)? We suspect the stock code's timing method, which we can test in stage 2.
 - What voltage does the ESP32's GPIO3 really see from the UNO's TX pin? See [5 V on the UART](camera-board.md#5-v-on-the-uart).
 - How noisy are the 5 V rail and I2C bus while the motors run? The stock firmware pauses the motors around gyro and ultrasonic readings. This one waits for an oscilloscope, as the [roadmap](../roadmap.md#stage-1-order) explains.
 - What is the battery's capacity? This is low priority, and we won't open the case just to find out.

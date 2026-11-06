@@ -9,7 +9,7 @@
 | USB-serial chip | USB ID `1A86:7523`, which is WCH's CH340 family |
 | MCU signature | `1E 95 0F`. That's the ATmega328P's, though avrdude notes that some other chips share it |
 | Bootloader | Optiboot 4.4 at 115200 baud, 512 bytes at `0x7E00`, identical to the copy in Arduino's `arduino:avr` 1.8.8 core |
-| Application | Ends at about 31.9 KB, and its text strings match the stock firmware. We didn't compare it byte for byte with a build from source |
+| Application | Ends at about 31.9 KB, and its text strings match the stock firmware. The maintainer never flashed this robot, so this is what it shipped with. We didn't compare it byte for byte with a build from source |
 
 ## How to take a backup
 
