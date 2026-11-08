@@ -20,7 +20,7 @@ The software is built through AI-driven development, using [Claude Code](https:/
 |---|---|
 | [Vision](docs/vision.md) | The idea, goals, principles and what we're not doing yet |
 | [Roadmap](docs/roadmap.md) | Stages, exit criteria, longer-term tracks and how we work |
-| [Features](docs/features.md) | The checklist for the first goal |
+| [Requirements](docs/requirements.md) | What the first goal must do, including safety, and how we check it |
 | [Hardware](docs/hardware/README.md) | Parts, pin map, circuits, power, camera board and stock protocol |
 | [Tools](docs/tools.md) | What to install, and how to update and remove it |
 | [Decisions](docs/decisions/README.md) | Short records of why we chose things |

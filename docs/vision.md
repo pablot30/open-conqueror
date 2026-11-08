@@ -12,7 +12,7 @@ The tank is the first target, not the final product. What we learn should apply 
 
 ## Goals
 
-**First goal: our software on stock hardware.** The robot does everything on the [feature list](features.md), including video and phone control through our own web page, and no ELEGOO code runs on it.
+**First goal: our software on stock hardware.** The robot meets the [requirements](requirements.md), including video and phone control through our own web page, and no ELEGOO code runs on it.
 
 **Next: get the most out of the stock hardware.** Smoother line following, better heading hold, ultrasonic sweeps, and vision and language commands running on a computer over Wi-Fi.
 
