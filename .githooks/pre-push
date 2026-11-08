@@ -1,0 +1,31 @@
+#!/bin/sh
+# Refuses pushes that could damage main, until GitHub can enforce this itself.
+# Blocks: pushing to main directly, deleting any remote branch, and force pushes.
+# Emergency override, for example to restore main from a local copy:
+#   OPEN_CONQUEROR_ALLOW_PUSH=1 git push ...
+# Git runs this through sh on macOS, Linux and Windows (Git for Windows).
+
+[ "${OPEN_CONQUEROR_ALLOW_PUSH:-0}" = "1" ] && exit 0
+
+status=0
+
+while read -r local_ref local_sha remote_ref remote_sha; do
+    if [ "$(printf '%s' "$local_sha" | tr -d 0)" = "" ]; then
+        echo "pre-push: refusing to delete $remote_ref on the remote." >&2
+        status=1
+        continue
+    fi
+    if [ "$remote_ref" = "refs/heads/main" ]; then
+        echo "pre-push: refusing to push to main directly. Open a pull request instead." >&2
+        status=1
+        continue
+    fi
+    if [ "$(printf '%s' "$remote_sha" | tr -d 0)" != "" ]; then
+        if ! git merge-base --is-ancestor "$remote_sha" "$local_sha" 2>/dev/null; then
+            echo "pre-push: refusing to force push $remote_ref, which would rewrite its history." >&2
+            status=1
+        fi
+    fi
+done
+
+exit $status

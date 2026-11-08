@@ -22,6 +22,7 @@ Stage 2, planning. Stages 0 and 1 are done. Don't write firmware until the stage
 
 - Commit or push only when asked.
 - Work on short branches with pull requests. The maintainer merges.
+- Never force-push, push to `main` directly, or delete branches on GitHub. `main` changes only through merged pull requests. GitHub can't enforce this on a private repo on the free plan, so `.githooks/pre-push` does it locally.
 - Commits use a GitHub noreply address.
 
 ## Writing
