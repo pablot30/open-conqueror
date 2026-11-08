@@ -4,7 +4,7 @@ Open-source software for the ELEGOO Conqueror tank, rebuilt from scratch through
 
 ## Current stage
 
-Stage 0, organizing. Don't write firmware until the roadmap reaches that stage and the maintainer agrees.
+Stage 2, planning. Stages 0 and 1 are done. Don't write firmware until the stage 2 plan is agreed and the maintainer says to start.
 
 ## Rules
 

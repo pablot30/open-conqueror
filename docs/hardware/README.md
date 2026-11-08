@@ -30,7 +30,7 @@ The UNO's USB port and the camera board share its only UART, so set the **Upload
 
 ## Open questions
 
-To answer in stage 1:
+These don't block stage 2:
 
 - What are the motors' voltage and current ratings? ELEGOO doesn't publish them. See [Motors](motor-driver.md#motors).
 - Why does the ultrasonic sensor [read 25 to 35% short](../notebook/2026-11-06-first-sensor-readings.md#the-ultrasonic-reads-short)? We suspect the stock code's timing method, which we can test in stage 2.

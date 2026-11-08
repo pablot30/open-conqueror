@@ -1,6 +1,6 @@
 # 0003: Public from the first commit, under Apache-2.0
 
-**Date:** 2026-11-03. **Status:** accepted.
+**Date:** 2026-11-03. **Status:** accepted, except that [0005](0005-publish-with-first-working-firmware.md) moves publishing to when our first firmware works.
 
 ## Context
 
