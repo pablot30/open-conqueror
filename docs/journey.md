@@ -17,7 +17,7 @@ The docs get their first local commit. Backing up the UNO, the EEPROM read succe
 - **Sensor tests:** the first recording misses everything because there's no start signal. The fix is "reply go, wait 15 seconds".
 - **The left/right mix-up:** standing in front of the robot swaps its left and right. We record a wrong conclusion and correct it a day later. **Story:** agree on conventions before testing.
 - **The camera board:** a USB-C to USB-C cable can't power it, because it lacks two small resistors. The backup works over a USB-A cable.
-- **Motors:** the first run, filmed by hand on a table, settles nothing. The second, from behind with a fixed phone, confirms the channels and a stock bug. Videos: `IMG_3701.MOV` (first run) and `IMG_3703.MOV` (second run).
+- **Motors:** the first run, filmed by hand on a table, settles nothing. The second, from behind with a fixed phone, confirms the channels and a stock bug. Both videos were test footage; better ones get filmed later.
 
 See the notebook entries for [sensors](notebook/2026-11-06-first-sensor-readings.md), the [camera board](notebook/2026-11-06-backing-up-the-camera-board.md) and [motor channels](notebook/2026-11-06-motor-channels.md).
 
