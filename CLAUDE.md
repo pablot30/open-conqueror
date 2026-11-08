@@ -11,7 +11,7 @@ Stage 2, planning. Stages 0 and 1 are done. Don't write firmware until the stage
 - **Stock hardware first.** Don't propose hardware changes until stage 5, unless a decision at hand depends on one. See `docs/decisions/0001-stock-hardware-first.md`.
 - **No vendor files.** Never add ELEGOO's code, manuals or firmware to this repo, and never modify a local copy of the kit. Describe hardware facts in our own words.
 - **Say how you know.** Hardware facts state their source and whether they were measured on a robot.
-- **Feature target.** `docs/features.md` defines the first goal. Follow the manual's behaviour, and don't reproduce stock bugs.
+- **Requirements.** `docs/requirements.md` defines the first goal, with IDs that issues, tests and commits refer to. Follow the manual's behaviour, and don't reproduce stock bugs.
 - **Record what matters.** Decisions go in `docs/decisions/`, and lessons in `docs/notebook/`.
 - **The robot is physical.** Don't flash it or run its motors without the maintainer's OK.
 - **Cross-platform.** Everything must work on macOS, Linux and Windows. Use each language's path APIs and avoid bash-only scripts.

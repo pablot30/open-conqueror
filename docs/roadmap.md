@@ -4,10 +4,10 @@
 
 | Stage | Work | Done when |
 |---|---|---|
-| 0. Organize | Vision, roadmap, feature list, hardware notes | The docs are agreed |
+| 0. Organize | Vision, roadmap, requirements, hardware notes | The docs are agreed |
 | 1. Know the robot | Back up the factory firmware, check the sensors and motors one at a time, answer the [open hardware questions](hardware/README.md#open-questions) | Both boards are backed up and verified, and we know the hardware well enough to write our own firmware |
-| 2. Own the UNO | First a plan: architecture, toolchain, testing, development loop and backlog. Then our UNO firmware and protocol, plus a computer tool to control it. We publish the repo once the first firmware works ([0005](decisions/0005-publish-with-first-working-firmware.md)) | Every UNO item on the [feature list](features.md) is ticked on the robot |
-| 3. Own the camera board | Our ESP32-S3 firmware, with a Wi-Fi password and a web control page | No ELEGOO code runs on the robot and the whole feature list is ticked |
+| 2. Own the UNO | First a plan: requirements, development loop, quality rules (coding standard, static analysis, coverage), toolchain, architecture, protocol with telemetry, calibration and diagnostics, security and updates, releases, and backlog. Then our UNO firmware and protocol, plus a computer tool to control it. We publish the repo once the first firmware works ([0005](decisions/0005-publish-with-first-working-firmware.md)) | Every stage 2 requirement in the [requirements](requirements.md) is checked on the robot |
+| 3. Own the camera board | Our ESP32-S3 firmware, with a Wi-Fi password and a web control page | No ELEGOO code runs on the robot, and every requirement is checked |
 | 4. Stretch the stock hardware | Smoother line following, better heading hold, ultrasonic sweeps, vision and language commands running on a computer over Wi-Fi | Each improvement is measured against the stock firmware, restored from the backup and measured the same way |
 | 5. Upgrade on evidence | Hardware changes where stage 4 hit a measured limit, probably starting with a UNO R4 WiFi and encoders | Decided when we get there |
 
