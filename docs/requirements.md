@@ -12,6 +12,7 @@ Each requirement has an ID so that issues, tests and commits can refer to it:
 - **T:** a technical goal, how well it does it.
 - **SG and S:** safety goals, and the safety requirements that achieve them.
 - **D:** a development requirement, what we need in order to build and test it.
+- **Q:** a quality requirement, how we build it.
 
 ## Features
 
@@ -105,6 +106,7 @@ Two hardware limits shape this. The robot has **no current sensing and no wheel 
 | S9 | Below 7.0 V the robot warns. Below 6.4 V *(proposed)* it stops the motors and won't drive. Readings are filtered so a brief dip under load doesn't trigger it | SG6 | 2 | Bench supply |
 | S10 | The motors' average voltage stays at or below 6 V until we know their real rating *(proposed)* | SG7 | 2 | Calculate from the PWM limit and battery voltage |
 | S11 | Wi-Fi uses a password, and the link only accepts commands from our tool or page. Credentials never go in the repo | SG8 | 3 | Try to connect without the password |
+| S12 | Only firmware we've signed can be installed over Wi-Fi. Details depend on what each board's hardware supports. The camera board has secure boot and key storage, and the UNO has neither | SG8 | 2 | Try to install an unsigned image |
 
 ## Development requirements
 
@@ -119,9 +121,26 @@ Two hardware limits shape this. The robot has **no current sensing and no wheel 
 | D7 | **Telemetry:** the robot streams its state to the computer: versions, mode, sensor readings, motor commands and internal signals, at a rate we can choose | 2 | View it live in the computer tool |
 | D8 | **Logs:** both boards send timestamped log messages with a severity level, and the computer can record them | 2 | Record a session and read it back |
 | D9 | **Evaluation tool:** on the computer, we can view telemetry and logs live, record them, replay them later and plot signals. It may be our own tool, an existing viewer, or both | 2 | Analyse a recorded test run |
-| D10 | **Online calibration:** calibration values, such as line sensor thresholds and controller gains, can be read and changed while the robot runs, then saved on the robot. Saved values carry a check so that corrupted values fall back to safe defaults | 2 | Change a value live, then power off and on |
+| D10 | **Online calibration:** calibration values, such as line sensor thresholds and controller gains, can be read and changed while the robot runs. Changes live in RAM, so a power cycle returns to the stored values. Storing them is a separate, deliberate step. Stored values carry a check, so corrupted values fall back to safe defaults | 2 | Change a value live, power cycle, and check it reverted. Then store it, power cycle, and check it stayed |
 | D11 | **Diagnostics:** monitors detect faults, such as a low battery, a missing gyro, the ultrasonic timing out, the link dropping or an unexpected reset. Each fault is stored on the robot as a fault code with its status and a snapshot of the conditions when it happened. The computer can read and clear them, as with diagnostic trouble codes in cars | 2 | Cause a fault on purpose, then read its code and snapshot |
 | D12 | **Debugging:** each board can be debugged beyond log messages, for example with breakpoints | 2 | Stop at a breakpoint on each board |
+| D13 | **One signal database:** telemetry signals, calibration values and fault codes are defined once, in a database file, as CAN databases do in cars. Code for the robot and the decoder on the computer are generated from it, so the link carries compact bytes, not text | 2 | Add a signal to the database, and see it in the tool without hand-written code |
+| D14 | **Recordings in chunks:** long sessions are recorded in chunks with an index, so files stay manageable and any part can be found quickly | 2 | Record a long session and jump to a moment in it |
+| D15 | **Calibration data management:** each stored set of calibration values records which database version it belongs to. The robot rejects a set made for an incompatible software version | 2 | Load a set from an older version |
+| D16 | **Releases:** a release is a numbered package with every firmware image and the calibration defaults, plus a list of their versions and checksums. Flashing a release installs exactly that, and the robot can report which release it runs | 2 | Flash a release, then ask the robot which release it runs |
+
+## Quality requirements
+
+These apply to every change before it's merged. The research behind them, and the exact scope and tools, come in the [stage 2 plan](roadmap.md).
+
+| ID | Requirement |
+|---|---|
+| Q1 | **Coding standard:** the firmware follows a recognised safety-oriented coding standard, such as MISRA C++ or a free alternative, checked by static code analysis |
+| Q2 | **No new findings:** a change can't add static analysis findings. Any exception is recorded with a justification |
+| Q3 | **Unit test coverage:** the code that has unit tests reaches 100% line, branch and MC/DC coverage. Which code that covers is decided in the plan |
+| Q4 | **Merge gates:** every change goes through a pull request, and CI must pass before it's merged: build, tests, coverage and static analysis |
+| Q5 | **The same discipline everywhere:** the computer tool and web page follow their own languages' best practices, with linting, type checking, tests and coverage |
+| Q6 | **Traceability:** tests and changes refer to requirement IDs, so we can show what checks each requirement |
 
 ## Deliberate differences from stock
 
