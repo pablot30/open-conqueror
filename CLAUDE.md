@@ -12,7 +12,7 @@ Stage 2, planning. Stages 0 and 1 are done. Don't write firmware until the stage
 - **No vendor files.** Never add ELEGOO's code, manuals or firmware to this repo, and never modify a local copy of the kit. Describe hardware facts in our own words.
 - **Say how you know.** Hardware facts state their source and whether they were measured on a robot.
 - **Requirements.** `docs/requirements.md` defines the first goal, with IDs that issues, tests and commits refer to. Follow the manual's behaviour, and don't reproduce stock bugs.
-- **Record what matters.** Decisions go in `docs/decisions/`, and lessons in `docs/notebook/`.
+- **Record what matters.** Decisions go in `docs/decisions/`, and technical lessons in `docs/notebook/`. Lessons about how to run the project go in `docs/playbook.md`, and milestones and memorable moments in `docs/journey.md`.
 - **The robot is physical.** Don't flash it or run its motors without the maintainer's OK.
 - **Cross-platform.** Everything must work on macOS, Linux and Windows. Use each language's path APIs and avoid bash-only scripts.
 - **No secrets.** Wi-Fi credentials and personal data stay out of the repo.

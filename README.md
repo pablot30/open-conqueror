@@ -26,6 +26,8 @@ The software is built through AI-driven development, using [Claude Code](https:/
 | [Research](docs/research/README.md) | Reports written before big decisions |
 | [Decisions](docs/decisions/README.md) | Short records of why we chose things |
 | [Notebook](docs/notebook/README.md) | What we learn along the way |
+| [Playbook](docs/playbook.md) | How we run the project, step by step, as it grows |
+| [Journey](docs/journey.md) | The project's story, milestone by milestone |
 
 ## Supported hardware
 
