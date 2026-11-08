@@ -2,6 +2,20 @@
 
 Everything this project needs installed on a computer, and how to remove it. When we add a tool, it goes here in the same change. When we stop needing one, we remove it and take it off this list.
 
+## Repository setup
+
+After cloning, turn on the project's git hooks once:
+
+```
+git config core.hooksPath .githooks
+```
+
+The pre-push hook refuses direct pushes to `main`, force pushes and branch deletions. GitHub can only enforce this itself on public repos, or on a paid plan. Once the repo is public, apply `.github/rulesets/protect-main.json` with:
+
+```
+gh api repos/pablot30/open-conqueror/rulesets --method POST --input .github/rulesets/protect-main.json
+```
+
 ## Rules
 
 - Install with the system's package manager: Homebrew on macOS, the distro's on Linux, winget on Windows.
