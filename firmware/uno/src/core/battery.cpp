@@ -7,7 +7,9 @@ namespace oc {
 uint16_t batteryAdcToMillivolts(uint16_t adc) {
   // Vin = adc / 1023 * 5000 mV * (10 + 1.5) / 1.5
   //     = adc * 575000 / 15345
-  const uint32_t millivolts = (static_cast<uint32_t>(adc) * 575000UL) / 15345UL;
+  // U, not UL: unsigned long is 64 bits on some computers, which would make
+  // the expression wider than uint32_t. On the AVR, 575000U is 32 bits.
+  const uint32_t millivolts = (static_cast<uint32_t>(adc) * 575000U) / 15345U;
   return static_cast<uint16_t>(millivolts);
 }
 
