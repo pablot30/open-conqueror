@@ -16,7 +16,7 @@ This isn't a blueprint we designed in advance. It grows from what the project ac
 
 **When:** before the first commit, because everything committed stays in the history.
 
-**What:** a license, `.gitattributes` for line endings, `.editorconfig`, a `.gitignore` that keeps out secrets and vendor files, and a commit email that doesn't expose a personal address.
+**What:** a license, `.gitattributes` for line endings, `.editorconfig`, a `.gitignore` that keeps out secrets and vendor files, and a commit email that doesn't expose a personal address. On GitHub, also turn on "Keep my email addresses private" before the first merge on the website. Otherwise GitHub writes merge commits under your account's email. We missed this and had to rewrite the history and recreate the repo.
 
 **Why:** check what you're allowed to publish before you publish it. The robot kit came with no license to redistribute its code or manuals, so none of it goes in the repo, and we describe hardware facts in our own words.
 
@@ -67,6 +67,8 @@ This isn't a blueprint we designed in advance. It grows from what the project ac
 **What:** requirements with IDs and a way to check each one. They cover features, technical goals, safety goals derived from hazards, development needs and quality rules. Research the big choices before deciding them.
 
 **Why:** safety and quality are much cheaper to design in than to add later. See the [requirements](requirements.md).
+
+**But:** plan only as far as the next thing that runs. Our stage 2 plan grew into MISRA mappings, MC/DC and signed releases before any firmware existed, and we had to cut it back to a walking skeleton ([0006](decisions/0006-walking-skeleton-first.md)). Keep the full requirements as the target, and pull each one in when an increment needs it.
 
 ## 9. Protect the main line
 
