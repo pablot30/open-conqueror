@@ -29,6 +29,10 @@ See the notebook entries for [sensors](notebook/2026-11-06-first-sensor-readings
 - **Requirements:** features, safety goals derived from hazards, and quality rules including full MC/DC coverage and no new static analysis findings. See the [requirements](requirements.md).
 - **Protecting main:** GitHub can't protect a private repo's branches on the free plan, so a git hook does it for now.
 
+## 2026-11-09: Back to basics
+
+Stage 2 planning has grown into MISRA mappings, MC/DC coverage, description files, signed releases and three more research reports, for firmware that doesn't exist yet. We stop and cut it back to a walking skeleton: drive, stop and stay safe over USB, then grow in increments that each run on the robot. **Story:** planning for problems you don't have yet can stop you shipping anything. See [decision 0006](decisions/0006-walking-skeleton-first.md).
+
 ## Ideas for content
 
 - How an AI agent and an engineer split the work on real hardware: who touches the robot, and who writes and checks.

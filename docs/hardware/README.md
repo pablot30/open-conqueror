@@ -34,7 +34,8 @@ These don't block stage 2:
 
 - What are the motors' voltage and current ratings? ELEGOO doesn't publish them. See [Motors](motor-driver.md#motors).
 - Why does the ultrasonic sensor [read 25 to 35% short](../notebook/2026-11-06-first-sensor-readings.md#the-ultrasonic-reads-short)? We suspect the stock code's timing method, which we can test in stage 2.
-- What voltage does the ESP32's GPIO3 really see from the UNO's TX pin? See [5 V on the UART](camera-board.md#5-v-on-the-uart).
+- What voltage does the ESP32's GPIO3 really see from the UNO's TX pin? See [5 V on the UART](camera-board.md#5-v-on-the-uart). Waiting for a multimeter.
+- How far is our battery reading from a multimeter's? The stock firmware adds 8% to its A3 reading, and our first firmware will apply no correction. Measure the battery terminals and Vin while the firmware reports its reading. Waiting for a multimeter.
 - How noisy are the 5 V rail and I2C bus while the motors run? The stock firmware pauses the motors around gyro and ultrasonic readings. This one waits for an oscilloscope, as the [roadmap](../roadmap.md#stage-1-order) explains.
 - What is the battery's capacity? This is low priority, and we won't open the case just to find out.
 - Do the predictions in the [first look at the stock firmware](../notebook/2026-11-03-first-look-at-stock-firmware.md) hold on the robot?
