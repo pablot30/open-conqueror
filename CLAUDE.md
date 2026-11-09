@@ -22,7 +22,8 @@ Stage 2, increment 1: the walking skeleton. Stages 0 and 1 are done. We build in
 
 - Commit or push only when asked.
 - Work on short branches with pull requests. The maintainer merges.
-- Never force-push, push to `main` directly, or delete branches on GitHub. `main` changes only through merged pull requests. GitHub can't enforce this on a private repo on the free plan, so `.githooks/pre-push` does it locally.
+- Never force-push, push to `main` directly, or delete `main` or a `release/` branch. `main` changes only through merged pull requests. GitHub can't enforce this on a private repo on the free plan, so `.githooks/pre-push` does it locally.
+- Delete work branches once they're merged, locally and on GitHub, so only live work is left.
 - Commits use a GitHub noreply address.
 
 ## Writing

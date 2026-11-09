@@ -38,10 +38,10 @@ At the end of the session we put the factory firmware back from the [UNO backup]
 - **Main power off, checked by the firmware:** before writing, our firmware's battery reading showed 4.37 V instead of 7.42 V, the USB supply feeding back. That confirmed the switch without anyone having to look.
 - **The application only:** we wrote the backup's first 31,872 bytes and left out the bootloader at the top of flash. We don't know this board's lock bits, so we didn't ask the bootloader to rewrite itself. Writing took 5 s and avrdude verified it.
 - **Checked byte for byte:** we read all 32 KB back. Its SHA-256 matches the backup's exactly, bootloader included.
-- **Running:** after a reset, the stock firmware printed its gyro chip ID, 52, as it did on 2026-11-04, and answered an ultrasonic query with 25 cm.
+- **Running:** after a reset, the stock firmware printed its gyro chip ID, 52, as it did on 2026-11-04, and answered an ultrasonic query with 25 cm. Then, off USB, the maintainer drove it with the IR remote, which our firmware doesn't support yet, and it worked normally.
 
 ## What we learned about testing
 
-- **Let the test wait for the person.** Two MODE button checks ran on a countdown that the maintainer never saw in time, and recorded nothing. The third waited up to two minutes for presses and caught them.
+- **Say exactly what to touch, and what will happen.** Two MODE button checks recorded nothing because the request said "MODE" without saying where it is. The maintainer understood the IR remote's key, not the button on the shield. Before a hands-on step, name the part and where it sits, what will move and for how long, what to do and when, and what to watch for. Letting the test wait for the action, rather than run on a countdown, also helped: the third check waited up to two minutes and caught the presses.
 - **Telemetry at 10 Hz can miss a short event.** The first firmware's MODE stop lasted under 100 ms, so it could vanish between two telemetry messages. A test that holds a state open for longer, here by streaming a 1% drive command, makes the event visible.
 - **Check the test script too.** Our MODE script once read the last telemetry message from before it re-armed the robot, and reported a press that never happened. The log showed the robot driving the whole time.

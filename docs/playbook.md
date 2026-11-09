@@ -74,7 +74,7 @@ This isn't a blueprint we designed in advance. It grows from what the project ac
 
 **When:** as soon as the code lives on a shared server.
 
-**What:** changes reach `main` only through reviewed pull requests, with no force pushes or deletions. If the platform can't enforce that, enforce it locally until it can.
+**What:** changes reach `main` only through reviewed pull requests, with no force pushes, and `main` and release branches can't be deleted. Delete work branches once they're merged, so the branch list shows only live work. If the platform can't enforce this, enforce it locally until it can.
 
 **Why:** GitHub only protects branches on private repos with a paid plan. We use a [pre-push hook](tools.md#repository-setup) until the repo is public.
 
