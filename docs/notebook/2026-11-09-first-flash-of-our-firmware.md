@@ -38,7 +38,7 @@ At the end of the session we put the factory firmware back from the [UNO backup]
 - **Main power off, checked by the firmware:** before writing, our firmware's battery reading showed 4.37 V instead of 7.42 V, the USB supply feeding back. That confirmed the switch without anyone having to look.
 - **The application only:** we wrote the backup's first 31,872 bytes and left out the bootloader at the top of flash. We don't know this board's lock bits, so we didn't ask the bootloader to rewrite itself. Writing took 5 s and avrdude verified it.
 - **Checked byte for byte:** we read all 32 KB back. Its SHA-256 matches the backup's exactly, bootloader included.
-- **Running:** after a reset, the stock firmware printed its gyro chip ID, 52, as it did on 2026-11-04, and answered an ultrasonic query with 25 cm.
+- **Running:** after a reset, the stock firmware printed its gyro chip ID, 52, as it did on 2026-11-04, and answered an ultrasonic query with 25 cm. Then, off USB, the maintainer drove it with the IR remote, which our firmware doesn't support yet, and it worked normally.
 
 ## What we learned about testing
 
