@@ -4,7 +4,7 @@ Open-source software for the ELEGOO Conqueror tank, rebuilt from scratch through
 
 ## Current stage
 
-Stage 2, planning. Stages 0 and 1 are done. Don't write firmware until the stage 2 plan is agreed and the maintainer says to start.
+Stage 2, increment 1: the walking skeleton. Stages 0 and 1 are done. We build in small increments that each run on the robot, and add tools and process only when an increment needs them. See `docs/decisions/0006-walking-skeleton-first.md` and the build order in `docs/requirements.md`.
 
 ## Rules
 

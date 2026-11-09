@@ -39,6 +39,8 @@ On every system, install the core with `arduino-cli core install arduino:avr@1.8
 
 The core lives in `~/Library/Arduino15` on macOS, `~/.arduino15` on Linux and `%LOCALAPPDATA%\Arduino15` on Windows. Other Arduino work on the same computer may share that folder, so remove individual cores rather than the whole folder.
 
+Our firmware build pins the core in `firmware/uno/sketch.yaml`. arduino-cli installs a pinned core and its tools (avr-gcc, avrdude, arduinoOTA) by itself on the first build, in the `internal` folder inside the folder above. To remove them, delete the folders starting with `arduino_avr`, `arduino_avr-gcc`, `arduino_avrdude` and `arduino_arduinoOTA` in `internal`. The next build downloads them again.
+
 We've only used the macOS commands so far.
 
 ### esptool
@@ -55,10 +57,40 @@ On macOS, Homebrew also installs `cffi`, `cryptography` and `libyaml` for it if 
 
 We've only used the macOS commands so far.
 
+### Python 3.10 or newer
+
+Runs `scripts/dev.py`, which builds, tests and flashes the firmware, and the computer tool `host/oc.py`. **Needed since:** stage 2.
+
+| | macOS | Linux | Windows |
+|---|---|---|---|
+| Install | `brew install python` | distro package, such as `python3` | `winget install Python.Python.3.12` |
+| Update | `brew upgrade python` | same as install method | `winget upgrade Python.Python.3.12` |
+| Uninstall | `brew uninstall python` | same as install method | `winget uninstall Python.Python.3.12` |
+
+The computer tool needs pyserial, pinned in `host/requirements.txt`. It goes in a virtual environment in the repo's `.venv/` folder, which git ignores:
+
+```
+python -m venv .venv
+.venv/bin/pip install -r host/requirements.txt          (macOS and Linux)
+.venv\Scripts\pip install -r host/requirements.txt      (Windows)
+```
+
+Run the tool with `.venv/bin/python host/oc.py`, or `.venv\Scripts\python host\oc.py` on Windows. To remove it, delete `.venv/`.
+
+### CMake and a C++ compiler
+
+Build and run the firmware's unit tests on the computer. **Needed since:** stage 2.
+
+| | macOS | Linux | Windows |
+|---|---|---|---|
+| Install | `brew install cmake`, and the compiler from `xcode-select --install` | distro packages, such as `cmake` and `g++` | `winget install Kitware.CMake` and `winget install Microsoft.VisualStudio.2022.BuildTools`, choosing the C++ workload |
+| Update | `brew upgrade cmake` | same as install method | `winget upgrade` with the same IDs |
+| Uninstall | `brew uninstall cmake` | same as install method | `winget uninstall` with the same IDs |
+
+### cppcheck, optional
+
+CI runs it on every pull request, so it doesn't need to be on your computer. Install it only to run `python scripts/dev.py lint` locally: `brew install cppcheck` on macOS, the distro's `cppcheck` package on Linux, or `winget install Cppcheck.Cppcheck` on Windows. Remove it the same way.
+
 ## Planned
 
-| Tool | For | Install on macOS | Uninstall on macOS | When |
-|---|---|---|---|---|
-| Python packages for the computer tool | Stage 2 control and testing | A virtual environment in `.venv/`, added to `.gitignore` | Delete `.venv/` | Stage 2 |
-
-Stage 1's sensor checks need neither: they're throwaway scripts using only Python's standard library, and they aren't part of the repo.
+Nothing yet.

@@ -19,3 +19,10 @@ build/
 *.hex
 *.elf
 *.bin
+
+# Python
+.venv/
+__pycache__/
+
+# Written by scripts/dev.py before each build
+firmware/uno/src/generated/

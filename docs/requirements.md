@@ -4,7 +4,7 @@ What our software must do on the stock robot, and how we'll check each requireme
 
 The behaviour comes from ELEGOO's manual, except where [decision 0004](decisions/0004-own-protocol-and-control-page.md) replaces the stock app with our own tool and web page. Where the manual is silent, the stock firmware is the reference. We don't reproduce stock bugs.
 
-**Status: draft.** Numbers marked *proposed* are starting points, to be confirmed by measurements on the robot.
+**Status: draft.** Numbers marked *proposed* are starting points, to be confirmed by measurements on the robot. We build these in increments, in the [build order](#build-order) below ([decision 0006](decisions/0006-walking-skeleton-first.md)).
 
 Each requirement has an ID so that issues, tests and commits can refer to it:
 
@@ -13,6 +13,20 @@ Each requirement has an ID so that issues, tests and commits can refer to it:
 - **SG and S:** safety goals, and the safety requirements that achieve them.
 - **D:** a development requirement, what we need in order to build and test it.
 - **Q:** a quality requirement, how we build it.
+
+## Build order
+
+Each increment runs on the robot before the next one starts. A requirement joins an increment only when that increment needs it.
+
+| Increment | Requirements | Notes |
+|---|---|---|
+| **1. Walking skeleton** | F2, F3, F4, S1 (computer tool and MODE button), S3, S4, S5, S9, S10, T2, T8, D4, D6 | Driving without the gyro, over USB. Pull requests, CI, unit tests, cppcheck |
+| 2. Sensors and status | F1, F5, F13, F14, F15, T1, T3, T4, T6, S2, F10 | Gyro, LED, servos, ultrasonic, IR remote |
+| 3. Modes | F6 to F9, S6 to S8, T5 | Line tracking, obstacle avoidance, follow, MODE button cycling |
+| 4. Wi-Fi and tools | F11, T7, D1, D7, D8, D9 | Through the stock camera bridge. Plot recordings with existing tools first |
+| Later | D2, D3, D10 to D16, Q1, Q3, Q5, S11, S12, and the stage 3 features F12 and F16 to F18 | Each comes back when we need it: wireless updates and security with our camera firmware in stage 3, the MISRA mapping and coverage gates once the code settles, description files once the protocol settles |
+
+The rest of D5 and Q2, Q4 and Q6 apply from the first increment in a light form: unit tests and CI on three systems, no new cppcheck findings, merges through pull requests, and requirement IDs in tests and commits.
 
 ## Features
 

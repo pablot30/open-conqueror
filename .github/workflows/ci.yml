@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  firmware:
+    name: Firmware build and cppcheck
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: arduino/setup-arduino-cli@v2
+        with:
+          version: 1.5.1
+      - name: Build (T8 size limits, no warnings in our code)
+        run: python3 scripts/dev.py build
+      - name: Install cppcheck
+        run: sudo apt-get update && sudo apt-get install --yes cppcheck
+      - name: cppcheck
+        run: python3 scripts/dev.py lint
+
+  tests:
+    name: Unit tests (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-15, windows-2025]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Firmware logic tests
+        run: python scripts/dev.py test
+      - name: Computer tool tests
+        run: python -m unittest discover -s host

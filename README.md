@@ -2,7 +2,7 @@
 
 Open-source software for the ELEGOO Conqueror tank, rebuilt from scratch through AI-driven development, with everything we learn published along the way.
 
-> **Status: stage 0, organizing.** There is no firmware here yet, so nothing in this repo runs on a robot. See the [roadmap](docs/roadmap.md).
+> **Status: stage 2, first firmware.** The UNO firmware's first increment builds and passes its tests on a computer, but hasn't run on a robot yet. See the [roadmap](docs/roadmap.md) and the [firmware](firmware/README.md).
 
 ## What this is
 
@@ -22,6 +22,7 @@ The software is built through AI-driven development, using [Claude Code](https:/
 | [Roadmap](docs/roadmap.md) | Stages, exit criteria, longer-term tracks and how we work |
 | [Requirements](docs/requirements.md) | What the first goal must do, including safety, and how we check it |
 | [Hardware](docs/hardware/README.md) | Parts, pin map, circuits, power, camera board and stock protocol |
+| [Firmware](firmware/README.md) | How to build, test and flash, and the protocol |
 | [Tools](docs/tools.md) | What to install, and how to update and remove it |
 | [Research](docs/research/README.md) | Reports written before big decisions |
 | [Decisions](docs/decisions/README.md) | Short records of why we chose things |
