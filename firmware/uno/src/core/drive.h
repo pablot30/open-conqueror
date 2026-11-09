@@ -19,10 +19,14 @@ struct MotorOutput {
   int16_t right;
 };
 
+// After power-on and after every stop, drive commands are ignored until a
+// neutral one (both sides 0) arrives. A stream of resent drive commands
+// therefore can't undo a stop: driving again takes a deliberate new command.
 class DriveControl {
  public:
   // A drive command, each side -100 to 100 percent of the allowed maximum.
   void drive(int8_t leftPercent, int8_t rightPercent, uint32_t nowMs);
+  // Brakes, and holds the motors stopped until the next neutral command.
   void stop();
 
   // Call every loop. pwmLimit is the highest PWM allowed (S10), and
@@ -38,6 +42,7 @@ class DriveControl {
   int8_t rightPercent_ = 0;
   uint32_t lastCommandMs_ = 0U;
   bool linkTimedOut_ = false;
+  bool armed_ = false;  // true once a neutral command has followed the last stop
 };
 
 }  // namespace oc

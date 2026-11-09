@@ -14,6 +14,12 @@ int16_t scale(int8_t percent, uint16_t pwmLimit) {
 }  // namespace
 
 void DriveControl::drive(int8_t leftPercent, int8_t rightPercent, uint32_t nowMs) {
+  if (!armed_) {
+    if ((leftPercent != 0) || (rightPercent != 0)) {
+      return;  // still holding a stop, or standby since power-on
+    }
+    armed_ = true;
+  }
   state_ = DriveState::kDriving;
   leftPercent_ = leftPercent;
   rightPercent_ = rightPercent;
@@ -22,6 +28,7 @@ void DriveControl::drive(int8_t leftPercent, int8_t rightPercent, uint32_t nowMs
 }
 
 void DriveControl::stop() {
+  armed_ = false;
   if (state_ == DriveState::kDriving) {
     state_ = DriveState::kStopped;
   }

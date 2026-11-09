@@ -109,7 +109,7 @@ Two hardware limits shape this. The robot has **no current sensing and no wheel 
 
 | ID | Requirement | Goal | Stage | How we check |
 |---|---|---|---|---|
-| S1 | A stop from the IR remote, the MODE button, the computer tool or the web page stops the motors within 150 ms *(proposed)* | SG1 | 2 | Time it with a log or a video |
+| S1 | A stop from the IR remote, the MODE button, the computer tool or the web page stops the motors within 150 ms *(proposed)*. They stay stopped until a deliberate new drive command, so commands that keep arriving can't restart them | SG1 | 2 | Time it with a log or a video |
 | S2 | The IR remote's OK key stops the robot even when Wi-Fi is down | SG1 | 2 | Turn Wi-Fi off and press OK |
 | S3 | Movement commanded over the link stops if no valid message arrives for 300 ms *(proposed)* | SG2 | 2 | Unplug the link, or stop the computer tool mid-drive |
 | S4 | A watchdog resets the UNO if its firmware hangs, and the motors are off after any reset | SG2, SG3 | 2 | Force a hang in a test build |

@@ -9,3 +9,4 @@ Each entry should say how we know something: measured on the robot, compiled, or
 - [2026-11-06: First sensor readings](2026-11-06-first-sensor-readings.md)
 - [2026-11-06: Backing up the camera board](2026-11-06-backing-up-the-camera-board.md)
 - [2026-11-06: Motor channels](2026-11-06-motor-channels.md)
+- [2026-11-09: First flash of our firmware](2026-11-09-first-flash-of-our-firmware.md)

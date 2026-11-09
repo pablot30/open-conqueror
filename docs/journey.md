@@ -33,6 +33,10 @@ See the notebook entries for [sensors](notebook/2026-11-06-first-sensor-readings
 
 Stage 2 planning has grown into MISRA mappings, MC/DC coverage, description files, signed releases and three more research reports, for firmware that doesn't exist yet. We stop and cut it back to a walking skeleton: drive, stop and stay safe over USB, then grow in increments that each run on the robot. **Story:** planning for problems you don't have yet can stop you shipping anything. See [decision 0006](decisions/0006-walking-skeleton-first.md).
 
+## 2026-11-09: Our firmware drives the robot
+
+The same evening, the walking skeleton runs on the robot. The agent flashes it and drives it from the computer while the maintainer watches. Every track turns the right way, and the robot stops on command and when the link goes quiet. Testing on the robot finds a bug the unit tests missed: a MODE press stopped the robot for only a tenth of a second, because the computer's next drive message started it again. **Story:** a stop has to hold, and you only see that it doesn't when the whole system runs. See [first flash of our firmware](notebook/2026-11-09-first-flash-of-our-firmware.md).
+
 ## Ideas for content
 
 - How an AI agent and an engineer split the work on real hardware: who touches the robot, and who writes and checks.

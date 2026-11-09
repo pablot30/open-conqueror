@@ -48,6 +48,7 @@ def drive_message(left: int, right: int) -> bytes:
 
 
 STOP = b"{S}"
+NEUTRAL = b"{D,0,0}"  # releases a held stop
 VERSION = b"{V}"
 
 
@@ -177,6 +178,10 @@ class Shell(cmd.Cmd):
         message = drive_message(left, right)
         end = time.monotonic() + seconds
         try:
+            # Each command typed here is a deliberate request to drive, so it
+            # starts with a neutral message. That releases a stop held by the
+            # firmware; the resends below can't.
+            self.robot.send(NEUTRAL)
             while time.monotonic() < end:
                 self.robot.send(message)
                 time.sleep(RESEND_PERIOD_S)
