@@ -8,6 +8,13 @@ using oc::MotorOutput;
 
 namespace {
 
+// A controller that has had its neutral command, so it accepts driving.
+DriveControl armedAt(uint32_t nowMs) {
+  DriveControl drive;
+  drive.drive(0, 0, nowMs);
+  return drive;
+}
+
 void startsInStandby() {  // S5
   DriveControl drive;
   const MotorOutput output = drive.update(0U, 255U, true);
@@ -24,7 +31,7 @@ void stopBeforeDriveStaysInStandby() {  // S5
 }
 
 void drivesScaledToLimit() {  // F3, S10
-  DriveControl drive;
+  DriveControl drive = armedAt(0U);
   drive.drive(100, -50, 0U);
   const MotorOutput output = drive.update(10U, 182U, true);
   CHECK(drive.state() == DriveState::kDriving);
@@ -34,13 +41,13 @@ void drivesScaledToLimit() {  // F3, S10
 }
 
 void limitNeverExceeds255() {
-  DriveControl drive;
+  DriveControl drive = armedAt(0U);
   drive.drive(100, 100, 0U);
   CHECK(drive.update(0U, 1000U, true).left == 255);
 }
 
 void stopBrakes() {  // F4, S1
-  DriveControl drive;
+  DriveControl drive = armedAt(0U);
   drive.drive(80, 80, 0U);
   drive.stop();
   const MotorOutput output = drive.update(10U, 255U, true);
@@ -51,7 +58,7 @@ void stopBrakes() {  // F4, S1
 }
 
 void linkTimeoutStops() {  // S3
-  DriveControl drive;
+  DriveControl drive = armedAt(1000U);
   drive.drive(50, 50, 1000U);
   CHECK(drive.update(1000U + oc::config::kLinkTimeoutMs, 255U, true).left != 0);
   CHECK(!drive.linkTimedOut());
@@ -59,23 +66,72 @@ void linkTimeoutStops() {  // S3
   CHECK(output.left == 0);
   CHECK(drive.state() == DriveState::kStopped);
   CHECK(drive.linkTimedOut());
-  // A new drive command clears the flag.
+  // Resent commands after the timeout don't restart it, and leave the flag.
   drive.drive(50, 50, 2000U);
+  CHECK(drive.update(2000U, 255U, true).left == 0);
+  CHECK(drive.linkTimedOut());
+  // A neutral command, then a new drive command, clears it.
+  drive.drive(0, 0, 2100U);
+  drive.drive(50, 50, 2200U);
+  CHECK(drive.update(2200U, 255U, true).left != 0);
   CHECK(!drive.linkTimedOut());
 }
 
 void linkTimeoutSurvivesMillisWrap() {  // S3
-  DriveControl drive;
+  DriveControl drive = armedAt(0xFFFFFF00U);
   drive.drive(50, 50, 0xFFFFFF00U);
   CHECK(drive.update(0x00000010U, 255U, true).left != 0);
   CHECK(drive.update(0x00000100U, 255U, true).left == 0);
 }
 
 void criticalBatteryStops() {  // S9
-  DriveControl drive;
+  DriveControl drive = armedAt(0U);
   drive.drive(50, 50, 0U);
   CHECK(drive.update(10U, 255U, false).left == 0);
   CHECK(drive.state() == DriveState::kStopped);
+}
+
+void ignoresDrivingBeforeNeutral() {  // S4, S5: a reset mid-drive stays stopped
+  DriveControl drive;
+  drive.drive(50, 50, 0U);
+  const MotorOutput output = drive.update(10U, 255U, true);
+  CHECK(drive.state() == DriveState::kStandby);
+  CHECK(!output.enabled);
+  drive.drive(0, 0, 20U);
+  CHECK(drive.state() == DriveState::kDriving);
+  CHECK(drive.update(30U, 255U, true).left == 0);  // neutral brakes
+  drive.drive(50, 50, 40U);
+  CHECK(drive.update(50U, 255U, true).left != 0);
+}
+
+void stopHoldsAgainstResentCommands() {  // S1
+  DriveControl drive = armedAt(0U);
+  drive.drive(60, 60, 0U);
+  drive.stop();
+  for (uint32_t t = 100U; t <= 1000U; t += 100U) {
+    drive.drive(60, 60, t);  // the computer keeps resending
+    CHECK(drive.update(t, 255U, true).left == 0);
+    CHECK(drive.state() == DriveState::kStopped);
+  }
+  drive.drive(0, 0, 1100U);
+  drive.drive(60, 60, 1200U);
+  CHECK(drive.update(1200U, 255U, true).left != 0);
+}
+
+void stopDisarmsEvenWhenNotDriving() {  // S1
+  DriveControl drive = armedAt(0U);
+  drive.stop();
+  drive.drive(60, 60, 10U);
+  CHECK(drive.update(10U, 255U, true).left == 0);
+}
+
+void criticalBatteryHoldsStop() {  // S9
+  DriveControl drive = armedAt(0U);
+  drive.drive(50, 50, 0U);
+  CHECK(drive.update(10U, 255U, false).left == 0);
+  // Battery recovered, but the old command stream doesn't restart it.
+  drive.drive(50, 50, 20U);
+  CHECK(drive.update(20U, 255U, true).left == 0);
 }
 
 }  // namespace
@@ -89,4 +145,8 @@ void runDriveTests() {
   linkTimeoutStops();
   linkTimeoutSurvivesMillisWrap();
   criticalBatteryStops();
+  ignoresDrivingBeforeNeutral();
+  stopHoldsAgainstResentCommands();
+  stopDisarmsEvenWhenNotDriving();
+  criticalBatteryHoldsStop();
 }

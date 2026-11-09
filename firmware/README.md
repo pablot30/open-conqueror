@@ -32,6 +32,7 @@ Messages are short text inside braces, at 9600 baud. That's what the stock camer
 | Message | Meaning |
 |---|---|
 | `{D,left,right}` | Drive. Each track is -100 to 100 percent of the allowed maximum. Resend at least every 300 ms, or the robot stops (S3) |
+| `{D,0,0}` | Neutral: brake, and release a held stop. After power-on and after every stop, the robot ignores other drive messages until it gets this one |
 | `{S}` | Stop: brake both tracks |
 | `{"N":100}` | Stop. The stock bridge sends this when a client disconnects |
 | `{V}` | Ask for the version |
@@ -48,10 +49,10 @@ Messages are short text inside braces, at 9600 baud. That's what the stock camer
 
 | Requirement | How |
 |---|---|
-| S1 | `{S}` or the MODE button brakes both tracks |
+| S1 | `{S}` or the MODE button brakes both tracks. The stop holds until a neutral `{D,0,0}`, so drive messages the computer keeps resending can't restart the robot |
 | S3 | Drive commands expire after 300 ms |
 | S4 | A 250 ms watchdog resets the UNO if the loop hangs, and the driver's pull-downs keep the motors off through a reset |
-| S5 | The driver stays in standby from power-on until the first drive command |
+| S5 | The driver stays in standby from power-on until a neutral `{D,0,0}` and then a drive command. If the UNO resets mid-drive, resent drive messages don't restart the motors |
 | S9 | Under 7.0 V it reports a low battery. Under 6.4 V it brakes and won't drive until the battery is back above 6.8 V. The reading is filtered over about 0.3 s |
 | S10 | PWM is limited so the motors' average voltage stays at or below 6 V |
 
@@ -59,7 +60,7 @@ The battery reading has no correction yet. It hasn't been compared with a multim
 
 ## First flash on the robot
 
-Nothing here has run on the robot yet. The first session:
+We ran this on 2026-11-09; see the [notebook](../docs/notebook/2026-11-09-first-flash-of-our-firmware.md). To repeat it:
 
 1. Tracks off the ground, battery charged, switch on **Upload**, USB connected.
 2. `python scripts/dev.py build`, then `upload`.
