@@ -31,6 +31,15 @@ The fix: after power-on and after every stop, the firmware ignores drive message
 
 Unit tests can't find this kind of bug if they test each command on its own. The new tests stop the robot and then keep sending drive commands, like the computer tool does.
 
+## Restoring the stock firmware
+
+At the end of the session we put the factory firmware back from the [UNO backup](2026-11-04-backing-up-the-uno.md), with main power off. This was the first real test of that backup (D6).
+
+- **Main power off, checked by the firmware:** before writing, our firmware's battery reading showed 4.37 V instead of 7.42 V, the USB supply feeding back. That confirmed the switch without anyone having to look.
+- **The application only:** we wrote the backup's first 31,872 bytes and left out the bootloader at the top of flash. We don't know this board's lock bits, so we didn't ask the bootloader to rewrite itself. Writing took 5 s and avrdude verified it.
+- **Checked byte for byte:** we read all 32 KB back. Its SHA-256 matches the backup's exactly, bootloader included.
+- **Running:** after a reset, the stock firmware printed its gyro chip ID, 52, as it did on 2026-11-04, and answered an ultrasonic query with 25 cm.
+
 ## What we learned about testing
 
 - **Let the test wait for the person.** Two MODE button checks ran on a countdown that the maintainer never saw in time, and recorded nothing. The third waited up to two minutes for presses and caught them.
