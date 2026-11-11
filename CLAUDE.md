@@ -4,7 +4,7 @@ Open-source software for the ELEGOO Conqueror tank, rebuilt from scratch through
 
 ## Current stage
 
-Stage 2, between increments 1 and 2. Increment 1, the walking skeleton, ran on the robot on 2026-11-09. Next: settle the health model (A5 in `docs/architecture.md`) and write decision 0008, then the tooling from decision 0007, then increment 2. We build in small increments that each run on the robot, and add tools and process only when an increment needs them. See `docs/decisions/0006-walking-skeleton-first.md` and the build order in `docs/requirements.md`.
+Stage 2, between increments 1 and 2. Increment 1, the walking skeleton, ran on the robot on 2026-11-09. Next: record the agreed architecture (`docs/architecture.md`) as decision 0008, then the tooling from decision 0007, then increment 2, which includes the first iteration of diagnostics. We build in small increments that each run on the robot, and add tools and process only when an increment needs them. See `docs/decisions/0006-walking-skeleton-first.md` and the build order in `docs/requirements.md`.
 
 ## Rules
 
