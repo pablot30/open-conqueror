@@ -1,6 +1,6 @@
 # Architecture
 
-**Status:** A1 to A4 agreed with the maintainer on 2026-11-11. A5 is proposed and still open. Once A5 is settled, the agreed answers become decision 0008.
+**Status:** A1 to A5 agreed with the maintainer on 2026-11-11. They become decision 0008.
 
 This page covers how the software is split across machines and how each part is built. It's sized for stage 2, increments 2 to 4, and it marks where it must grow for several robots, missions and other robot types. Input: the [vision](vision.md), the [requirements](requirements.md), and the private research report R6 on firmware architecture, cut down to what we need now.
 
@@ -61,7 +61,7 @@ Four layers. Everything except the bottom one builds and is unit-tested on a com
 | Layer | Contents | Increment |
 |---|---|---|
 | **Modes** | Standby, remote driving, line tracking, obstacle avoidance, follow. One active at a time | 1 (remote driving), 3 (the rest) |
-| **Services** | **Motion:** speed and heading hold. **Safety supervisor:** the only code that sets the motors; it checks every request and applies stops, arming, the battery and the link timeout. **Mode manager:** stops the motors on every mode change (S6). **Link:** the protocol. **Health manager:** see A5 | 1 (parts), 2 |
+| **Services** | **Motion:** speed and heading hold. **Safety supervisor:** the only code that sets the motors; it checks every request and applies stops, arming, the battery and the link timeout. **Mode manager:** stops the motors on every mode change (S6). **Link:** the protocol. **Diagnostics:** see A5 | 1 (parts), 2 |
 | **Devices** | One driver per part: motor driver, gyro, ultrasonic, line sensors, servos, LED, IR receiver, battery, button | 1 (motors, battery, button), 2 |
 | **Hardware access** | Pins, timers, I2C, UART, watchdog. The only code that touches registers | 1 |
 
@@ -124,18 +124,20 @@ The robot's firmware is the same whichever computer built it. "Works on macOS, L
 
 If we ever need ROS 2, it runs in a container, so it works on all three.
 
-## A5. Health: checks, faults and signal status (proposed, open)
+## A5. Health: monitors, diagnostic events and signal status
 
 Every sensor value needs a status as well as a value. Our ultrasonic reads its maximum, 150 cm, when no echo comes back, so a plain number can't tell "nothing there" from "I don't know". Faults also need one shared way to be confirmed and reacted to.
 
-- **Checks:** each unit tests what it owns every time it runs and reports pass or fail, such as "the echo arrived in time" or "the gyro answered". Each check has an ID, listed in the unit's README.
-- **The health manager,** one service, debounces every check the same way, with a counter and thresholds per check. A fault is *untested*, *ok*, *suspected*, *confirmed* or *recovering*. It applies reactions from one table, such as "gyro faulty: heading hold off", through the safety supervisor. Later it keeps a fault memory with snapshot data in EEPROM (D11).
-- **Signal status:** every sensor value carries *ok*, *init*, *stale*, *fault* or *unavailable*. Only *ok* may be acted on.
-- **Cost:** a few bytes per check, about 100 bytes of RAM for thirty checks.
+We use the standard terms, so the design is familiar to people from the field and to agents, and keep only the parts we need:
 
-**Public sources:** AUTOSAR Classic's Diagnostic Event Manager and Function Inhibition Manager specifications, OBD-II monitors (SAE J1979), the DTC status byte in UDS (ISO 14229-1), "error" and "not available" values in SAE J1939, the sign/status matrix in ARINC 429, ROS diagnostics (OK, WARN, ERROR, STALE) and MAVLink's sensor health flags. The names here are our own.
+- **Monitors.** Each unit runs monitors on what it owns, every time it runs, and reports **passed** or **failed**: "the echo arrived in time", "the gyro answered", "the battery reading is plausible". Each monitor has an ID, listed in the unit's README. *Sources:* OBD-II monitors (SAE J1979), AUTOSAR's diagnostic monitors.
+- **Diagnostic events and the diagnostics service.** One service, `services/diagnostics/`, debounces every monitor the same way, with a counter and thresholds per event. An event's status is **not tested**, **prefailed**, **failed**, **prepassed** or **passed**. *Source:* the debounce states in AUTOSAR Classic's Diagnostic Event Manager specification.
+- **Reactions** come from one table, such as "gyro failed: heading hold off" or "ultrasonic failed: obstacle avoidance and follow unavailable", and stops go through the safety supervisor. *Source:* AUTOSAR's Function Inhibition Manager.
+- **Signal status.** Every sensor value carries **valid**, **error** or **not available**, and only *valid* may be acted on. *Not available* covers a sensor that isn't fitted, is switched off or hasn't produced a value yet. *Source:* the "error indicator" and "not available" values of SAE J1939. ARINC 429's sign/status matrix and ROS diagnostics' OK, WARN, ERROR and STALE do the same job.
+- **Fault codes and fault memory** come later: confirmed events stored with snapshot data in EEPROM, and readable codes like the DTCs of UDS (ISO 14229-1) and OBD (D11).
+- **Cost:** a few bytes per event, about 100 bytes of RAM for thirty events.
 
-**Open:** whether to build it in a minimal form in increment 2, and the names.
+**First iteration, in increment 2:** monitors for the units increment 2 adds (gyro, ultrasonic, battery, link), the diagnostics service with counter debouncing, a reaction table, signal status on sensor values, and event statuses in telemetry. Fault memory and fault codes wait until we've used this and know what we want from them.
 
 ## What this leaves for later
 
