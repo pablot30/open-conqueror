@@ -35,7 +35,7 @@ When these conflict, the order is: safe, then working on the robot, then simple,
 ### Fun to play
 
 - **Every increment ends with something you can play with,** not only a passing test.
-- **Plug and play.** From a new robot to playing in minutes: one guided setup backs up the stock firmware, flashes ours, sets up Wi-Fi and checks that everything works. The same for people and agents, with as little friction as possible.
+- **Plug and play, in seconds.** One command takes a new robot to playing: it backs up the stock firmware, flashes ours, sets up Wi-Fi and checks that everything works. Only the steps that need a hand, like a switch, wait for a person. We time it and keep making it faster, for people and agents alike.
 
 ### Safe to fail
 
