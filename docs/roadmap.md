@@ -41,6 +41,9 @@ These have no committed order. We'll choose based on what the earlier stages tea
 | Small language models | Natural-language commands mapped to safe robot actions | Can start on a laptop |
 | Automated development | An agent builds, flashes, tests and judges results on the real robot, unattended | Flashing without the Upload-Cam switch, a test stand, an overhead camera |
 | Model Hardware Standard | Exposing the robot through Anthropic's [standard for agents operating devices](https://www.anthropic.com/news/model-hardware-standard-research-preview) | A public spec, which didn't exist when this was written |
+| Health monitoring | Diagnostics that find faults, and prognostics that warn before a part fails, such as a battery losing capacity or a motor wearing out | Logged history across sessions. Battery sag under load is measurable today; motor wear needs current sensing or encoders |
+| Behaviours and missions | Modes that combine and adapt, and missions the user designs, such as "search the room for the red ball" | The modes from stage 2, a way to describe missions, a simulator |
+| Several robots | Robots of different kinds working together, such as a drone and the tank on one mission | A shared protocol, coordinates and clock, and a second robot |
 | Own hardware | A custom board replacing the shield | What the other tracks teach us |
 
 ## How we work
