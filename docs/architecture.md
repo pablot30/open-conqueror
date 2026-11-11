@@ -1,6 +1,6 @@
 # Architecture
 
-**Status:** A1 to A5 agreed with the maintainer on 2026-11-11. They become decision 0008.
+**Status:** agreed with the maintainer on 2026-11-11 and 2026-11-12, and recorded in [decision 0008](decisions/0008-architecture.md).
 
 This page covers how the software is split across machines and how each part is built. It's sized for stage 2, increments 2 to 4, and it marks where it must grow for several robots, missions and other robot types. Input: the [vision](vision.md), the [requirements](requirements.md), and research report [R6](research/2026-11-09-embedded-firmware-architecture.md) on firmware architecture, cut down to what we need now.
 
@@ -133,9 +133,21 @@ We use the standard terms, so the design is familiar to people from the field an
 - **Monitors.** Each unit runs monitors on what it owns, every time it runs, and reports **passed** or **failed**: "the echo arrived in time", "the gyro answered", "the battery reading is plausible". Each monitor has an ID, listed in the unit's README. *Sources:* OBD-II monitors (SAE J1979), AUTOSAR's diagnostic monitors.
 - **Diagnostic events and the diagnostics service.** One service, `services/diagnostics/`, debounces every monitor the same way, with a counter and thresholds per event. An event's status is **not tested**, **prefailed**, **failed**, **prepassed** or **passed**. *Source:* the debounce states in AUTOSAR Classic's Diagnostic Event Manager specification.
 - **Reactions** come from one table, such as "gyro failed: heading hold off" or "ultrasonic failed: obstacle avoidance and follow unavailable", and stops go through the safety supervisor. *Source:* AUTOSAR's Function Inhibition Manager.
-- **Signal status.** Every sensor value carries **valid**, **error** or **not available**, and only *valid* may be acted on. *Not available* covers a sensor that isn't fitted, is switched off or hasn't produced a value yet. *Source:* the "error indicator" and "not available" values of SAE J1939. ARINC 429's sign/status matrix and ROS diagnostics' OK, WARN, ERROR and STALE do the same job.
-- **Fault codes and fault memory** come later: confirmed events stored with snapshot data in EEPROM, and readable codes like the DTCs of UDS (ISO 14229-1) and OBD (D11).
-- **Cost:** a few bytes per event, about 100 bytes of RAM for thirty events.
+- **Signal status.** Every sensor value carries one of five statuses, and each leads to a different reaction:
+
+  | Status | Meaning | Quality | The value holds | May be used by |
+  |---|---|---|---|---|
+  | **valid** | Fresh and trusted | good | The measurement | Everyone |
+  | **init** | Started, no trusted value yet, such as the gyro calibrating at power-on | bad | The signal's init value | Nobody. Modes wait; it isn't a fault |
+  | **substitute** | A replacement while a fault is confirmed or while it heals | uncertain | The last valid value, or a safe default chosen per signal | Control loops, briefly. Never safety decisions |
+  | **error** | Fault confirmed | bad | The safe default | Nobody. Reactions apply |
+  | **not available** | Not fitted, switched off or out of service | bad | Nothing meaningful | Nobody |
+
+  The status follows the signal's diagnostic event: *not tested* gives **init**, *passed* gives **valid**, *prefailed* and *prepassed* give **substitute**, and *failed* gives **error**. A value that stops arriving needs no status of its own: a monitor checks that it updates in time, and the usual debouncing takes it to substitute and then error. Example: one missed ultrasonic echo holds the last distance as a substitute, several make it an error and obstacle avoidance unavailable, and when echoes return it stays a substitute until healed.
+
+  *Sources:* quality (good, uncertain, bad) and the status codes `Bad_WaitingForInitialData`, `Uncertain_LastUsableValue`, `Uncertain_SubstituteValue`, `Bad_SensorFailure` and `Bad_NotConnected` in OPC UA (IEC 62541); the value status byte of fieldbus device profiles such as PROFIBUS PA, with "initial value", "last usable value" and "substitute value"; init and substitution values in AUTOSAR COM; the "error indicator" and "not available" values of SAE J1939.
+- **Fault codes and fault memory** come later: confirmed events stored with snapshot data in EEPROM, and readable codes like the DTCs of UDS (ISO 14229-1) and OBD (D11). Device health for the user, such as "maintenance required", can follow NAMUR NE 107's four categories when prognostics arrive.
+- **Cost:** a few bytes per event, about 100 bytes of RAM for thirty events, plus a status byte and one substitute value per signal.
 
 **First iteration, in increment 2:** monitors for the units increment 2 adds (gyro, ultrasonic, battery, link), the diagnostics service with counter debouncing, a reaction table, signal status on sensor values, and event statuses in telemetry. Fault memory and fault codes wait until we've used this and know what we want from them.
 
