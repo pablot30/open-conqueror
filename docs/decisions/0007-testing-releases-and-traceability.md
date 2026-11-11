@@ -1,6 +1,6 @@
 # 0007: How we test, release and trace our software
 
-**Date:** 2026-11-11. **Status:** draft, for the maintainer to review.
+**Date:** 2026-11-11. **Status:** accepted.
 
 ## Context
 
