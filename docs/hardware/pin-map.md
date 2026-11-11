@@ -10,7 +10,7 @@ Left and right here mean the robot's own, looking the way it drives. The line se
 |---|---|---|
 | D0 | UART RX from camera board | Passes through the Upload-Cam switch |
 | D1 | UART TX to camera board | Wired directly in both switch positions |
-| D2 | MODE button | 10 kΩ pull-up, external interrupt INT0 |
+| D2 | MODE button | 10 kΩ pull-up, external interrupt INT0. Reads low when pressed ([checked on our robot](../notebook/2026-11-09-first-flash-of-our-firmware.md)) |
 | D3 | TB6612 STBY | Shared by both motors |
 | D4 | WS2812 data | One LED, 100 kΩ pull-down |
 | D5 | PWMA, right track | Timer0, about 976 Hz by default |

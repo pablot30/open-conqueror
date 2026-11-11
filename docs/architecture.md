@@ -2,7 +2,7 @@
 
 **Status:** A1 to A4 agreed with the maintainer on 2026-11-11. A5 is proposed and still open. Once A5 is settled, the agreed answers become decision 0008.
 
-This page covers how the software is split across machines and how each part is built. It's sized for stage 2, increments 2 to 4, and it marks where it must grow for several robots, missions and other robot types. Input: the [vision](vision.md), the [requirements](requirements.md), and the private research report R6 on firmware architecture, cut down to what we need now.
+This page covers how the software is split across machines and how each part is built. It's sized for stage 2, increments 2 to 4, and it marks where it must grow for several robots, missions and other robot types. Input: the [vision](vision.md), the [requirements](requirements.md), and research report [R6](research/2026-11-09-embedded-firmware-architecture.md) on firmware architecture, cut down to what we need now.
 
 ## A1. Which machine does what
 
