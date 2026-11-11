@@ -35,7 +35,7 @@ When these conflict, the order is: safe, then working on the robot, then simple,
 ### Fun to play
 
 - **Every increment ends with something you can play with,** not only a passing test.
-- **Easy to start:** from clone to a driving robot in minutes, with one command per task.
+- **Plug and play.** From a new robot to playing in minutes: one guided setup backs up the stock firmware, flashes ours, sets up Wi-Fi and checks that everything works. The same for people and agents, with as little friction as possible.
 
 ### Safe to fail
 
