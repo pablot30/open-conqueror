@@ -37,6 +37,10 @@ Stage 2 planning has grown into MISRA mappings, MC/DC coverage, description file
 
 The same evening, the walking skeleton runs on the robot. The agent flashes it and drives it from the computer while the maintainer watches. Every track turns the right way, and the robot stops on command and when the link goes quiet. Testing on the robot finds a bug the unit tests missed: a MODE press stopped the robot for only a tenth of a second, because the computer's next drive message started it again. **Story:** a stop has to hold, and you only see that it doesn't when the whole system runs. See [first flash of our firmware](notebook/2026-11-09-first-flash-of-our-firmware.md).
 
+## 2026-11-11: Values before structure
+
+A day with no robot. We decide how to test, trace and release ([0007](decisions/0007-testing-releases-and-traceability.md)), and the maintainer stops a first release of the walking skeleton: a release has to earn its name through release candidates and time on the robot. We write down the project's values (fun to play, safe to fail, simple to grow, open to people and agents) and a bigger vision: modes that combine, a robot that knows its own health, and tanks and drones on missions together. Then the architecture: guard, gateway and brain roles, robots that talk to each other, self-contained units, and a health model built from public standards. Four of the eight research reports are published. **Story:** a version number isn't a release.
+
 ## Ideas for content
 
 - How an AI agent and an engineer split the work on real hardware: who touches the robot, and who writes and checks.

@@ -85,3 +85,43 @@ This isn't a blueprint we designed in advance. It grows from what the project ac
 **What:** use the system's package manager or a project-local environment, install only what a step needs, and keep a [list of what's installed](tools.md) with how to remove it.
 
 **Why:** a development machine that collects tools nobody remembers becomes impossible to reproduce on another computer, or for another person.
+
+## 11. Run every increment on the real hardware
+
+**When:** at the end of each increment, before starting the next.
+
+**What:** flash it, run its checks on the robot, and write down what happened.
+
+**Why:** the walking skeleton passed every unit test, yet on the robot a MODE press stopped it for only a tenth of a second, because the computer's next drive message started it again. Units tested on their own can't show that. See the [first flash](notebook/2026-11-09-first-flash-of-our-firmware.md).
+
+## 12. Brief people precisely before hands-on steps
+
+**When:** every time someone has to touch or watch the hardware.
+
+**What:** say which part and where it is, what will move and for how long, what to do and when, and what to watch for. Let the test wait for the person's action rather than run on a countdown.
+
+**Why:** two MODE button checks recorded nothing because the request said "press MODE" without saying it meant the button on the board, not the remote's key.
+
+## 13. Keep builds and releases apart
+
+**When:** as soon as code runs on the hardware.
+
+**What:** identify every build by its version and git commit, and end each increment with a test report. Release only what's worth using, after release candidates have proven themselves on the hardware over time.
+
+**Why:** we nearly called the walking skeleton a release. It drove and stopped, but nobody could use it, and it had run on the robot for one evening. See [0007](decisions/0007-testing-releases-and-traceability.md).
+
+## 14. Agree the values before the structure
+
+**When:** before the first big structural decision.
+
+**What:** a short, memorable set of values with an order for when they conflict. Ours: fun to play, safe to fail, simple to grow, open to people and agents. See the [vision](vision.md).
+
+**Why:** they decide how much structure is enough. Without them, every architecture question turns into a matter of taste.
+
+## 15. Settle the architecture before the parts multiply
+
+**When:** before the increment that adds many parts at once.
+
+**What:** one page on which machine does what, the layers, and how units are laid out. Check each idea against more than one field, and keep a list of what waits and why.
+
+**Why:** the walking skeleton didn't need an architecture, but increment 2 adds five devices at once. Our habits came from automotive practice, and robotics, aerospace and web development offered better fits in places, such as priority-based behaviours and a status on every sensor value. See the [architecture](architecture.md).
