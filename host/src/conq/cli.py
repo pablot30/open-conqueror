@@ -71,12 +71,18 @@ def cmd_status(args: argparse.Namespace) -> int:
         since = robot.now()
         time.sleep(args.seconds)
         samples = robot.telemetry(since)
+        health = robot.health()
     finally:
         robot.close()
     latest = samples[-1][1] if samples else None
+    last_health = health[-1][1] if health else None
     data = {"ok": latest is not None, "port": robot.port,
-            "telemetry": latest.to_dict() if latest else None, "samples": len(samples)}
-    return output(args, data, latest.describe() if latest else "No telemetry received.")
+            "telemetry": latest.to_dict() if latest else None, "samples": len(samples),
+            "health": last_health.to_dict() if last_health else None}
+    text = latest.describe() if latest else "No telemetry received."
+    if last_health:
+        text += "\nHealth: " + last_health.describe()
+    return output(args, data, text)
 
 
 def cmd_drive(args: argparse.Namespace) -> int:
@@ -194,7 +200,8 @@ def build_parser() -> argparse.ArgumentParser:
     sub.add_parser("version", parents=[common], help="the firmware's version and commit").set_defaults(
         func=cmd_version)
     p = sub.add_parser("status", parents=[common], help="the robot's latest telemetry")
-    p.add_argument("--seconds", type=float, default=0.5, help="how long to listen (default 0.5)")
+    p.add_argument("--seconds", type=float, default=1.2,
+                   help="how long to listen (default 1.2, long enough for a health message)")
     p.set_defaults(func=cmd_status)
     p = sub.add_parser("drive", parents=[common], help="drive in one direction for a while, then stop")
     p.add_argument("direction", choices=list(protocol.DIRECTIONS), help="f b l r fl fr bl br")

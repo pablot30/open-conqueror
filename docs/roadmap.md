@@ -1,6 +1,6 @@
 # Roadmap
 
-**Current stage: 2, between increments 1 and 2.** Stages 0 and 1 are done. Increment 1 ran on the robot on 2026-11-09. The [architecture](architecture.md) is agreed ([0008](decisions/0008-architecture.md)). The repo now matches it, with the tooling from [0007](decisions/0007-testing-releases-and-traceability.md). Before increment 2, a short robot session reruns increment 1's robot tests on a build of `main`. We finish a stage before starting the next.
+**Current stage: 2, increment 2.** Stages 0 and 1 are done. Increment 1 passed its robot tests on 2026-11-12 ([test report](test-reports/2026-11-12-increment-1/README.md)). The [architecture](architecture.md) is agreed ([0008](decisions/0008-architecture.md)) and the repo matches it. We finish a stage before starting the next.
 
 | Stage | Work | Done when |
 |---|---|---|

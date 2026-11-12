@@ -37,6 +37,20 @@ class MessageTests(unittest.TestCase):
         self.assertIn("driving", telemetry.describe())
         self.assertEqual(telemetry.to_dict()["state_name"], "driving")
 
+    def test_parse_telemetry_protocol_2(self) -> None:
+        telemetry = protocol.parse_telemetry("1200,0,0,0,7400,0,900,0".split(","))
+        assert telemetry is not None
+        self.assertEqual(telemetry.battery_status_name, "valid")
+        self.assertIn("(valid)", telemetry.describe())
+
+    def test_parse_health(self) -> None:
+        health = protocol.parse_health(["0", "4", "4", "1"])
+        assert health is not None
+        self.assertEqual(health.events, {"battery sensor": 4, "frame overrun": 4, "link timeout": 1})
+        self.assertEqual(health.to_dict()["events"]["link timeout"], "prefailed")
+        self.assertIsNone(protocol.parse_health([]))
+        self.assertIsNone(protocol.parse_health(["x"]))
+
     def test_parse_telemetry_rejects_bad_fields(self) -> None:
         self.assertIsNone(protocol.parse_telemetry(["1", "2"]))
         self.assertIsNone(protocol.parse_telemetry(["x"] * 7))

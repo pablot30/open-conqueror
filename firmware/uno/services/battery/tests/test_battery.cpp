@@ -73,9 +73,19 @@ void pwmLimitKeepsMotorsAtSixVolts() {  // S10
   CHECK(battery.pwmLimit() == 255U);
 }
 
+void plausibilityMonitor() {  // A5
+  CHECK(!oc::batteryReadingPlausible(0U));      // open divider
+  CHECK(!oc::batteryReadingPlausible(1023U));   // shorted, or 38 V
+  CHECK(oc::batteryReadingPlausible(adcFor(7400U)));
+  CHECK(oc::batteryReadingPlausible(adcFor(4400U)));  // USB only
+  CHECK(!oc::batteryReadingPlausible(adcFor(500U)));
+  CHECK(!oc::batteryReadingPlausible(adcFor(12000U)));
+}
+
 }  // namespace
 
 void runUnitTests() {
+  plausibilityMonitor();
   convertsAdc();
   criticalBeforeFirstSample();
   firstSampleSetsLevel();

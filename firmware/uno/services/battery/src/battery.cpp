@@ -11,6 +11,11 @@ uint16_t batteryAdcToMillivolts(uint16_t adc) {
   return static_cast<uint16_t>(millivolts);
 }
 
+bool batteryReadingPlausible(uint16_t adc) {
+  const uint16_t mv = batteryAdcToMillivolts(adc);
+  return (mv >= 1000U) && (mv <= 10000U);
+}
+
 void BatteryMonitor::sample(uint16_t adc) {
   const uint32_t reading = batteryAdcToMillivolts(adc);
   if (!hasSample_) {

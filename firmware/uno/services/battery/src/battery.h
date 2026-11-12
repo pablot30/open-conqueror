@@ -34,6 +34,11 @@ enum class BatteryLevel : uint8_t {
 // is applied yet; see docs/hardware/README.md, open questions.
 uint16_t batteryAdcToMillivolts(uint16_t adc);
 
+// Monitor for the battery sensor (A5): true if one raw reading is plausible,
+// between 1 V and 10 V at Vin. An open or shorted divider reads far outside.
+// With main power off, USB feeds back about 4.4 V, which counts as plausible.
+bool batteryReadingPlausible(uint16_t adc);
+
 class BatteryMonitor {
  public:
   void sample(uint16_t adc);
