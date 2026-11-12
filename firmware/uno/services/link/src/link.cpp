@@ -43,6 +43,8 @@ Command make(CommandType type) {
   command.type = type;
   command.left = 0;
   command.right = 0;
+  command.pan = 0U;
+  command.tilt = 0U;
   return command;
 }
 
@@ -61,11 +63,31 @@ Command parseDrive(const char* text) {
   return command;
 }
 
+bool inAngleRange(int16_t value) { return (value >= 0) && (value <= 180); }
+
+Command parseCamera(const char* text) {
+  // text points just after "P"
+  int16_t pan = 0;
+  int16_t tilt = 0;
+  if ((*text != ',') || !readInt(++text, pan) || (*text != ',') ||
+      !readInt(++text, tilt) || (*text != '\0') || !inAngleRange(pan) ||
+      !inAngleRange(tilt)) {
+    return make(CommandType::kInvalid);
+  }
+  Command command = make(CommandType::kCamera);
+  command.pan = static_cast<uint8_t>(pan);
+  command.tilt = static_cast<uint8_t>(tilt);
+  return command;
+}
+
 }  // namespace
 
 Command parseMessage(const char* body) {
   if (body[0] == 'D') {
     return parseDrive(body + 1);
+  }
+  if (body[0] == 'P') {
+    return parseCamera(body + 1);
   }
   if (equals(body, "S") || equals(body, "\"N\":100")) {
     return make(CommandType::kStop);

@@ -125,7 +125,7 @@ void sendHealth() {
   send(message);
 }
 
-void handle(const oc::Command& command, uint32_t nowMs) {
+void handle(const oc::Command& command, uint32_t nowMs, uint32_t frames) {
   switch (command.type) {
     case oc::CommandType::kDrive:
       safety.drive(command.left, command.right, nowMs);
@@ -135,6 +135,10 @@ void handle(const oc::Command& command, uint32_t nowMs) {
       break;
     case oc::CommandType::kVersion:
       sendVersion();
+      break;
+    case oc::CommandType::kCamera:
+      oc::servos_hw::move(command.pan, command.tilt);
+      servoMove.start(frames);
       break;
     case oc::CommandType::kInvalid:
       sendError();
@@ -209,7 +213,7 @@ void updateLed(uint32_t nowMs) {
 // One frame's work.
 void runFrame(uint32_t frames, uint32_t nowMs) {
   while (Serial.available() > 0) {
-    handle(parser.feed(static_cast<char>(Serial.read())), nowMs);
+    handle(parser.feed(static_cast<char>(Serial.read())), nowMs, frames);
   }
 
   if (modeButton.update(oc::board::modeButtonPressed(), nowMs)) {

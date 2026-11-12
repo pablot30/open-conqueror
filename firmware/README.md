@@ -45,6 +45,7 @@ This is protocol version 3. Messages are short text inside braces, at 9600 baud.
 | `{S}` | Stop: brake both tracks |
 | `{"N":100}` | Stop. The stock bridge sends this when a client disconnects |
 | `{V}` | Ask for the version |
+| `{P,pan,tilt}` | Point the camera: pan and tilt, each 0 to 180 degrees, 90 is the centre. The servos are released 0.5 s later |
 
 **From the robot:**
 

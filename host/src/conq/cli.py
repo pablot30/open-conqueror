@@ -114,6 +114,18 @@ def cmd_drive(args: argparse.Namespace) -> int:
     return output(args, data, text)
 
 
+def cmd_camera(args: argparse.Namespace) -> int:
+    message = protocol.camera_message(args.pan, args.tilt)
+    robot = connect(args)
+    try:
+        robot.send(message)
+        time.sleep(0.7)  # the servos move, then the firmware releases them
+    finally:
+        robot.close()
+    return output(args, {"ok": True, "pan": args.pan, "tilt": args.tilt},
+                  f"Camera sent to pan {args.pan}, tilt {args.tilt}.")
+
+
 def cmd_stop(args: argparse.Namespace) -> int:
     robot = Robot(choose_port(args.port))
     robot.close()  # close() sends a stop
@@ -214,6 +226,10 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("seconds", type=float, help="how long to drive")
     p.set_defaults(func=cmd_drive)
     sub.add_parser("stop", parents=[common], help="brake both tracks").set_defaults(func=cmd_stop)
+    p = sub.add_parser("camera", parents=[common], help="point the camera; 90 90 is the centre")
+    p.add_argument("pan", type=int, help="0 to 180 degrees")
+    p.add_argument("tilt", type=int, help="0 to 180 degrees")
+    p.set_defaults(func=cmd_camera)
     sub.add_parser("shell", parents=[common], help="interactive prompt, for people").set_defaults(func=cmd_shell)
     p = sub.add_parser("test", parents=[common], help="run robot tests from tests/robot/")
     p.add_argument("tests", nargs="*", help="test files; all of tests/robot/ if none")

@@ -37,6 +37,13 @@ NEUTRAL = b"{D,0,0}"  # releases a held stop; the firmware needs it before drivi
 VERSION = b"{V}"
 
 
+def camera_message(pan: int, tilt: int) -> bytes:
+    for value in (pan, tilt):
+        if not 0 <= value <= 180:
+            raise ValueError("camera angles are 0 to 180 degrees")
+    return f"{{P,{pan},{tilt}}}".encode("ascii")
+
+
 def drive_message(left: int, right: int) -> bytes:
     for value in (left, right):
         if not -100 <= value <= 100:
