@@ -47,6 +47,10 @@ class MessageTests(unittest.TestCase):
         health = protocol.parse_health(["0", "4", "4", "1"])
         assert health is not None
         self.assertEqual(health.events, {"battery sensor": 4, "frame overrun": 4, "link timeout": 1})
+        sensors = protocol.parse_sensors(["9000", "-150", "0"])
+        assert sensors is not None
+        self.assertEqual(sensors.gyro_status_name, "valid")
+        self.assertIn("90.0 deg", sensors.describe())
         self.assertEqual(health.to_dict()["events"]["link timeout"], "prefailed")
         self.assertIsNone(protocol.parse_health([]))
         self.assertIsNone(protocol.parse_health(["x"]))

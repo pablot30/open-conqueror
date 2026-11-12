@@ -9,24 +9,32 @@
 #include <board.h>
 #include <button.h>
 #include <diagnostics.h>
+#include <gyro.h>
+#include <led.h>
 #include <link.h>
 #include <safety.h>
 #include <scheduler.h>
+#include <servos.h>
 
 #include "src/version.h"
 
 namespace {
 
 // The link protocol's version, sent in the version message. 1 was the
-// walking skeleton; 2 adds the battery status to telemetry, the health
-// message, and this field.
-const int32_t kProtocolVersion = 2;
+// walking skeleton; 2 added the battery status to telemetry, the health
+// message, and this field; 3 adds the sensor message.
+const int32_t kProtocolVersion = 3;
 
 // Periodic work, in frames of 10 ms. Phases keep messages apart.
 const uint32_t kBatteryEveryFrames = 2U;     // 20 ms
 const uint32_t kTelemetryEveryFrames = 10U;  // 100 ms
 const uint32_t kHealthEveryFrames = 100U;    // 1 s
 const uint32_t kHealthPhase = 5U;            // between two telemetry messages
+const uint32_t kSensorsEveryFrames = 20U;    // 200 ms
+const uint32_t kSensorsPhase = 15U;
+const uint32_t kLedEveryFrames = 2U;         // 50 updates a second
+const uint32_t kLedPhase = 1U;
+const uint32_t kGyroRetryFrames = 100U;      // try to wake a missing gyro once a second
 
 // MODE button debounce time.
 const uint32_t kModeButtonDebounceMs = 30U;
@@ -38,6 +46,11 @@ oc::SafetySupervisor safety;
 oc::BatteryMonitor battery;
 oc::Diagnostics diagnostics;
 oc::Debouncer modeButton(kModeButtonDebounceMs);
+oc::HeadingGyro gyro;
+oc::ServoMove servoMove;
+
+bool gyroReady = false;
+oc::Rgb ledShown = {1U, 1U, 1U};  // not a real colour, so the first update is sent
 
 oc::MotorOutput lastOutput = {false, 0, 0};
 
@@ -136,6 +149,63 @@ oc::MonitorResult resultOf(bool passed) {
   return passed ? oc::MonitorResult::kPassed : oc::MonitorResult::kFailed;
 }
 
+oc::SignalStatus gyroStatus() {
+  if (!gyro.calibrated()) {
+    return oc::SignalStatus::kInit;
+  }
+  return oc::signalStatusFor(diagnostics.status(oc::EventId::kGyroComms));
+}
+
+// {G,heading,rate,gyroStatus}: heading in hundredths of a degree since
+// power-on, turn rate in hundredths of a degree per second.
+void sendSensors() {
+  oc::MessageWriter message('G');
+  message.field(static_cast<int32_t>(gyro.headingCdeg()));
+  message.field(gyro.rateCdps());
+  message.field(static_cast<int32_t>(gyroStatus()));
+  message.finish();
+  send(message);
+}
+
+void updateGyro(uint32_t frames) {
+  if (!gyroReady) {
+    if (oc::every(frames, kGyroRetryFrames, 0U)) {
+      gyroReady = oc::gyro_hw::begin();
+    }
+    diagnostics.report(oc::EventId::kGyroComms, resultOf(gyroReady));
+    return;
+  }
+  int16_t raw = 0;
+  const bool ok = oc::gyro_hw::readZ(raw);
+  diagnostics.report(oc::EventId::kGyroComms, resultOf(ok));
+  if (ok) {
+    gyro.update(raw);
+  } else {
+    gyro.missedFrame();  // keeps the last rate, as a substitute
+  }
+}
+
+oc::LedMode ledMode() {
+  if (battery.level() == oc::BatteryLevel::kCritical) {
+    return oc::LedMode::kBatteryCritical;
+  }
+  if (battery.level() == oc::BatteryLevel::kLow) {
+    return oc::LedMode::kBatteryLow;
+  }
+  if (safety.state() == oc::DriveState::kDriving) {
+    return oc::LedMode::kDriving;
+  }
+  return oc::LedMode::kStandby;
+}
+
+void updateLed(uint32_t nowMs) {
+  const oc::Rgb color = oc::ledColor(ledMode(), nowMs);
+  if (!(color == ledShown)) {
+    oc::led_hw::show(color);
+    ledShown = color;
+  }
+}
+
 // One frame's work.
 void runFrame(uint32_t frames, uint32_t nowMs) {
   while (Serial.available() > 0) {
@@ -158,11 +228,22 @@ void runFrame(uint32_t frames, uint32_t nowMs) {
   oc::board::setMotors(lastOutput.enabled, lastOutput.left, lastOutput.right);
   diagnostics.report(oc::EventId::kLinkTimeout, resultOf(!safety.linkTimedOut()));
 
+  updateGyro(frames);
+  if (servoMove.finished(frames)) {
+    oc::servos_hw::release();
+  }
+  if (oc::every(frames, kLedEveryFrames, kLedPhase)) {
+    updateLed(nowMs);
+  }
+
   if (oc::every(frames, kTelemetryEveryFrames, 0U)) {
     sendTelemetry(nowMs);
   }
   if (oc::every(frames, kHealthEveryFrames, kHealthPhase)) {
     sendHealth();
+  }
+  if (oc::every(frames, kSensorsEveryFrames, kSensorsPhase)) {
+    sendSensors();
   }
 }
 
@@ -172,6 +253,10 @@ void setup() {
   oc::board::init();
   Serial.begin(9600);  // the stock camera bridge's rate
   battery.sample(oc::board::readBatteryAdc());
+  oc::led_hw::begin();
+  oc::servos_hw::move(oc::config::kPanCentreDeg, oc::config::kTiltCentreDeg);  // F14
+  servoMove.start(0U);
+  gyroReady = oc::gyro_hw::begin();  // F13: calibration runs in the first frames
   sendVersion();
   wdt_enable(WDTO_250MS);  // S4
 }

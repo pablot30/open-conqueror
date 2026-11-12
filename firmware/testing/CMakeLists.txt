@@ -1,6 +1,7 @@
 # Unit tests for the firmware units, built with the host computer's own C++
 # compiler and run with CTest (D5). Every unit folder with a tests/ folder
 # becomes one test executable and one CTest test, named after the unit.
+# Sources ending in _hw.cpp are left out: they use the board's hardware.
 cmake_minimum_required(VERSION 3.20)
 project(open_conqueror_unit_tests CXX)
 
@@ -29,7 +30,12 @@ foreach(UNIT_DIR ${UNIT_DIRS})
   endif()
   get_filename_component(UNIT ${UNIT_DIR} NAME)
   file(GLOB UNIT_SOURCES CONFIGURE_DEPENDS ${UNIT_DIR}/src/*.cpp)
+  # Files ending in _hw.cpp talk to the hardware and only build for the board.
+  list(FILTER UNIT_SOURCES EXCLUDE REGEX "_hw\\.cpp$")
   file(GLOB UNIT_TESTS CONFIGURE_DEPENDS ${UNIT_DIR}/tests/*.cpp)
+  if(NOT UNIT_TESTS)
+    continue()
+  endif()
   add_executable(${UNIT}_tests main.cpp ${UNIT_TESTS} ${UNIT_SOURCES})
   target_include_directories(${UNIT}_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${UNIT_INCLUDE_DIRS})
   if(MSVC)

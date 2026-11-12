@@ -98,7 +98,7 @@ def find_units() -> list[dict[str, Any]]:
                 "layer": layer,
                 "version": values.get("version", "unknown"),
                 "path": unit_dir.relative_to(ROOT).as_posix(),
-                "has_tests": (unit_dir / "tests").is_dir(),
+                "has_tests": any((unit_dir / "tests").glob("*.cpp")),
             })
     return units
 

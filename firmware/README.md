@@ -11,8 +11,8 @@ The firmware is built from self-contained **units**, grouped in the four layers 
 | `uno/uno.ino` | Connects the units. No logic of its own beyond that |
 | `uno/sketch.yaml` | The build profile: board, pinned core version, and every unit |
 | `uno/services/` | `safety` (the only code that decides what the motors do), `battery`, `link` (the protocol), `scheduler` (the 10 ms frame), `diagnostics` (monitors, events, signal status) |
-| `uno/devices/` | `button` (MODE button debouncing) |
-| `uno/hal/` | `board`, the only code that touches pins |
+| `uno/devices/` | `button` (MODE button debouncing), `gyro` (turn rate and heading), `servos` (camera pan and tilt), `led` (the status LED) |
+| `uno/hal/` | `board`: the motor driver, battery divider and MODE button pins. Device units keep their own hardware code in files ending in `_hw.cpp`, which only build for the board |
 | `uno/modes/` | Arrives in increment 3, with the modes |
 | `testing/` | The shared unit test harness, built with CMake on the host computer |
 
@@ -34,7 +34,7 @@ CI builds the same image on every pull request and keeps it, with the build repo
 
 ## Protocol
 
-This is protocol version 2. Messages are short text inside braces, at 9600 baud. That's what the stock camera firmware's bridge forwards, so the same messages should work over Wi-Fi in increment 4. The firmware ignores anything outside braces.
+This is protocol version 3. Messages are short text inside braces, at 9600 baud. That's what the stock camera firmware's bridge forwards, so the same messages should work over Wi-Fi in increment 4. The firmware ignores anything outside braces.
 
 **From the computer:**
 
@@ -52,12 +52,17 @@ This is protocol version 2. Messages are short text inside braces, at 9600 baud.
 |---|---|
 | `{V,version,commit,protocol}` | Firmware version, git commit and protocol version, at startup and on request (D4). The commit ends in `-dirty` if the build had uncommitted changes |
 | `{T,ms,state,left,right,mV,faults,frame,bstat}` | Telemetry, 10 times a second. `state`: 0 standby, 1 driving, 2 stopped. `left` and `right`: motor PWM, -255 to 255. `mV`: battery at Vin. `faults`: 1 link timeout, 2 battery low, 4 battery critical. `frame`: the longest frame's work since the last message, in µs (T2). `bstat`: the battery reading's signal status: 0 valid, 1 init, 2 substitute, 3 error, 4 not available |
-| `{H,skipped,e0,e1,...}` | Health, once a second. `skipped`: frames skipped since power-on. Then each diagnostic event's state, in the order of `EventId` in [diagnostics.h](uno/services/diagnostics/src/diagnostics.h): 0 not tested, 1 prefailed, 2 failed, 3 prepassed, 4 passed. Events today: battery sensor, frame overrun, link timeout |
+| `{H,skipped,e0,e1,...}` | Health, once a second. `skipped`: frames skipped since power-on. Then each diagnostic event's state, in the order of `EventId` in [diagnostics.h](uno/services/diagnostics/src/diagnostics.h): 0 not tested, 1 prefailed, 2 failed, 3 prepassed, 4 passed. Events today: battery sensor, frame overrun, link timeout, gyro comms |
+| `{G,heading,rate,gstat}` | Sensors, 5 times a second. `heading`: 0 to 35999 hundredths of a degree since power-on, positive counterclockwise seen from above. `rate`: hundredths of a degree per second. `gstat`: the gyro's signal status, *init* until it has calibrated |
 | `{E,1}` | A message wasn't understood |
 
 ## How it runs
 
 The firmware does its work in **frames of 10 ms** (T1), timed by `micros()`. Each frame reads the link and the MODE button, updates the safety supervisor and the motors, and reports to diagnostics. The battery is sampled every 2nd frame, telemetry goes out every 10th and health every 100th. If a frame's work takes longer than 5 ms (T2), the `frame overrun` event fails; if the firmware falls a whole frame behind, the missed frames are skipped and counted, not run late in a burst.
+
+## What's linked in
+
+Our code is Apache-2.0. The firmware image also contains the Arduino AVR core, its Wire library and the Servo library, which are LGPL-2.1. That's fine for an open-source project: anyone can rebuild the image from this repo with other versions of them. Release notes will list these with their licences.
 
 ## What it does for safety
 

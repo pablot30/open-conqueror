@@ -72,14 +72,19 @@ def cmd_status(args: argparse.Namespace) -> int:
         time.sleep(args.seconds)
         samples = robot.telemetry(since)
         health = robot.health()
+        sensors = robot.sensors(since)
     finally:
         robot.close()
     latest = samples[-1][1] if samples else None
     last_health = health[-1][1] if health else None
+    last_sensors = sensors[-1][1] if sensors else None
     data = {"ok": latest is not None, "port": robot.port,
             "telemetry": latest.to_dict() if latest else None, "samples": len(samples),
-            "health": last_health.to_dict() if last_health else None}
+            "health": last_health.to_dict() if last_health else None,
+            "sensors": last_sensors.to_dict() if last_sensors else None}
     text = latest.describe() if latest else "No telemetry received."
+    if last_sensors:
+        text += "\nSensors: " + last_sensors.describe()
     if last_health:
         text += "\nHealth: " + last_health.describe()
     return output(args, data, text)
