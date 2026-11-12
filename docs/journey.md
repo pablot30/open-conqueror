@@ -41,6 +41,10 @@ The same evening, the walking skeleton runs on the robot. The agent flashes it a
 
 A day with no robot. We decide how to test, trace and release ([0007](decisions/0007-testing-releases-and-traceability.md)), and the maintainer stops a first release of the walking skeleton: a release has to earn its name through release candidates and time on the robot. We write down the project's values (fun to play, safe to fail, simple to grow, open to people and agents) and a bigger vision: modes that combine, a robot that knows its own health, and tanks and drones on missions together. Then the architecture: guard, gateway and brain roles, robots that talk to each other, self-contained units, and a health model built from public standards. Four of the eight research reports are published. **Story:** a version number isn't a release.
 
+## 2026-11-12: The tests live in the repo
+
+The repo is restructured to match the architecture: firmware units, the `conq` command and robot tests in the repo. The agent flashes the build and runs all four robot tests itself; the maintainer watches the tracks and presses the MODE button when asked. Everything passes, and for the first time the result is a [test report](test-reports/2026-11-12-increment-1/README.md) that traces each requirement to a test, a log and the exact commit. **Story:** the same session as three days earlier, but this time anyone can rerun it.
+
 ## Ideas for content
 
 - How an AI agent and an engineer split the work on real hardware: who touches the robot, and who writes and checks.

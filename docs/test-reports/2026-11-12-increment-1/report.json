@@ -1,0 +1,375 @@
+{
+  "ok": true,
+  "status": "passed",
+  "conq": "0.1.0.dev0",
+  "reports": [
+    {
+      "test": "version_and_standby",
+      "file": "tests/robot/version_and_standby.py",
+      "requirements": [
+        "D4",
+        "S5",
+        "T2"
+      ],
+      "status": "passed",
+      "firmware": {
+        "version": "0.1.0-dev",
+        "commit": "64e636d"
+      },
+      "port": "/dev/cu.usbserial-21310",
+      "started": "2026-11-12T10:25:21+00:00",
+      "duration_s": 4.0,
+      "results": [
+        {
+          "check": "version reported",
+          "status": "passed",
+          "detail": "{'version': '0.1.0-dev', 'commit': '64e636d'}",
+          "requirements": [
+            "D4"
+          ]
+        },
+        {
+          "check": "version matches the VERSION file",
+          "status": "passed",
+          "detail": "robot 0.1.0-dev, VERSION 0.1.0-dev",
+          "requirements": [
+            "D4"
+          ]
+        },
+        {
+          "check": "telemetry arrives 10 times a second",
+          "status": "passed",
+          "detail": "20 in 2 s",
+          "requirements": []
+        },
+        {
+          "check": "standby with no motor output",
+          "status": "passed",
+          "detail": "",
+          "requirements": [
+            "S5"
+          ]
+        },
+        {
+          "check": "battery reading plausible with main power on",
+          "status": "passed",
+          "detail": "7399 mV",
+          "requirements": []
+        },
+        {
+          "check": "longest loop under 5 ms",
+          "status": "passed",
+          "detail": "1252 us",
+          "requirements": [
+            "T2"
+          ]
+        }
+      ],
+      "log": "logs/version_and_standby.jsonl"
+    },
+    {
+      "test": "directions",
+      "file": "tests/robot/directions.py",
+      "requirements": [
+        "F2",
+        "F3",
+        "F4",
+        "S10"
+      ],
+      "status": "passed",
+      "firmware": {
+        "version": "0.1.0-dev",
+        "commit": "64e636d"
+      },
+      "port": "/dev/cu.usbserial-21310",
+      "started": "2026-11-12T10:25:25+00:00",
+      "duration_s": 14.1,
+      "results": [
+        {
+          "check": "f: motor output",
+          "status": "passed",
+          "detail": "PWM 63, 63; expected about 63, 63 at 7248 mV",
+          "requirements": [
+            "F2",
+            "F3",
+            "S10"
+          ]
+        },
+        {
+          "check": "f: stopped after",
+          "status": "passed",
+          "detail": "",
+          "requirements": [
+            "F4"
+          ]
+        },
+        {
+          "check": "b: motor output",
+          "status": "passed",
+          "detail": "PWM -63, -63; expected about -63, -63 at 7223 mV",
+          "requirements": [
+            "F2",
+            "F3",
+            "S10"
+          ]
+        },
+        {
+          "check": "b: stopped after",
+          "status": "passed",
+          "detail": "",
+          "requirements": [
+            "F4"
+          ]
+        },
+        {
+          "check": "l: motor output",
+          "status": "passed",
+          "detail": "PWM -63, 63; expected about -63, 63 at 7217 mV",
+          "requirements": [
+            "F2",
+            "F3",
+            "S10"
+          ]
+        },
+        {
+          "check": "l: stopped after",
+          "status": "passed",
+          "detail": "",
+          "requirements": [
+            "F4"
+          ]
+        },
+        {
+          "check": "r: motor output",
+          "status": "passed",
+          "detail": "PWM 63, -63; expected about 63, -63 at 7199 mV",
+          "requirements": [
+            "F2",
+            "F3",
+            "S10"
+          ]
+        },
+        {
+          "check": "r: stopped after",
+          "status": "passed",
+          "detail": "",
+          "requirements": [
+            "F4"
+          ]
+        },
+        {
+          "check": "fl: motor output",
+          "status": "passed",
+          "detail": "PWM 31, 63; expected about 31, 63 at 7246 mV",
+          "requirements": [
+            "F2",
+            "F3",
+            "S10"
+          ]
+        },
+        {
+          "check": "fl: stopped after",
+          "status": "passed",
+          "detail": "",
+          "requirements": [
+            "F4"
+          ]
+        },
+        {
+          "check": "bl: motor output",
+          "status": "passed",
+          "detail": "PWM -31, -63; expected about -31, -63 at 7251 mV",
+          "requirements": [
+            "F2",
+            "F3",
+            "S10"
+          ]
+        },
+        {
+          "check": "bl: stopped after",
+          "status": "passed",
+          "detail": "",
+          "requirements": [
+            "F4"
+          ]
+        },
+        {
+          "check": "fr: motor output",
+          "status": "passed",
+          "detail": "PWM 63, 31; expected about 63, 31 at 7238 mV",
+          "requirements": [
+            "F2",
+            "F3",
+            "S10"
+          ]
+        },
+        {
+          "check": "fr: stopped after",
+          "status": "passed",
+          "detail": "",
+          "requirements": [
+            "F4"
+          ]
+        },
+        {
+          "check": "br: motor output",
+          "status": "passed",
+          "detail": "PWM -63, -31; expected about -63, -31 at 7258 mV",
+          "requirements": [
+            "F2",
+            "F3",
+            "S10"
+          ]
+        },
+        {
+          "check": "br: stopped after",
+          "status": "passed",
+          "detail": "",
+          "requirements": [
+            "F4"
+          ]
+        },
+        {
+          "check": "tracks_correct",
+          "status": "passed",
+          "detail": "Did every move turn the tracks the way its name says? Answer: yes, given by the maintainer in chat right after the run.",
+          "requirements": [
+            "F2",
+            "F3"
+          ]
+        }
+      ],
+      "log": "logs/directions.jsonl"
+    },
+    {
+      "test": "stops",
+      "file": "tests/robot/stops.py",
+      "requirements": [
+        "F4",
+        "S1",
+        "S3",
+        "S4",
+        "S5"
+      ],
+      "status": "passed",
+      "firmware": {
+        "version": "0.1.0-dev",
+        "commit": "64e636d"
+      },
+      "port": "/dev/cu.usbserial-21310",
+      "started": "2026-11-12T10:25:39+00:00",
+      "duration_s": 9.7,
+      "results": [
+        {
+          "check": "ignored until a neutral command",
+          "status": "passed",
+          "detail": "",
+          "requirements": [
+            "S4",
+            "S5"
+          ]
+        },
+        {
+          "check": "stop command brakes",
+          "status": "passed",
+          "detail": "stopped telemetry 61 ms after the command",
+          "requirements": [
+            "F4",
+            "S1"
+          ]
+        },
+        {
+          "check": "stop holds while drive commands keep coming",
+          "status": "passed",
+          "detail": "",
+          "requirements": [
+            "S1"
+          ]
+        },
+        {
+          "check": "link timeout stops after about 300 ms",
+          "status": "passed",
+          "detail": "stopped telemetry 290 ms after the last message",
+          "requirements": [
+            "S3"
+          ]
+        },
+        {
+          "check": "link timeout fault reported",
+          "status": "passed",
+          "detail": "faults 1",
+          "requirements": [
+            "S3"
+          ]
+        },
+        {
+          "check": "timeout stop holds when messages return",
+          "status": "passed",
+          "detail": "",
+          "requirements": [
+            "S3"
+          ]
+        },
+        {
+          "check": "drives again after neutral",
+          "status": "passed",
+          "detail": "",
+          "requirements": [
+            "S1"
+          ]
+        }
+      ],
+      "log": "logs/stops.jsonl"
+    },
+    {
+      "test": "mode_button",
+      "file": "tests/robot/mode_button.py",
+      "requirements": [
+        "S1"
+      ],
+      "status": "passed",
+      "firmware": {
+        "version": "0.1.0-dev",
+        "commit": "64e636d"
+      },
+      "port": "/dev/cu.usbserial-21310",
+      "started": "2026-11-12T10:25:55+00:00",
+      "duration_s": 12.0,
+      "results": [
+        {
+          "check": "press 1 stops and holds",
+          "status": "passed",
+          "detail": "held for 1.5 s of drive commands",
+          "requirements": [
+            "S1"
+          ]
+        },
+        {
+          "check": "press 2 stops and holds",
+          "status": "passed",
+          "detail": "held for 1.5 s of drive commands",
+          "requirements": [
+            "S1"
+          ]
+        },
+        {
+          "check": "press 3 stops and holds",
+          "status": "passed",
+          "detail": "held for 1.5 s of drive commands",
+          "requirements": [
+            "S1"
+          ]
+        },
+        {
+          "check": "presses seen",
+          "status": "passed",
+          "detail": "3 of 3 within 120 s",
+          "requirements": [
+            "S1"
+          ]
+        }
+      ],
+      "log": "logs/mode_button.jsonl"
+    }
+  ]
+}

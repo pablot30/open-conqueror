@@ -287,8 +287,13 @@ def upload(args: argparse.Namespace) -> int:
     if port is None:
         sys.exit("Couldn't pick a port: give one with --port. `arduino-cli board list` shows them.")
     print("The Upload-Cam switch must be on Upload.", file=sys.stderr)
-    return run([cli, "upload", "--fqbn", FQBN, "--port", port,
-                "--input-dir", str(BUILD / "uno"), str(SKETCH)]).returncode
+    proc = run([cli, "upload", "--fqbn", FQBN, "--port", port,
+                "--input-dir", str(BUILD / "uno"), str(SKETCH)], capture=True)
+    print(proc.stdout, end="")
+    print(proc.stderr, end="", file=sys.stderr)
+    if proc.returncode != 0 and "not in sync" in (proc.stdout + proc.stderr):
+        print("The bootloader didn't answer. Check that the Upload-Cam switch is on Upload.", file=sys.stderr)
+    return proc.returncode
 
 
 def main() -> int:
