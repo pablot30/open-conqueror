@@ -63,7 +63,7 @@ Four layers. Everything except the bottom one builds and is unit-tested on the h
 | **Modes** | Standby, remote driving, line tracking, obstacle avoidance, follow. One active at a time | 1 (remote driving), 3 (the rest) |
 | **Services** | **Motion:** speed and heading hold. **Safety supervisor:** the only code that sets the motors; it checks every request and applies stops, arming, the battery and the link timeout. **Mode manager:** stops the motors on every mode change (S6). **Link:** the protocol. **Diagnostics:** see A5 | 1 (parts), 2 |
 | **Devices** | One driver per part: motor driver, gyro, ultrasonic, line sensors, servos, LED, IR receiver, battery, button | 1 (motors, battery, button), 2 |
-| **Hardware access** | Pins, timers, I2C, UART, watchdog. The only code that touches registers | 1 |
+| **Hardware access** | Pins, timers, I2C, UART, watchdog: `hal/`, plus each device unit's files ending in `_hw.cpp`. Only this code touches registers, so everything else builds and is tested on the host computer | 1 |
 
 - **One fixed 10 ms loop** (T1: 100 times a second). Each task gets a time budget, and no driver ever waits (T2). Aircraft systems often use the same "cyclic executive" for its predictability.
 - **No RTOS on the guard, for now.** An RTOS would fit in 2 KB, just, but every task needs its own stack, and preemption brings races and priority problems that are hard to test. The guard's tasks are short and periodic, so a loop does the job. The gateway will run an RTOS anyway in stage 3, because the ESP32's Wi-Fi software is built on FreeRTOS. **Trigger for the guard:** a bigger microcontroller, such as the UNO R4's, with work that can't be split into short steps. Tasks with budgets map one to one onto RTOS tasks, so the move stays cheap.
