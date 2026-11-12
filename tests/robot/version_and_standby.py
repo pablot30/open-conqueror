@@ -1,0 +1,35 @@
+"""The firmware reports its version, and starts with the motors off."""
+
+from pathlib import Path
+
+REQUIREMENTS = ["D4", "S5", "T2"]
+MOVES = False
+SETUP = "Robot connected over USB, Upload-Cam switch on Upload, main power on."
+BRIEF = """Nothing moves. The robot restarts when the port opens, then the test
+listens for 2 seconds. Nothing to do or watch."""
+
+MAX_LOOP_US = 5000  # T2
+
+
+def run(t):
+    robot = t.robot
+    firmware = robot.version()
+    t.check("version reported", bool(firmware and firmware["version"] and firmware["commit"]),
+            str(firmware), ["D4"])
+    version_file = Path(__file__).resolve().parents[2] / "VERSION"
+    if firmware and version_file.is_file():
+        expected = version_file.read_text(encoding="utf-8").strip()
+        t.check("version matches the VERSION file", firmware["version"] == expected,
+                f"robot {firmware['version']}, VERSION {expected}", ["D4"])
+
+    since = robot.now()
+    t.wait(2.0)
+    samples = [s for _, s in robot.telemetry(since)]
+    t.check("telemetry arrives 10 times a second", 15 <= len(samples) <= 25, f"{len(samples)} in 2 s")
+    t.check("standby with no motor output", bool(samples) and all(
+        s.state == 0 and s.left_pwm == 0 and s.right_pwm == 0 for s in samples), "", ["S5"])
+    if samples:
+        mv = samples[-1].battery_mv
+        t.check("battery reading plausible with main power on", 6000 <= mv <= 8700, f"{mv} mV")
+        longest = max(s.longest_loop_us for s in samples)
+        t.check("longest loop under 5 ms", longest < MAX_LOOP_US, f"{longest} us", ["T2"])

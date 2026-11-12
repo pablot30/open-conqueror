@@ -26,6 +26,7 @@ The software is built through AI-driven development, using [Claude Code](https:/
 | [Firmware](firmware/README.md) | How to build, test and flash, and the protocol |
 | [Tools](docs/tools.md) | What to install, and how to update and remove it |
 | [Research](docs/research/README.md) | Reports written before big decisions |
+| [Test reports](docs/test-reports/README.md) | What each increment was tested against on the robot, with the logs |
 | [Decisions](docs/decisions/README.md) | Short records of why we chose things |
 | [Notebook](docs/notebook/README.md) | What we learn along the way |
 | [Playbook](docs/playbook.md) | How we run the project, step by step, as it grows |

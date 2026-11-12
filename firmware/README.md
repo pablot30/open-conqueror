@@ -4,24 +4,33 @@ Our firmware for the robot. Only the UNO has firmware so far, at increment 1, th
 
 ## Layout
 
+The firmware is built from self-contained **units**, grouped in the four layers of the [architecture](../docs/architecture.md) (A2 and A4). Each unit has a README, a version in `library.properties`, its code in `src/` and its unit tests in `tests/`.
+
 | Folder | Contents |
 |---|---|
-| `uno/` | The Arduino sketch. `uno.ino` connects the parts |
-| `uno/src/core/` | Logic that doesn't touch hardware: protocol, driving, battery, button. It builds on a computer too, for the unit tests |
-| `uno/src/hal/` | The only code that touches pins |
-| `tests/` | Unit tests for `core/`, built with CMake on the computer |
+| `uno/uno.ino` | Connects the units. No logic of its own beyond that |
+| `uno/sketch.yaml` | The build profile: board, pinned core version, and every unit |
+| `uno/services/` | `safety` (the only code that decides what the motors do), `battery`, `link` (the protocol) |
+| `uno/devices/` | `button` (MODE button debouncing) |
+| `uno/hal/` | `board`, the only code that touches pins |
+| `uno/modes/` | Arrives in increment 3, with the modes |
+| `testing/` | The shared unit test harness, built with CMake on the host computer |
+
+`python scripts/dev.py units` lists the units and their versions.
 
 ## Build, test and flash
 
 Install the tools in [tools.md](../docs/tools.md) first. From the repo root, on any system:
 
 ```
-python scripts/dev.py build
-python scripts/dev.py test
-python scripts/dev.py upload --port <port>
+python scripts/dev.py build          # add --json for a report agents can read
+python scripts/dev.py test           # all units; or test one: dev.py test safety
+python scripts/dev.py upload         # finds the port if only one is connected
 ```
 
-Use `python3` instead of `python` where that's the name. The build fails if our code has compiler warnings, or breaks the T8 limits: 80% of flash and 512 bytes of free RAM. Flashing needs the Upload-Cam switch on **Upload**.
+Use `python3` instead of `python` where that's the name. The build fails if our code has compiler warnings, or breaks the T8 limits: 80% of flash and 512 bytes of free RAM. It reports the firmware version (from the `VERSION` file), the git commit and every unit's version. Flashing needs the Upload-Cam switch on **Upload**.
+
+CI builds the same image on every pull request and keeps it, with the build report, as a download on the run's page.
 
 ## Protocol
 
@@ -58,13 +67,20 @@ Messages are short text inside braces, at 9600 baud. That's what the stock camer
 
 The battery reading has no correction yet. It hasn't been compared with a multimeter, so the thresholds may be off by a few hundred millivolts.
 
-## First flash on the robot
+## Driving and testing from the host computer
 
-We ran this on 2026-11-09; see the [notebook](../docs/notebook/2026-11-09-first-flash-of-our-firmware.md). To repeat it:
+`conq`, from the [host package](../host/pyproject.toml), talks to the robot over USB. Every command also takes `--json`.
 
-1. Tracks off the ground, battery charged, switch on **Upload**, USB connected.
-2. `python scripts/dev.py build`, then `upload`.
-3. Start the tool: `python host/oc.py --port <port>`. Check the version message and `status`: standby, no motor output, a plausible battery voltage.
-4. Drive each direction at 30% for 1 s with `go f 30`, `go b 30`, `go l 30` and so on. Check each track turns the right way.
-5. Stops: `stop` mid-drive. Press MODE mid-drive. Close the tool mid-drive, which stops the resends: the robot should stop within about 300 ms.
-6. Restore the stock firmware from the backup (D6).
+```
+conq version                  # firmware version and commit
+conq status                   # latest telemetry
+conq drive f 30 0.5           # forward at 30% for half a second, then stop
+conq stop
+conq shell                    # interactive prompt, for people
+conq test --list              # the robot tests in tests/robot/
+conq test                     # run them all; logs and a report go to build/robot-tests/
+```
+
+Robot tests that move the robot ask for confirmation, or need `--confirm-moves` when run by an agent or script. Questions only a person can answer, such as which way a track turned, can be answered in advance with `--answer tracks_correct=yes`.
+
+We first ran our firmware on 2026-11-09; see the [notebook](../docs/notebook/2026-11-09-first-flash-of-our-firmware.md). Going back to the stock firmware is tested, so it isn't needed after every session.

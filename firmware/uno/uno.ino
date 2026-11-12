@@ -1,23 +1,30 @@
 // open-conqueror UNO firmware, increment 1: the walking skeleton.
 // Drives both tracks from the computer, stops on command, on the MODE button
 // and when the link goes quiet, and reports its state. See firmware/README.md.
+// This file only connects the units; each unit lives in its own folder.
 
 #include <avr/wdt.h>
 
-#include "src/core/battery.h"
-#include "src/core/config.h"
-#include "src/core/debounce.h"
-#include "src/core/drive.h"
-#include "src/core/protocol.h"
-#include "src/hal/board.h"
+#include <battery.h>
+#include <board.h>
+#include <button.h>
+#include <link.h>
+#include <safety.h>
+
 #include "src/version.h"
 
 namespace {
 
+// Telemetry period. 10 messages a second fit easily in 9600 baud.
+const uint32_t kTelemetryPeriodMs = 100U;
+
+// MODE button debounce time.
+const uint32_t kModeButtonDebounceMs = 30U;
+
 oc::Parser parser;
-oc::DriveControl driveControl;
+oc::SafetySupervisor safety;
 oc::BatteryMonitor battery;
-oc::Debouncer modeButton(oc::config::kButtonDebounceMs);
+oc::Debouncer modeButton(kModeButtonDebounceMs);
 
 uint32_t lastBatterySampleMs = 0U;
 uint32_t lastTelemetryMs = 0U;
@@ -53,7 +60,7 @@ void sendError() {
 
 uint8_t faultFlags() {
   uint8_t flags = 0U;
-  if (driveControl.linkTimedOut()) {
+  if (safety.linkTimedOut()) {
     flags |= 0x01U;
   }
   if (battery.level() == oc::BatteryLevel::kLow) {
@@ -68,7 +75,7 @@ uint8_t faultFlags() {
 void sendTelemetry(uint32_t nowMs) {
   oc::MessageWriter message('T');
   message.field(static_cast<int32_t>(nowMs));
-  message.field(static_cast<int32_t>(driveControl.state()));
+  message.field(static_cast<int32_t>(safety.state()));
   message.field(lastOutput.left);
   message.field(lastOutput.right);
   message.field(static_cast<int32_t>(battery.millivolts()));
@@ -82,10 +89,10 @@ void sendTelemetry(uint32_t nowMs) {
 void handle(const oc::Command& command, uint32_t nowMs) {
   switch (command.type) {
     case oc::CommandType::kDrive:
-      driveControl.drive(command.left, command.right, nowMs);
+      safety.drive(command.left, command.right, nowMs);
       break;
     case oc::CommandType::kStop:
-      driveControl.stop();
+      safety.stop();
       break;
     case oc::CommandType::kVersion:
       sendVersion();
@@ -119,7 +126,7 @@ void loop() {
   }
 
   if (modeButton.update(oc::board::modeButtonPressed(), nowMs)) {
-    driveControl.stop();  // S1
+    safety.stop();  // S1
   }
 
   if ((nowMs - lastBatterySampleMs) >= oc::config::kBatterySamplePeriodMs) {
@@ -127,11 +134,11 @@ void loop() {
     battery.sample(oc::board::readBatteryAdc());
   }
 
-  lastOutput = driveControl.update(nowMs, battery.pwmLimit(),
+  lastOutput = safety.update(nowMs, battery.pwmLimit(),
                                    battery.level() != oc::BatteryLevel::kCritical);
-  oc::board::setMotors(lastOutput);
+  oc::board::setMotors(lastOutput.enabled, lastOutput.left, lastOutput.right);
 
-  if ((nowMs - lastTelemetryMs) >= oc::config::kTelemetryPeriodMs) {
+  if ((nowMs - lastTelemetryMs) >= kTelemetryPeriodMs) {
     lastTelemetryMs = nowMs;
     sendTelemetry(nowMs);
   }

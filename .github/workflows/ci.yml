@@ -16,9 +16,23 @@ jobs:
       - uses: actions/checkout@v5
       - uses: arduino/setup-arduino-cli@v2
         with:
-          version: 1.5.1
+          version: 1.6.0
+      - name: Units (every unit folder is in the build profile)
+        run: python3 scripts/dev.py units
       - name: Build (T8 size limits, no warnings in our code)
-        run: python3 scripts/dev.py build
+        shell: bash
+        run: |
+          mkdir -p build
+          python3 scripts/dev.py build --json | tee build/build-report.json
+      - name: Keep the firmware image
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware-uno-${{ github.sha }}
+          path: |
+            build/uno/uno.ino.hex
+            build/uno/uno.ino.elf
+            build/build-report.json
+          if-no-files-found: error
       - name: Install cppcheck
         run: sudo apt-get update && sudo apt-get install --yes cppcheck
       - name: cppcheck
@@ -38,5 +52,7 @@ jobs:
           python-version: "3.12"
       - name: Firmware logic tests
         run: python scripts/dev.py test
-      - name: Computer tool tests
-        run: python -m unittest discover -s host
+      - name: Install the host package
+        run: python -m pip install -e host
+      - name: Host package tests
+        run: python -m unittest discover -s host/tests

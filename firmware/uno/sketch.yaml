@@ -1,8 +1,17 @@
-# Pins the board and core version. scripts/dev.py builds with this profile.
+# The UNO build: board, pinned core version, and every unit the firmware is
+# made of. scripts/dev.py builds with this profile and checks that every unit
+# folder is listed here. Plain arduino-cli can use it too:
+#   arduino-cli compile --profile uno firmware/uno
 profiles:
   uno:
     fqbn: arduino:avr:uno
     platforms:
       - platform: arduino:avr (1.8.8)
+    libraries:
+      - dir: hal/board
+      - dir: devices/button
+      - dir: services/battery
+      - dir: services/link
+      - dir: services/safety
 
 default_profile: uno
