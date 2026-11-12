@@ -8,12 +8,15 @@
 
 namespace oc {
 
+// The fastest camera speed a message may ask for, in degrees a second.
+const int16_t kMaxCameraSpeedDps = 999;
+
 enum class CommandType : uint8_t {
   kNone,     // no complete message yet
   kDrive,    // {D,left,right}, each -100 to 100 percent
   kStop,     // {S}, or the bridge's {"N":100} when a client disconnects
   kVersion,  // {V}
-  kCamera,   // {P,pan,tilt}, each 0 to 180 degrees
+  kCamera,   // {P,pan,tilt} or {P,pan,tilt,speed}; angles 0 to 180 degrees
   kInvalid,  // a complete message we don't understand
 };
 
@@ -23,6 +26,8 @@ struct Command {
   int8_t right;   // kDrive
   uint8_t pan;    // kCamera
   uint8_t tilt;   // kCamera
+  bool hasSpeed;  // kCamera: the message gave a speed
+  uint16_t speed; // kCamera: degrees a second, 0 to kMaxCameraSpeedDps; 0 is as fast as possible
 };
 
 // Parses the body of one message, without the braces.
