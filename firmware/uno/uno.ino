@@ -1,6 +1,6 @@
-// open-conqueror UNO firmware, increment 1: the walking skeleton.
-// Drives both tracks from the computer, stops on command, on the MODE button
-// and when the link goes quiet, and reports its state. See firmware/README.md.
+// open-conqueror UNO firmware. Drives both tracks from the computer, stops on
+// command, on the MODE button and when the link goes quiet, and reports its
+// state and health. Work runs in 10 ms frames. See firmware/README.md.
 // This file only connects the units; each unit lives in its own folder.
 
 #include <avr/wdt.h>
@@ -8,30 +8,40 @@
 #include <battery.h>
 #include <board.h>
 #include <button.h>
+#include <diagnostics.h>
 #include <link.h>
 #include <safety.h>
+#include <scheduler.h>
 
 #include "src/version.h"
 
 namespace {
 
-// Telemetry period. 10 messages a second fit easily in 9600 baud.
-const uint32_t kTelemetryPeriodMs = 100U;
+// The link protocol's version, sent in the version message. 1 was the
+// walking skeleton; 2 adds the battery status to telemetry, the health
+// message, and this field.
+const int32_t kProtocolVersion = 2;
+
+// Periodic work, in frames of 10 ms. Phases keep messages apart.
+const uint32_t kBatteryEveryFrames = 2U;     // 20 ms
+const uint32_t kTelemetryEveryFrames = 10U;  // 100 ms
+const uint32_t kHealthEveryFrames = 100U;    // 1 s
+const uint32_t kHealthPhase = 5U;            // between two telemetry messages
 
 // MODE button debounce time.
 const uint32_t kModeButtonDebounceMs = 30U;
 
+oc::FrameClock frameClock;
+oc::Stopwatch frameWork;
 oc::Parser parser;
 oc::SafetySupervisor safety;
 oc::BatteryMonitor battery;
+oc::Diagnostics diagnostics;
 oc::Debouncer modeButton(kModeButtonDebounceMs);
 
-uint32_t lastBatterySampleMs = 0U;
-uint32_t lastTelemetryMs = 0U;
-uint16_t longestLoopUs = 0U;
 oc::MotorOutput lastOutput = {false, 0, 0};
 
-// Sends a message only if it fits in the transmit buffer, so the loop never
+// Sends a message only if it fits in the transmit buffer, so a frame never
 // waits on the serial port (T2).
 void send(const oc::MessageWriter& message) {
   const uint8_t length = message.length();
@@ -47,6 +57,7 @@ void sendVersion() {
   oc::MessageWriter message('V');
   message.field(OC_FIRMWARE_VERSION);
   message.field(OC_GIT_COMMIT);
+  message.field(kProtocolVersion);
   message.finish();
   send(message);
 }
@@ -73,6 +84,8 @@ uint8_t faultFlags() {
 }
 
 void sendTelemetry(uint32_t nowMs) {
+  const oc::SignalStatus batteryStatus =
+      oc::signalStatusFor(diagnostics.status(oc::EventId::kBatterySensor));
   oc::MessageWriter message('T');
   message.field(static_cast<int32_t>(nowMs));
   message.field(static_cast<int32_t>(safety.state()));
@@ -80,10 +93,23 @@ void sendTelemetry(uint32_t nowMs) {
   message.field(lastOutput.right);
   message.field(static_cast<int32_t>(battery.millivolts()));
   message.field(static_cast<int32_t>(faultFlags()));
-  message.field(static_cast<int32_t>(longestLoopUs));
+  message.field(static_cast<int32_t>(frameWork.longestUs()));
+  message.field(static_cast<int32_t>(batteryStatus));
   message.finish();
   send(message);
-  longestLoopUs = 0U;
+  frameWork.reset();
+}
+
+// {H,skipped,event0,event1,...}: frames skipped since power-on, then every
+// diagnostic event's state in EventId order.
+void sendHealth() {
+  oc::MessageWriter message('H');
+  message.field(static_cast<int32_t>(frameClock.skipped()));
+  for (uint8_t i = 0U; i < oc::Diagnostics::kEventCount; ++i) {
+    message.field(static_cast<int32_t>(diagnostics.status(static_cast<oc::EventId>(i))));
+  }
+  message.finish();
+  send(message);
 }
 
 void handle(const oc::Command& command, uint32_t nowMs) {
@@ -106,6 +132,40 @@ void handle(const oc::Command& command, uint32_t nowMs) {
   }
 }
 
+oc::MonitorResult resultOf(bool passed) {
+  return passed ? oc::MonitorResult::kPassed : oc::MonitorResult::kFailed;
+}
+
+// One frame's work.
+void runFrame(uint32_t frames, uint32_t nowMs) {
+  while (Serial.available() > 0) {
+    handle(parser.feed(static_cast<char>(Serial.read())), nowMs);
+  }
+
+  if (modeButton.update(oc::board::modeButtonPressed(), nowMs)) {
+    safety.stop();  // S1
+  }
+
+  if (oc::every(frames, kBatteryEveryFrames, 0U)) {
+    const uint16_t adc = oc::board::readBatteryAdc();
+    battery.sample(adc);
+    diagnostics.report(oc::EventId::kBatterySensor, resultOf(oc::batteryReadingPlausible(adc)));
+  }
+
+  const bool driveAllowed = (battery.level() != oc::BatteryLevel::kCritical) &&
+                            !diagnostics.inhibited(oc::kInhibitDrive);
+  lastOutput = safety.update(nowMs, battery.pwmLimit(), driveAllowed);
+  oc::board::setMotors(lastOutput.enabled, lastOutput.left, lastOutput.right);
+  diagnostics.report(oc::EventId::kLinkTimeout, resultOf(!safety.linkTimedOut()));
+
+  if (oc::every(frames, kTelemetryEveryFrames, 0U)) {
+    sendTelemetry(nowMs);
+  }
+  if (oc::every(frames, kHealthEveryFrames, kHealthPhase)) {
+    sendHealth();
+  }
+}
+
 }  // namespace
 
 void setup() {
@@ -119,32 +179,12 @@ void setup() {
 void loop() {
   wdt_reset();
   const uint32_t startUs = micros();
-  const uint32_t nowMs = millis();
-
-  while (Serial.available() > 0) {
-    handle(parser.feed(static_cast<char>(Serial.read())), nowMs);
+  if (!frameClock.due(startUs)) {
+    return;
   }
-
-  if (modeButton.update(oc::board::modeButtonPressed(), nowMs)) {
-    safety.stop();  // S1
-  }
-
-  if ((nowMs - lastBatterySampleMs) >= oc::config::kBatterySamplePeriodMs) {
-    lastBatterySampleMs = nowMs;
-    battery.sample(oc::board::readBatteryAdc());
-  }
-
-  lastOutput = safety.update(nowMs, battery.pwmLimit(),
-                                   battery.level() != oc::BatteryLevel::kCritical);
-  oc::board::setMotors(lastOutput.enabled, lastOutput.left, lastOutput.right);
-
-  if ((nowMs - lastTelemetryMs) >= kTelemetryPeriodMs) {
-    lastTelemetryMs = nowMs;
-    sendTelemetry(nowMs);
-  }
-
-  const uint32_t elapsedUs = micros() - startUs;
-  if (elapsedUs > longestLoopUs) {
-    longestLoopUs = (elapsedUs > 0xFFFFU) ? 0xFFFFU : static_cast<uint16_t>(elapsedUs);
-  }
+  runFrame(frameClock.frames(), millis());
+  const uint32_t endUs = micros();
+  frameWork.record(startUs, endUs);
+  diagnostics.report(oc::EventId::kFrameOverrun,
+                     resultOf((endUs - startUs) <= oc::config::kFrameBudgetUs));
 }

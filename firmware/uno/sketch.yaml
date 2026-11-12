@@ -11,7 +11,9 @@ profiles:
       - dir: hal/board
       - dir: devices/button
       - dir: services/battery
+      - dir: services/diagnostics
       - dir: services/link
       - dir: services/safety
+      - dir: services/scheduler
 
 default_profile: uno

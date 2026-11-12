@@ -10,7 +10,7 @@ The firmware is built from self-contained **units**, grouped in the four layers 
 |---|---|
 | `uno/uno.ino` | Connects the units. No logic of its own beyond that |
 | `uno/sketch.yaml` | The build profile: board, pinned core version, and every unit |
-| `uno/services/` | `safety` (the only code that decides what the motors do), `battery`, `link` (the protocol) |
+| `uno/services/` | `safety` (the only code that decides what the motors do), `battery`, `link` (the protocol), `scheduler` (the 10 ms frame), `diagnostics` (monitors, events, signal status) |
 | `uno/devices/` | `button` (MODE button debouncing) |
 | `uno/hal/` | `board`, the only code that touches pins |
 | `uno/modes/` | Arrives in increment 3, with the modes |
@@ -34,7 +34,7 @@ CI builds the same image on every pull request and keeps it, with the build repo
 
 ## Protocol
 
-Messages are short text inside braces, at 9600 baud. That's what the stock camera firmware's bridge forwards, so the same messages should work over Wi-Fi in increment 4. The firmware ignores anything outside braces.
+This is protocol version 2. Messages are short text inside braces, at 9600 baud. That's what the stock camera firmware's bridge forwards, so the same messages should work over Wi-Fi in increment 4. The firmware ignores anything outside braces.
 
 **From the computer:**
 
@@ -50,9 +50,14 @@ Messages are short text inside braces, at 9600 baud. That's what the stock camer
 
 | Message | Meaning |
 |---|---|
-| `{V,version,commit}` | Firmware version and git commit, at startup and on request (D4). The commit ends in `-dirty` if the build had uncommitted changes |
-| `{T,ms,state,left,right,mV,faults,loop}` | Telemetry, 10 times a second. `state`: 0 standby, 1 driving, 2 stopped. `left` and `right`: motor PWM, -255 to 255. `mV`: battery at Vin. `faults`: 1 link timeout, 2 battery low, 4 battery critical. `loop`: longest loop time since the last message, in µs |
+| `{V,version,commit,protocol}` | Firmware version, git commit and protocol version, at startup and on request (D4). The commit ends in `-dirty` if the build had uncommitted changes |
+| `{T,ms,state,left,right,mV,faults,frame,bstat}` | Telemetry, 10 times a second. `state`: 0 standby, 1 driving, 2 stopped. `left` and `right`: motor PWM, -255 to 255. `mV`: battery at Vin. `faults`: 1 link timeout, 2 battery low, 4 battery critical. `frame`: the longest frame's work since the last message, in µs (T2). `bstat`: the battery reading's signal status: 0 valid, 1 init, 2 substitute, 3 error, 4 not available |
+| `{H,skipped,e0,e1,...}` | Health, once a second. `skipped`: frames skipped since power-on. Then each diagnostic event's state, in the order of `EventId` in [diagnostics.h](uno/services/diagnostics/src/diagnostics.h): 0 not tested, 1 prefailed, 2 failed, 3 prepassed, 4 passed. Events today: battery sensor, frame overrun, link timeout |
 | `{E,1}` | A message wasn't understood |
+
+## How it runs
+
+The firmware does its work in **frames of 10 ms** (T1), timed by `micros()`. Each frame reads the link and the MODE button, updates the safety supervisor and the motors, and reports to diagnostics. The battery is sampled every 2nd frame, telemetry goes out every 10th and health every 100th. If a frame's work takes longer than 5 ms (T2), the `frame overrun` event fails; if the firmware falls a whole frame behind, the missed frames are skipped and counted, not run late in a burst.
 
 ## What it does for safety
 

@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import IO, Any, Callable
 
 from . import protocol
-from .protocol import Telemetry
+from .protocol import Health, Telemetry
 
 BOOT_SECONDS = 2.0  # opening the port restarts the UNO through the USB chip's DTR line
 RESEND_PERIOD_S = 0.1  # well inside the firmware's 300 ms link timeout
@@ -138,6 +138,14 @@ class Robot:
                 result.append((message.t, parsed))
         return result
 
+    def health(self, since: float = 0.0) -> list[tuple[float, Health]]:
+        result = []
+        for message in self.received(since, "H"):
+            parsed = protocol.parse_health(protocol.parse_message(message.body)[1])
+            if parsed is not None:
+                result.append((message.t, parsed))
+        return result
+
     def latest(self) -> Telemetry | None:
         samples = self.telemetry()
         return samples[-1][1] if samples else None
@@ -164,7 +172,7 @@ class Robot:
         if not message:
             return None
         values = protocol.parse_message(message[-1].body)[1]
-        keys = ["version", "commit"]
+        keys = ["version", "commit", "protocol"]
         return {key: values[i] if i < len(values) else "" for i, key in enumerate(keys)}
 
     def stream(self, message: bytes, seconds: float) -> None:
