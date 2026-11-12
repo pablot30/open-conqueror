@@ -72,14 +72,19 @@ def cmd_status(args: argparse.Namespace) -> int:
         time.sleep(args.seconds)
         samples = robot.telemetry(since)
         health = robot.health()
+        sensors = robot.sensors(since)
     finally:
         robot.close()
     latest = samples[-1][1] if samples else None
     last_health = health[-1][1] if health else None
+    last_sensors = sensors[-1][1] if sensors else None
     data = {"ok": latest is not None, "port": robot.port,
             "telemetry": latest.to_dict() if latest else None, "samples": len(samples),
-            "health": last_health.to_dict() if last_health else None}
+            "health": last_health.to_dict() if last_health else None,
+            "sensors": last_sensors.to_dict() if last_sensors else None}
     text = latest.describe() if latest else "No telemetry received."
+    if last_sensors:
+        text += "\nSensors: " + last_sensors.describe()
     if last_health:
         text += "\nHealth: " + last_health.describe()
     return output(args, data, text)
@@ -107,6 +112,18 @@ def cmd_drive(args: argparse.Namespace) -> int:
     text = (f"Drove {args.direction} at {args.speed}% for {args.seconds} s. PWM seen: {data['pwm_seen']}. "
             f"Now: {final.describe() if final else 'no telemetry'}")
     return output(args, data, text)
+
+
+def cmd_camera(args: argparse.Namespace) -> int:
+    message = protocol.camera_message(args.pan, args.tilt)
+    robot = connect(args)
+    try:
+        robot.send(message)
+        time.sleep(0.7)  # the servos move, then the firmware releases them
+    finally:
+        robot.close()
+    return output(args, {"ok": True, "pan": args.pan, "tilt": args.tilt},
+                  f"Camera sent to pan {args.pan}, tilt {args.tilt}.")
 
 
 def cmd_stop(args: argparse.Namespace) -> int:
@@ -209,6 +226,10 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("seconds", type=float, help="how long to drive")
     p.set_defaults(func=cmd_drive)
     sub.add_parser("stop", parents=[common], help="brake both tracks").set_defaults(func=cmd_stop)
+    p = sub.add_parser("camera", parents=[common], help="point the camera; 90 90 is the centre")
+    p.add_argument("pan", type=int, help="0 to 180 degrees")
+    p.add_argument("tilt", type=int, help="0 to 180 degrees")
+    p.set_defaults(func=cmd_camera)
     sub.add_parser("shell", parents=[common], help="interactive prompt, for people").set_defaults(func=cmd_shell)
     p = sub.add_parser("test", parents=[common], help="run robot tests from tests/robot/")
     p.add_argument("tests", nargs="*", help="test files; all of tests/robot/ if none")

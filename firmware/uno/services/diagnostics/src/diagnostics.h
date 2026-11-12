@@ -79,6 +79,7 @@ enum class EventId : uint8_t {
   kBatterySensor = 0,  // the battery reading is plausible
   kFrameOverrun = 1,   // each frame's work finished within its budget (T2)
   kLinkTimeout = 2,    // drive commands keep arriving while driving (S3)
+  kGyroComms = 3,      // the gyro answers on I2C
   kCount
 };
 

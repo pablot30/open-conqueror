@@ -43,6 +43,12 @@ void rejectsBadDrive() {
 void parsesStopAndVersion() {
   CHECK(oc::parseMessage("S").type == CommandType::kStop);
   CHECK(oc::parseMessage("V").type == CommandType::kVersion);
+  const Command camera = oc::parseMessage("P,60,120");
+  CHECK(camera.type == CommandType::kCamera && camera.pan == 60U && camera.tilt == 120U);
+  CHECK(oc::parseMessage("P,0,180").type == CommandType::kCamera);
+  CHECK(oc::parseMessage("P,181,90").type == CommandType::kInvalid);
+  CHECK(oc::parseMessage("P,-1,90").type == CommandType::kInvalid);
+  CHECK(oc::parseMessage("P,90").type == CommandType::kInvalid);
   CHECK(oc::parseMessage("SS").type == CommandType::kInvalid);
 }
 

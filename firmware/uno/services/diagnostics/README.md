@@ -9,7 +9,7 @@ Diagnostics, first iteration ([architecture](../../../../docs/architecture.md), 
 | **Requirements** | A5. Reactions protect S9: without a plausible battery reading the robot won't drive |
 | **Interface** | `Diagnostics::report(id, result)`, `status(id)`, `inhibited(reaction)`; `signalStatusFor(status)`; `qualify(measured, status, lastValid, safeDefault)`; the event list in `diagnostics.h` and its table in `diagnostics.cpp` |
 | **Unit tests** | `tests/test_diagnostics.cpp` |
-| **Monitors** | It has no monitors itself; it receives theirs. Events today: battery sensor, frame overrun, link timeout |
+| **Monitors** | It has no monitors itself; it receives theirs. Events today: battery sensor, frame overrun, link timeout, gyro comms |
 
 Test this unit on its own with `python scripts/dev.py test diagnostics`.
 

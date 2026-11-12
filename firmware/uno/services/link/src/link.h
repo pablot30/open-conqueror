@@ -13,13 +13,16 @@ enum class CommandType : uint8_t {
   kDrive,    // {D,left,right}, each -100 to 100 percent
   kStop,     // {S}, or the bridge's {"N":100} when a client disconnects
   kVersion,  // {V}
+  kCamera,   // {P,pan,tilt}, each 0 to 180 degrees
   kInvalid,  // a complete message we don't understand
 };
 
 struct Command {
   CommandType type;
-  int8_t left;
-  int8_t right;
+  int8_t left;    // kDrive
+  int8_t right;   // kDrive
+  uint8_t pan;    // kCamera
+  uint8_t tilt;   // kCamera
 };
 
 // Parses the body of one message, without the braces.

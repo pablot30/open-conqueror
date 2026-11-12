@@ -13,6 +13,9 @@ const EventConfig kEvents[Diagnostics::kEventCount] = {
     {1U, 100U, kReactNone},
     // kLinkTimeout: the safety supervisor already stops (S3); this records it.
     {1U, 1U, kReactNone},
+    // kGyroComms: 3 failed reads (30 ms) confirm it, 10 good ones heal it.
+    // Heading hold will react to it; nothing else needs the gyro yet.
+    {3U, 10U, kReactNone},
 };
 
 int8_t clampSteps(uint8_t steps) {

@@ -10,7 +10,7 @@ from dataclasses import asdict, dataclass, fields
 from typing import Any
 
 BAUD = 9600
-PROTOCOL_VERSION = 2  # the firmware reports its own in the version message
+PROTOCOL_VERSION = 3  # the firmware reports its own in the version message
 
 STATES = {0: "standby", 1: "driving", 2: "stopped"}
 FAULTS = {0x01: "link timeout", 0x02: "battery low", 0x04: "battery critical"}
@@ -18,7 +18,7 @@ FAULTS = {0x01: "link timeout", 0x02: "battery low", 0x04: "battery critical"}
 SIGNAL_STATUSES = {0: "valid", 1: "init", 2: "substitute", 3: "error", 4: "not available"}
 EVENT_STATES = {0: "not tested", 1: "prefailed", 2: "failed", 3: "prepassed", 4: "passed"}
 # Diagnostic events in the order the health message lists them.
-EVENTS = ["battery sensor", "frame overrun", "link timeout"]
+EVENTS = ["battery sensor", "frame overrun", "link timeout", "gyro comms"]
 
 # Track speeds as fractions of the requested speed: (left, right).
 DIRECTIONS = {
@@ -35,6 +35,13 @@ DIRECTIONS = {
 STOP = b"{S}"
 NEUTRAL = b"{D,0,0}"  # releases a held stop; the firmware needs it before driving
 VERSION = b"{V}"
+
+
+def camera_message(pan: int, tilt: int) -> bytes:
+    for value in (pan, tilt):
+        if not 0 <= value <= 180:
+            raise ValueError("camera angles are 0 to 180 degrees")
+    return f"{{P,{pan},{tilt}}}".encode("ascii")
 
 
 def drive_message(left: int, right: int) -> bytes:
@@ -124,6 +131,36 @@ class Health:
     def describe(self) -> str:
         events = ", ".join(f"{name}: {EVENT_STATES.get(state, state)}" for name, state in self.events.items())
         return f"{events}; frames skipped: {self.skipped_frames}"
+
+
+@dataclass
+class Sensors:
+    """The sensor message: {G,heading,rate,gyro_status}."""
+
+    heading_cdeg: int  # 0 to 35999 hundredths of a degree since power-on
+    rate_cdps: int     # hundredths of a degree per second
+    gyro_status: int   # signal status
+
+    @property
+    def gyro_status_name(self) -> str:
+        return SIGNAL_STATUSES.get(self.gyro_status, str(self.gyro_status))
+
+    def to_dict(self) -> dict[str, Any]:
+        data = asdict(self)
+        data["gyro_status_name"] = self.gyro_status_name
+        return data
+
+    def describe(self) -> str:
+        return (f"heading {self.heading_cdeg / 100:.1f} deg, turning {self.rate_cdps / 100:.2f} deg/s "
+                f"(gyro {self.gyro_status_name})")
+
+
+def parse_sensors(values: list[str]) -> Sensors | None:
+    try:
+        numbers = [int(v) for v in values]
+    except ValueError:
+        return None
+    return Sensors(*numbers[:3]) if len(numbers) >= 3 else None
 
 
 def parse_health(values: list[str]) -> Health | None:
