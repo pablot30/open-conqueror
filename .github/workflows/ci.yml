@@ -9,6 +9,33 @@ permissions:
   contents: read
 
 jobs:
+  pull-request:
+    name: Pull request follows decision 0009
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Branch name, title and linked issue
+        env:
+          BRANCH: ${{ github.head_ref }}
+          TITLE: ${{ github.event.pull_request.title }}
+          BODY: ${{ github.event.pull_request.body }}
+        run: |
+          ok=true
+          types='feat|fix|docs|refactor|test|ci|chore'
+          if ! printf '%s' "$BRANCH" | grep -Eq "^(($types)/[0-9]+-[a-z0-9]+(-[a-z0-9]+)*|release/[0-9]+\.[0-9]+)$"; then
+            echo "Branch '$BRANCH' should be <type>/<issue>-<short-description>, such as feat/12-gyro-calibration."
+            ok=false
+          fi
+          if ! printf '%s' "$TITLE" | grep -Eq "^($types)(\([a-z0-9-]+\))?!?: .+"; then
+            echo "Title should follow Conventional Commits, such as 'feat(gyro): calibrate at power-on'."
+            ok=false
+          fi
+          if ! printf '%s' "$BODY" | grep -Eiq "(closes|fixes|resolves) #[0-9]+"; then
+            echo "The description should link its issue with 'Closes #<number>'."
+            ok=false
+          fi
+          $ok
+
   firmware:
     name: Firmware build and cppcheck
     runs-on: ubuntu-24.04

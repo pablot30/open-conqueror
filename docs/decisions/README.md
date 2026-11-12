@@ -12,3 +12,4 @@ Short records of why we chose things, so nobody has to guess later. Add a new fi
 | [0006](0006-walking-skeleton-first.md) | A walking skeleton first, everything else when it's needed | Accepted |
 | [0007](0007-testing-releases-and-traceability.md) | How we test, release and trace our software | Accepted |
 | [0008](0008-architecture.md) | The architecture: roles, layers, units, host side and diagnostics | Accepted |
+| [0009](0009-issues-branches-and-commits.md) | Issues, branch names and commit messages | Accepted |
