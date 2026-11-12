@@ -6,7 +6,9 @@ namespace {
 
 // One full turn in the units of heading_: 360 degrees x 131 counts per
 // degree per second x 100 frames per second x 100 (the x100 in rateX100_).
-const int32_t kFullTurn = 360L * kGyroRawPerDps * kGyroFramesPerSecond * 100L;
+// int32_t throughout, not long: long is 64 bits on some host computers.
+const int32_t kFullTurn = static_cast<int32_t>(360) * kGyroRawPerDps * kGyroFramesPerSecond * static_cast<int32_t>(100);
+const int32_t kHundred = 100;
 
 }  // namespace
 
@@ -28,7 +30,7 @@ void HeadingGyro::update(int16_t raw) {
     if (count_ >= config::kGyroCalibrationFrames) {
       if ((static_cast<int32_t>(max_) - min_) <= config::kGyroStillSpanRaw) {
         // The mean, in hundredths of a count.
-        biasX100_ = (sum_ * 100L) / static_cast<int32_t>(count_);
+        biasX100_ = (sum_ * kHundred) / static_cast<int32_t>(count_);
         calibrated_ = true;
       } else if (restarts_ < 0xFFU) {
         ++restarts_;  // the robot moved; try again
@@ -39,7 +41,7 @@ void HeadingGyro::update(int16_t raw) {
     }
     return;
   }
-  rateX100_ = (static_cast<int32_t>(raw) * 100L) - biasX100_;
+  rateX100_ = (static_cast<int32_t>(raw) * kHundred) - biasX100_;
   integrate();
 }
 
@@ -62,7 +64,7 @@ void HeadingGyro::integrate() {
 
 uint16_t HeadingGyro::headingCdeg() const {
   // 36000 hundredths of a degree per kFullTurn.
-  return static_cast<uint16_t>(heading_ / (kFullTurn / 36000L));
+  return static_cast<uint16_t>(heading_ / (kFullTurn / static_cast<int32_t>(36000)));
 }
 
 }  // namespace oc
