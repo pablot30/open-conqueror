@@ -1,0 +1,147 @@
+"""Robot tests: scripted checks that run on the real robot.
+
+Each test is a Python file in tests/robot/ with these names:
+
+    REQUIREMENTS  list of requirement IDs it checks, such as ["S1", "S3"]
+    MOVES         True if the tracks will turn
+    SETUP         how the robot must be set up before it starts
+    BRIEF         what will happen, what the person does, and what to watch for
+    run(t)        the test itself; t is a Context
+
+The test checks the robot's telemetry itself and asks the person only for what
+a script can't see, such as which way a track turned. Answers can be given in
+advance with --answer, so an agent can run a test after asking the person.
+"""
+
+from __future__ import annotations
+
+import importlib.util
+import sys
+import time
+import traceback
+from dataclasses import dataclass, field
+from datetime import datetime, timezone
+from pathlib import Path
+from types import ModuleType
+from typing import Any, Callable
+
+from .link import Robot
+
+
+class TestDefinitionError(Exception):
+    pass
+
+
+@dataclass
+class RobotTest:
+    name: str
+    path: Path
+    requirements: list[str]
+    moves: bool
+    setup: str
+    brief: str
+    run: Callable[["Context"], None]
+
+    def describe(self) -> dict[str, Any]:
+        return {"name": self.name, "file": self.path.as_posix(), "requirements": self.requirements,
+                "moves": self.moves, "setup": self.setup, "brief": self.brief}
+
+
+def load(path: Path) -> RobotTest:
+    spec = importlib.util.spec_from_file_location(f"conq_robot_test_{path.stem}", path)
+    if spec is None or spec.loader is None:
+        raise TestDefinitionError(f"{path}: not a Python file")
+    module: ModuleType = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    missing = [name for name in ("REQUIREMENTS", "MOVES", "SETUP", "BRIEF", "run") if not hasattr(module, name)]
+    if missing:
+        raise TestDefinitionError(f"{path}: missing {', '.join(missing)}")
+    requirements = list(module.REQUIREMENTS)
+    if not requirements or not all(isinstance(r, str) for r in requirements):
+        raise TestDefinitionError(f"{path}: REQUIREMENTS must list requirement IDs")
+    return RobotTest(path.stem, path, requirements, bool(module.MOVES),
+                     str(module.SETUP).strip(), str(module.BRIEF).strip(), module.run)
+
+
+def find_tests(directory: Path) -> list[Path]:
+    return sorted(p for p in directory.glob("*.py") if not p.name.startswith("_"))
+
+
+@dataclass
+class Context:
+    robot: Robot
+    answers: dict[str, str]
+    interactive: bool
+    results: list[dict[str, Any]] = field(default_factory=list)
+
+    def say(self, text: str) -> None:
+        print(text, file=sys.stderr, flush=True)
+
+    def step(self, text: str) -> None:
+        """Marks the start of a step, in the log and on screen."""
+        self.robot.note(text)
+        self.say(f"- {text}")
+
+    def check(self, name: str, passed: bool, detail: str = "", requirements: list[str] | None = None) -> bool:
+        self.results.append({"check": name, "status": "passed" if passed else "failed",
+                             "detail": detail, "requirements": requirements or []})
+        self.say(f"  {'PASS' if passed else 'FAIL'} {name}{': ' + detail if detail else ''}")
+        return passed
+
+    def confirm(self, key: str, question: str, requirements: list[str] | None = None) -> bool | None:
+        """Asks the person a yes/no question and records it as a check.
+        Unanswered questions leave the test incomplete rather than failed."""
+        answer = self.answers.get(key)
+        if answer is None and self.interactive:
+            answer = input(f"{question} [y/n] ").strip()
+        if answer is None:
+            self.results.append({"check": key, "status": "unanswered", "detail": question,
+                                 "requirements": requirements or []})
+            self.say(f"  ASK  {key}: {question} (give it with --answer {key}=yes)")
+            return None
+        yes = answer.lower() in ("y", "yes", "true", "1")
+        self.results.append({"check": key, "status": "passed" if yes else "failed",
+                             "detail": f"{question} Answer: {answer}", "requirements": requirements or []})
+        return yes
+
+    def wait(self, seconds: float) -> None:
+        time.sleep(seconds)
+
+
+def run_test(test: RobotTest, port: str, log_path: Path, answers: dict[str, str],
+             interactive: bool) -> dict[str, Any]:
+    started = datetime.now(timezone.utc)
+    robot = Robot(port, log_path)
+    context = Context(robot, answers, interactive)
+    firmware = None
+    try:
+        robot.wait_for_boot()
+        firmware = robot.version()
+        test.run(context)
+    except KeyboardInterrupt:
+        context.results.append({"check": "run", "status": "failed", "detail": "interrupted", "requirements": []})
+    except Exception:  # a broken test is a failed test, with the reason kept
+        context.results.append({"check": "run", "status": "failed",
+                                "detail": traceback.format_exc(limit=3), "requirements": []})
+    finally:
+        robot.close()
+
+    statuses = {r["status"] for r in context.results}
+    if "failed" in statuses or not context.results:
+        status = "failed"
+    elif "unanswered" in statuses:
+        status = "incomplete"
+    else:
+        status = "passed"
+    return {
+        "test": test.name,
+        "file": test.path.as_posix(),
+        "requirements": test.requirements,
+        "status": status,
+        "firmware": firmware,
+        "port": port,
+        "started": started.isoformat(timespec="seconds"),
+        "duration_s": round((datetime.now(timezone.utc) - started).total_seconds(), 1),
+        "results": context.results,
+        "log": log_path.as_posix(),
+    }

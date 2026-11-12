@@ -59,7 +59,7 @@ We've only used the macOS commands so far.
 
 ### Python 3.10 or newer
 
-Runs `scripts/dev.py`, which builds, tests and flashes the firmware, and the computer tool `host/oc.py`. **Needed since:** stage 2.
+Runs `scripts/dev.py`, which builds, tests and flashes the firmware, and the `conq` command from the host package. **Needed since:** stage 2.
 
 | | macOS | Linux | Windows |
 |---|---|---|---|
@@ -67,15 +67,15 @@ Runs `scripts/dev.py`, which builds, tests and flashes the firmware, and the com
 | Update | `brew upgrade python` | same as install method | `winget upgrade Python.Python.3.12` |
 | Uninstall | `brew uninstall python` | same as install method | `winget uninstall Python.Python.3.12` |
 
-The computer tool needs pyserial, pinned in `host/requirements.txt`. It goes in a virtual environment in the repo's `.venv/` folder, which git ignores:
+The host package in `host/` provides the `conq` command. Its one dependency, pyserial, is pinned in `host/pyproject.toml`. Install it in editable mode into a virtual environment in the repo's `.venv/` folder, which git ignores:
 
 ```
 python -m venv .venv
-.venv/bin/pip install -r host/requirements.txt          (macOS and Linux)
-.venv\Scripts\pip install -r host/requirements.txt      (Windows)
+.venv/bin/pip install -e host          (macOS and Linux)
+.venv\Scripts\pip install -e host      (Windows)
 ```
 
-Run the tool with `.venv/bin/python host/oc.py`, or `.venv\Scripts\python host\oc.py` on Windows. To remove it, delete `.venv/`.
+Then run `.venv/bin/conq`, or `.venv\Scripts\conq` on Windows, or activate the environment and run `conq`. Editable mode means changes to the code take effect without reinstalling. To remove it, delete `.venv/`.
 
 ### CMake and a C++ compiler
 

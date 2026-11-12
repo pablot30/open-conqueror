@@ -1,15 +1,18 @@
-// Firmware version (D4). Bump it in the pull request that changes behaviour.
-// The git commit comes from build_info.h, which scripts/dev.py writes before
-// each build. Builds without it, such as from the Arduino IDE, say "unknown".
+// Firmware version and git commit (D4). scripts/dev.py writes both into
+// generated/build_info.h before each build: the version from the VERSION file
+// at the repo root, the commit from git. Builds without it, such as from the
+// Arduino IDE, report "unknown".
 #ifndef OC_VERSION_H
 #define OC_VERSION_H
-
-#define OC_FIRMWARE_VERSION "0.1.0"
 
 #if defined(__has_include)
 #if __has_include("generated/build_info.h")
 #include "generated/build_info.h"
 #endif
+#endif
+
+#ifndef OC_FIRMWARE_VERSION
+#define OC_FIRMWARE_VERSION "unknown"
 #endif
 
 #ifndef OC_GIT_COMMIT

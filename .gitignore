@@ -23,6 +23,7 @@ build/
 # Python
 .venv/
 __pycache__/
+*.egg-info/
 
 # Written by scripts/dev.py before each build
 firmware/uno/src/generated/

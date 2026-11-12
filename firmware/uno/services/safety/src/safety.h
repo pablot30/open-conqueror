@@ -1,0 +1,56 @@
+// The safety supervisor: the only code that decides what the motors do,
+// from commands, time and the battery. See docs/architecture.md, A2.
+#ifndef OC_SAFETY_H
+#define OC_SAFETY_H
+
+#include <stdint.h>
+
+namespace oc {
+
+namespace config {
+// S3: drive commands expire after this long without a new one (proposed).
+const uint32_t kLinkTimeoutMs = 300U;
+}  // namespace config
+
+enum class DriveState : uint8_t {
+  kStandby = 0,  // S5: driver in standby since power-on, motors coast
+  kDriving = 1,  // following the latest drive command
+  kStopped = 2,  // motors braked after a stop, timeout or low battery
+};
+
+// What to send to the motor driver. PWM is -255 to 255, negative is backward.
+struct MotorOutput {
+  bool enabled;  // false keeps the driver in standby
+  int16_t left;
+  int16_t right;
+};
+
+// After power-on and after every stop, drive commands are ignored until a
+// neutral one (both sides 0) arrives. A stream of resent drive commands
+// therefore can't undo a stop: driving again takes a deliberate new command.
+class SafetySupervisor {
+ public:
+  // A drive command, each side -100 to 100 percent of the allowed maximum.
+  void drive(int8_t leftPercent, int8_t rightPercent, uint32_t nowMs);
+  // Brakes, and holds the motors stopped until the next neutral command.
+  void stop();
+
+  // Call every loop. pwmLimit is the highest PWM allowed (S10), and
+  // driveAllowed is false while the battery is critical (S9).
+  MotorOutput update(uint32_t nowMs, uint16_t pwmLimit, bool driveAllowed);
+
+  DriveState state() const { return state_; }
+  bool linkTimedOut() const { return linkTimedOut_; }
+
+ private:
+  DriveState state_ = DriveState::kStandby;
+  int8_t leftPercent_ = 0;
+  int8_t rightPercent_ = 0;
+  uint32_t lastCommandMs_ = 0U;
+  bool linkTimedOut_ = false;
+  bool armed_ = false;  // true once a neutral command has followed the last stop
+};
+
+}  // namespace oc
+
+#endif  // OC_SAFETY_H

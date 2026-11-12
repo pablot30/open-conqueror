@@ -56,7 +56,7 @@ Each message carries the robot's ID, its boot count and the time since boot. A b
 
 ## A2. How the UNO firmware is built
 
-Four layers. Everything except the bottom one builds and is unit-tested on a computer, as `core/` is today.
+Four layers. Everything except the bottom one builds and is unit-tested on the host computer.
 
 | Layer | Contents | Increment |
 |---|---|---|
@@ -97,6 +97,7 @@ firmware/
         src/            its code
         tests/          its unit tests, run on the host computer
         sim/  hil/      only when someone builds them
+  testing/              the shared unit test harness
 host/                   Python package for the host computer: transports, protocol, client, the `conq` command
   tests/                its unit tests
 tests/robot/            robot tests, run by `conq` against a real robot or the simulator
