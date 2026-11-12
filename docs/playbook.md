@@ -125,3 +125,12 @@ This isn't a blueprint we designed in advance. It grows from what the project ac
 **What:** one page on which machine does what, the layers, and how units are laid out. Check each idea against more than one field, and keep a list of what waits and why.
 
 **Why:** the walking skeleton didn't need an architecture, but increment 2 adds five devices at once. Our habits came from automotive practice, and robotics, aerospace and web development offered better fits in places, such as priority-based behaviours and a status on every sensor value. See the [architecture](architecture.md).
+
+## 16. Give every change a ticket and a name that says what it is
+
+**When:** as soon as more than one change is in flight.
+
+**What:** an issue for each piece of work, with its reason and requirement IDs; branches named by type and issue, such as `feat/12-frame-and-diagnostics`; pull requests that close their issue; and commit messages in a public format, Conventional Commits. See [0009](decisions/0009-issues-branches-and-commits.md).
+
+**Why:** our first branch names said when a change was made, not what or why. With issues, anyone can follow a change back to its reason. Rename branches before opening pull requests: renaming afterwards closed two of ours.
+

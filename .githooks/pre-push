@@ -1,7 +1,8 @@
 #!/bin/sh
 # Refuses pushes that could damage main, until GitHub can enforce this itself.
-# Blocks: pushing to main directly, deleting main or a release/ branch, and
-# force pushes. Deleting merged work branches is allowed, to keep GitHub tidy.
+# Blocks: pushing to main directly, deleting main or a release/ branch, force
+# pushes, and branch names outside decision 0009's pattern. Deleting merged
+# work branches is allowed, to keep GitHub tidy.
 # Emergency override, for example to restore main from a local copy:
 #   OPEN_CONQUEROR_ALLOW_PUSH=1 git push ...
 # Git runs this through sh on macOS, Linux and Windows (Git for Windows).
@@ -25,6 +26,16 @@ while read -r local_ref local_sha remote_ref remote_sha; do
         status=1
         continue
     fi
+    branch="${remote_ref#refs/heads/}"
+    case "$remote_ref" in
+        refs/heads/*)
+            if ! printf '%s' "$branch" | grep -Eq '^((feat|fix|docs|refactor|test|ci|chore)/[0-9]+-[a-z0-9]+(-[a-z0-9]+)*|release/[0-9]+\.[0-9]+)$'; then
+                echo "pre-push: branch name $branch doesn't follow decision 0009: <type>/<issue>-<short-description>, such as feat/12-gyro-calibration." >&2
+                status=1
+                continue
+            fi
+            ;;
+    esac
     if [ "$(printf '%s' "$remote_sha" | tr -d 0)" != "" ]; then
         if ! git merge-base --is-ancestor "$remote_sha" "$local_sha" 2>/dev/null; then
             echo "pre-push: refusing to force push $remote_ref, which would rewrite its history." >&2
