@@ -3,25 +3,26 @@
 namespace oc {
 
 // ===========================================================================
-// OUR REMOTE'S KEY CODES. This is the one place to fill in.
+// OUR REMOTE'S KEY CODES. This is the one place to change them.
 //
-// We haven't recorded them yet, so every entry is unknown and no key does
-// anything. To fill it in, put the robot on a table with the Upload-Cam
-// switch on Upload, and run `conq ir record`, or the robot test ir_keys. It
-// asks you to press each key, and prints these lines, ready to paste. Set
-// `known` to true as you paste each one.
+// Recorded on our robot on 2026-11-15 with the robot test ir_keys, using the
+// remote that came with the kit. Another remote may send other codes: record
+// it with `conq ir record` or tests/robot/ir_keys.py and paste the lines here.
 //
 // Format: {key, address, command, known}. The address is the first two
 // bytes of the frame (first byte in the low half), as the `{K,...}` message
 // reports it; the command is the third byte.
+//
+// Recorded for increment 3's mode keys, not used yet (address 0xFF00):
+// 1: 0x16, 2: 0x19, 3: 0x0D, 4: 0x0C, 5: 0x18, 6: 0x5E.
 // ===========================================================================
 namespace {
 const KeyEntry kKeyTable[] = {
-    {Key::kUp, 0x0000U, 0x00U, false},
-    {Key::kDown, 0x0000U, 0x00U, false},
-    {Key::kLeft, 0x0000U, 0x00U, false},
-    {Key::kRight, 0x0000U, 0x00U, false},
-    {Key::kOk, 0x0000U, 0x00U, false},
+    {Key::kUp, 0xFF00U, 0x46U, true},
+    {Key::kDown, 0xFF00U, 0x15U, true},
+    {Key::kLeft, 0xFF00U, 0x44U, true},
+    {Key::kRight, 0xFF00U, 0x43U, true},
+    {Key::kOk, 0xFF00U, 0x40U, true},
 };
 }  // namespace
 // ===========================================================================
