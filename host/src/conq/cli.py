@@ -114,15 +114,23 @@ def cmd_drive(args: argparse.Namespace) -> int:
     return output(args, data, text)
 
 
+def camera_wait(pan: int, tilt: int, speed: int | None) -> float:
+    """Seconds to stay connected: a move from the centre at this speed, plus the settle time."""
+    if speed == 0:
+        return 0.7
+    dps = 100 if speed is None else speed
+    return max(abs(pan - 90), abs(tilt - 90)) / dps + 0.7
+
+
 def cmd_camera(args: argparse.Namespace) -> int:
-    message = protocol.camera_message(args.pan, args.tilt)
+    message = protocol.camera_message(args.pan, args.tilt, args.speed)
     robot = connect(args)
     try:
         robot.send(message)
-        time.sleep(0.7)  # the servos move, then the firmware releases them
+        time.sleep(camera_wait(args.pan, args.tilt, args.speed))  # the servos move, then settle
     finally:
         robot.close()
-    return output(args, {"ok": True, "pan": args.pan, "tilt": args.tilt},
+    return output(args, {"ok": True, "pan": args.pan, "tilt": args.tilt, "speed": args.speed},
                   f"Camera sent to pan {args.pan}, tilt {args.tilt}.")
 
 
@@ -229,6 +237,8 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("camera", parents=[common], help="point the camera; 90 90 is the centre")
     p.add_argument("pan", type=int, help="0 to 180 degrees")
     p.add_argument("tilt", type=int, help="0 to 180 degrees")
+    p.add_argument("--speed", type=int, metavar="DPS",
+                   help="degrees a second, 0 to 999; 0 is as fast as possible (default 100)")
     p.set_defaults(func=cmd_camera)
     sub.add_parser("shell", parents=[common], help="interactive prompt, for people").set_defaults(func=cmd_shell)
     p = sub.add_parser("test", parents=[common], help="run robot tests from tests/robot/")

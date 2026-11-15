@@ -18,6 +18,13 @@ class MessageTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             protocol.camera_message(181, 90)
 
+    def test_camera_message_with_speed(self) -> None:
+        self.assertEqual(protocol.camera_message(60, 120, 50), b"{P,60,120,50}")
+        self.assertEqual(protocol.camera_message(60, 120, 0), b"{P,60,120,0}")
+        for speed in (-1, 1000):
+            with self.assertRaises(ValueError):
+                protocol.camera_message(60, 120, speed)
+
     def test_direction_speeds(self) -> None:
         self.assertEqual(protocol.direction_speeds("f", 30), (30, 30))
         self.assertEqual(protocol.direction_speeds("bl", 30), (-15, -30))

@@ -16,7 +16,7 @@ def run(t):
     firmware = robot.version()
     t.check("version reported", bool(firmware and firmware["version"] and firmware["commit"]),
             str(firmware), ["D4"])
-    t.check("protocol version reported", bool(firmware) and firmware.get("protocol") == "3",
+    t.check("protocol version reported", bool(firmware) and firmware.get("protocol") == "5",
             f"protocol {firmware.get('protocol') if firmware else '-'}", ["D4"])
     version_file = Path(__file__).resolve().parents[2] / "VERSION"
     if firmware and version_file.is_file():
