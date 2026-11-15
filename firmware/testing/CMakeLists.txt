@@ -2,6 +2,7 @@
 # compiler and run with CTest (D5). Every unit folder with a tests/ folder
 # becomes one test executable and one CTest test, named after the unit.
 # Sources ending in _hw.cpp are left out: they use the board's hardware.
+# tests/uses.txt can name other units to compile in, for tests of units together.
 cmake_minimum_required(VERSION 3.20)
 project(open_conqueror_unit_tests CXX)
 
@@ -35,6 +36,17 @@ foreach(UNIT_DIR ${UNIT_DIRS})
   file(GLOB UNIT_TESTS CONFIGURE_DEPENDS ${UNIT_DIR}/tests/*.cpp)
   if(NOT UNIT_TESTS)
     continue()
+  endif()
+  # A test that checks two units working together lists the other unit's
+  # name in tests/uses.txt, one per line, and gets that unit's sources too.
+  if(EXISTS ${UNIT_DIR}/tests/uses.txt)
+    file(STRINGS ${UNIT_DIR}/tests/uses.txt USED_UNITS)
+    set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${UNIT_DIR}/tests/uses.txt)
+    foreach(USED ${USED_UNITS})
+      file(GLOB USED_SOURCES CONFIGURE_DEPENDS ${UNO_DIR}/*/${USED}/src/*.cpp)
+      list(FILTER USED_SOURCES EXCLUDE REGEX "_hw\\.cpp$")
+      list(APPEND UNIT_SOURCES ${USED_SOURCES})
+    endforeach()
   endif()
   add_executable(${UNIT}_tests main.cpp ${UNIT_TESTS} ${UNIT_SOURCES})
   target_include_directories(${UNIT}_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${UNIT_INCLUDE_DIRS})

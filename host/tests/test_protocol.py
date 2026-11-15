@@ -60,6 +60,30 @@ class MessageTests(unittest.TestCase):
         self.assertIsNone(protocol.parse_health([]))
         self.assertIsNone(protocol.parse_health(["x"]))
 
+    def test_parse_sensors_with_distance(self) -> None:
+        sensors = protocol.parse_sensors(["100", "5", "0", "605", "0"])
+        assert sensors is not None
+        self.assertEqual((sensors.distance_mm, sensors.distance_status_name), (605, "valid"))
+        self.assertIn("ultrasonic 60.5 cm (valid)", sensors.describe())
+        self.assertEqual(sensors.to_dict()["distance_status_name"], "valid")
+
+    def test_distance_is_not_shown_unless_valid(self) -> None:
+        sensors = protocol.parse_sensors(["100", "5", "0", "0", "3"])
+        assert sensors is not None
+        self.assertIn("no distance (error)", sensors.describe())  # never a made-up distance
+
+    def test_parse_sensors_from_protocol_3_and_rejects_partial(self) -> None:
+        sensors = protocol.parse_sensors(["100", "5", "0"])
+        assert sensors is not None
+        self.assertIsNone(sensors.distance_mm)
+        self.assertNotIn("ultrasonic", sensors.describe())
+        self.assertIsNone(protocol.parse_sensors(["100", "5", "0", "605"]))
+
+    def test_parse_health_names_the_ultrasonic_event(self) -> None:
+        health = protocol.parse_health(["0", "4", "4", "4", "4", "2"])
+        assert health is not None
+        self.assertEqual(health.events["ultrasonic echo"], 2)
+
     def test_parse_telemetry_rejects_bad_fields(self) -> None:
         self.assertIsNone(protocol.parse_telemetry(["1", "2"]))
         self.assertIsNone(protocol.parse_telemetry(["x"] * 7))

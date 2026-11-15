@@ -16,6 +16,11 @@ const EventConfig kEvents[Diagnostics::kEventCount] = {
     // kGyroComms: 3 failed reads (30 ms) confirm it, 10 good ones heal it.
     // Heading hold will react to it; nothing else needs the gyro yet.
     {3U, 10U, kReactNone},
+    // kUltrasonicEcho: one ping a 60 ms, so 5 missed echoes (about 300 ms)
+    // confirm it, and 3 good ones (about 180 ms) heal it. Until then the
+    // distance is a substitute, then an error. It reads no echo for soft
+    // targets such as cloth, so this can fail with the sensor working.
+    {5U, 3U, kInhibitRanging},
 };
 
 int8_t clampSteps(uint8_t steps) {

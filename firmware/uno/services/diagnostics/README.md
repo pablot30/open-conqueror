@@ -9,7 +9,16 @@ Diagnostics, first iteration ([architecture](../../../../docs/architecture.md), 
 | **Requirements** | A5. Reactions protect S9: without a plausible battery reading the robot won't drive |
 | **Interface** | `Diagnostics::report(id, result)`, `status(id)`, `inhibited(reaction)`; `signalStatusFor(status)`; `qualify(measured, status, lastValid, safeDefault)`; the event list in `diagnostics.h` and its table in `diagnostics.cpp` |
 | **Unit tests** | `tests/test_diagnostics.cpp` |
-| **Monitors** | It has no monitors itself; it receives theirs. Events today: battery sensor, frame overrun, link timeout, gyro comms |
+| **Monitors** | It has no monitors itself; it receives theirs. Events today: battery sensor, frame overrun, link timeout, gyro comms, ultrasonic echo |
+
+## Reactions
+
+| Event | Confirmed after | Reaction while failed or healing |
+|---|---|---|
+| battery sensor | 5 bad samples | `kInhibitDrive`: the safety supervisor won't drive |
+| ultrasonic echo | 5 missed echoes | `kInhibitRanging`: obstacle avoidance and follow are unavailable (increment 3). Driving is not affected |
+| frame overrun, link timeout | 1 | None yet |
+| gyro comms | 3 failed reads | None yet |
 
 Test this unit on its own with `python scripts/dev.py test diagnostics`.
 
