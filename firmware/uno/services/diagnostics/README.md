@@ -18,7 +18,7 @@ Diagnostics, first iteration ([architecture](../../../../docs/architecture.md), 
 | battery sensor | 5 bad samples | `kInhibitDrive`: the safety supervisor won't drive |
 | ultrasonic echo | 5 missed echoes | `kInhibitRanging`: obstacle avoidance and follow are unavailable (increment 3). Driving is not affected |
 | frame overrun, link timeout | 1 | None yet |
-| gyro comms | 3 failed reads | None yet |
+| gyro comms | 3 failed reads | `kInhibitHeadingHold`: heading hold doesn't use the gyro, so the robot drives without correction. Driving is not affected |
 
 Test this unit on its own with `python scripts/dev.py test diagnostics`.
 

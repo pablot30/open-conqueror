@@ -10,12 +10,13 @@ from dataclasses import asdict, dataclass, fields
 from typing import Any
 
 BAUD = 9600
-PROTOCOL_VERSION = 5  # the firmware reports its own in the version message
+PROTOCOL_VERSION = 6  # the firmware reports its own in the version message
 
 STATES = {0: "standby", 1: "driving", 2: "stopped"}
 FAULTS = {0x01: "link timeout", 0x02: "battery low", 0x04: "battery critical"}
 # Signal statuses and diagnostic event states (docs/architecture.md, A5).
 SIGNAL_STATUSES = {0: "valid", 1: "init", 2: "substitute", 3: "error", 4: "not available"}
+HOLD_STATES = {0: "off", 1: "holding", 2: "substitute", 3: "no gyro"}
 EVENT_STATES = {0: "not tested", 1: "prefailed", 2: "failed", 3: "prepassed", 4: "passed"}
 # Diagnostic events in the order the health message lists them.
 EVENTS = ["battery sensor", "frame overrun", "link timeout", "gyro comms", "ultrasonic echo"]
@@ -135,18 +136,25 @@ class Health:
 
 @dataclass
 class Sensors:
-    """The sensor message: {G,heading,rate,gyro_status,distance,distance_status}.
-    Protocol 3 had the first three fields only."""
+    """The sensor message:
+    {G,heading,rate,gyro_status,distance,distance_status,hold,correction}.
+    Protocol 3 had the first three fields, protocol 4 five."""
 
     heading_cdeg: int  # 0 to 35999 hundredths of a degree since power-on
     rate_cdps: int     # hundredths of a degree per second
     gyro_status: int   # signal status
     distance_mm: int | None = None  # ultrasonic distance in millimetres; protocol 4 and later
     distance_status: int | None = None  # its signal status
+    hold: int | None = None  # heading hold state: protocol 6 and later
+    correction_permille: int | None = None  # its correction, tenths of a percent, positive turns left
 
     @property
     def gyro_status_name(self) -> str:
         return SIGNAL_STATUSES.get(self.gyro_status, str(self.gyro_status))
+
+    @property
+    def hold_name(self) -> str | None:
+        return None if self.hold is None else HOLD_STATES.get(self.hold, str(self.hold))
 
     @property
     def distance_status_name(self) -> str | None:
@@ -158,6 +166,7 @@ class Sensors:
         data = asdict(self)
         data["gyro_status_name"] = self.gyro_status_name
         data["distance_status_name"] = self.distance_status_name
+        data["hold_name"] = self.hold_name
         return data
 
     def describe(self) -> str:
@@ -167,6 +176,10 @@ class Sensors:
             # Only a valid distance is a measurement; the rest are placeholders.
             shown = f"{self.distance_mm / 10:.1f} cm" if self.distance_status == 0 else "no distance"
             text += f", ultrasonic {shown} ({self.distance_status_name})"
+        if self.hold is not None:
+            text += f", heading hold {self.hold_name}"
+            if self.hold in (1, 2):
+                text += f" ({(self.correction_permille or 0) / 10:+.1f}%)"
         return text
 
 
@@ -177,8 +190,10 @@ def parse_sensors(values: list[str]) -> Sensors | None:
         return None
     if len(numbers) == 3:  # protocol 3
         return Sensors(*numbers)
-    if len(numbers) >= 5:  # protocol 4; later fields are ignored
+    if len(numbers) in (5, 6):  # protocol 4
         return Sensors(*numbers[:5])
+    if len(numbers) >= 7:  # protocol 6; later fields are ignored
+        return Sensors(*numbers[:7])
     return None
 
 

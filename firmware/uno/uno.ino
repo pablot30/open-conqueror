@@ -13,6 +13,7 @@
 #include <ir.h>
 #include <led.h>
 #include <link.h>
+#include <motion.h>
 #include <pinchange.h>
 #include <safety.h>
 #include <scheduler.h>
@@ -27,8 +28,9 @@ namespace {
 // walking skeleton; 2 added the battery status to telemetry, the health
 // message, and this field; 3 adds the sensor message; 4 adds the
 // ultrasonic distance and its status to the sensor message; 5 adds the IR
+// message; 6 adds the heading hold's state and correction to the sensor
 // message.
-const int32_t kProtocolVersion = 5;
+const int32_t kProtocolVersion = 6;
 
 // Periodic work, in frames of 10 ms. Phases keep messages apart.
 const uint32_t kBatteryEveryFrames = 2U;     // 20 ms
@@ -55,6 +57,8 @@ oc::HeadingGyro gyro;
 oc::ServoMove servoMove;
 oc::Ranger ranger;
 oc::RemoteDriver remote;
+oc::HeadingHold headingHold;
+oc::HoldOutput holdOutput = {0, oc::HoldState::kOff};
 
 bool gyroReady = false;
 uint16_t irWidths[oc::kIrMaxPulses];
@@ -238,9 +242,11 @@ oc::SignalStatus gyroStatus() {
   return oc::signalStatusFor(diagnostics.status(oc::EventId::kGyroComms));
 }
 
-// {G,heading,rate,gyroStatus,distance,distanceStatus}: heading in hundredths
-// of a degree since power-on, turn rate in hundredths of a degree per second,
-// distance in millimetres.
+// {G,heading,rate,gyroStatus,distance,distanceStatus,hold,correction}:
+// heading in hundredths of a degree since power-on, turn rate in hundredths
+// of a degree per second, distance in millimetres, the heading hold's state
+// (0 off, 1 holding, 2 substitute, 3 no gyro) and its correction in tenths of
+// a percent, positive turning left.
 void sendSensors() {
   oc::MessageWriter message('G');
   message.field(static_cast<int32_t>(gyro.headingCdeg()));
@@ -248,6 +254,8 @@ void sendSensors() {
   message.field(static_cast<int32_t>(gyroStatus()));
   message.field(static_cast<int32_t>(distance.value));
   message.field(static_cast<int32_t>(distance.status));
+  message.field(static_cast<int32_t>(holdOutput.state));
+  message.field(static_cast<int32_t>(holdOutput.correctionPermille));
   message.finish();
   send(message);
 }
@@ -283,6 +291,25 @@ void updateUltrasonic(uint32_t nowMs) {
   }
   distance = oc::qualify<uint16_t>(ranger.lastDistanceMm(), diagnostics.status(oc::EventId::kUltrasonicEcho),
                                    lastValidDistanceMm, oc::config::kUltrasonicSafeMm);
+}
+
+// Heading hold (F1): while the robot is told to drive straight, asks the
+// safety supervisor for a small correction. The gyro counts only while its
+// signal is valid, or briefly a substitute, and not at all while the
+// diagnostics table switches heading hold off.
+void updateHeadingHold() {
+  oc::SignalStatus status = gyroStatus();
+  if (diagnostics.inhibited(oc::kInhibitHeadingHold)) {
+    status = oc::SignalStatus::kError;
+  }
+  oc::HoldInput input;
+  input.driving = (safety.state() == oc::DriveState::kDriving);
+  input.left = safety.commandedLeft();
+  input.right = safety.commandedRight();
+  input.headingCdeg = gyro.headingCdeg();
+  input.gyro = status;
+  holdOutput = headingHold.update(input);
+  safety.setTrim(holdOutput.correctionPermille);
 }
 
 oc::LedMode ledMode() {
@@ -326,11 +353,14 @@ void runFrame(uint32_t frames, uint32_t nowMs) {
 
   const bool driveAllowed = (battery.level() != oc::BatteryLevel::kCritical) &&
                             !diagnostics.inhibited(oc::kInhibitDrive);
+  // The gyro and heading hold come before the supervisor sets the motors, so
+  // a correction applies in the frame it was worked out in.
+  updateGyro(frames);
+  updateHeadingHold();
   lastOutput = safety.update(nowMs, battery.pwmLimit(), driveAllowed);
   oc::board::setMotors(lastOutput.enabled, lastOutput.left, lastOutput.right);
   diagnostics.report(oc::EventId::kLinkTimeout, resultOf(!safety.linkTimedOut()));
 
-  updateGyro(frames);
   updateUltrasonic(nowMs);
   if (servoMove.finished(frames)) {
     oc::servos_hw::release();

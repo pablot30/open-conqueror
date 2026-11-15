@@ -84,6 +84,18 @@ class MessageTests(unittest.TestCase):
         assert health is not None
         self.assertEqual(health.events["ultrasonic echo"], 2)
 
+    def test_parse_sensors_with_heading_hold(self) -> None:
+        sensors = protocol.parse_sensors(["100", "5", "0", "605", "0", "1", "-12"])
+        assert sensors is not None
+        self.assertEqual((sensors.hold_name, sensors.correction_permille), ("holding", -12))
+        self.assertIn("heading hold holding (-1.2%)", sensors.describe())
+        self.assertEqual(sensors.to_dict()["hold_name"], "holding")
+        off = protocol.parse_sensors(["100", "5", "0", "605", "0", "3", "0"])
+        assert off is not None
+        self.assertIn("heading hold no gyro", off.describe())
+        self.assertNotIn("%", off.describe())
+        self.assertIsNone(protocol.parse_sensors(["100", "5", "0", "605", "0", "1"]).hold)  # type: ignore[union-attr]
+
     def test_parse_ir(self) -> None:
         key = protocol.parse_ir(["65280", "69", "0"])
         assert key is not None

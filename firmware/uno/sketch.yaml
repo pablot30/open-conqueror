@@ -20,6 +20,7 @@ profiles:
       - dir: services/battery
       - dir: services/diagnostics
       - dir: services/link
+      - dir: services/motion
       - dir: services/safety
       - dir: services/scheduler
 

@@ -89,6 +89,7 @@ enum Reaction : uint8_t {
   kReactNone = 0x00U,
   kInhibitDrive = 0x01U,  // the safety supervisor won't drive
   kInhibitRanging = 0x02U,  // modes that need the distance (obstacle avoidance, follow) are unavailable
+  kInhibitHeadingHold = 0x04U,  // heading hold doesn't use the gyro: the robot drives without correction
 };
 
 // How one event debounces and what it does when it fails.
