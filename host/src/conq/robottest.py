@@ -147,8 +147,8 @@ def run_test(test: RobotTest, port: str, log_path: Path, answers: dict[str, str]
     statuses = {r["status"] for r in context.results}
     if "failed" in statuses or not context.results:
         status = "failed"
-    elif "unanswered" in statuses:
-        status = "incomplete"
+    elif "unanswered" in statuses or "skipped" in statuses:
+        status = "incomplete"  # nothing failed, but not everything was checked
     else:
         status = "passed"
     return {
