@@ -107,6 +107,23 @@ void missingEchoesGoSubstituteThenError() {  // A5 example, T3
   CHECK(!d.inhibited(oc::kInhibitRanging));
 }
 
+void gyroFaultSwitchesHeadingHoldOff() {  // A5 reaction table
+  Diagnostics d;
+  const EventId id = EventId::kGyroComms;
+  report(d, id, kPass, 10);
+  CHECK(!d.inhibited(oc::kInhibitHeadingHold));
+  report(d, id, kFail, 2);  // a substitute: heading hold may still use it, briefly
+  CHECK(oc::signalStatusFor(d.status(id)) == SignalStatus::kSubstitute);
+  CHECK(!d.inhibited(oc::kInhibitHeadingHold));
+  d.report(id, kFail);  // confirmed
+  CHECK(d.inhibited(oc::kInhibitHeadingHold));
+  CHECK(!d.inhibited(oc::kInhibitDrive));  // driving itself carries on
+  report(d, id, kPass, 9);  // healing: still off
+  CHECK(d.inhibited(oc::kInhibitHeadingHold));
+  d.report(id, kPass);
+  CHECK(!d.inhibited(oc::kInhibitHeadingHold));
+}
+
 void signalStatusFollowsEvent() {  // A5 mapping
   CHECK(oc::signalStatusFor(EventStatus::kNotTested) == SignalStatus::kInit);
   CHECK(oc::signalStatusFor(EventStatus::kPassed) == SignalStatus::kValid);
@@ -140,6 +157,7 @@ void runUnitTests() {
   unconfirmedFaultHasNoReaction();
   eventsAreIndependent();
   missingEchoesGoSubstituteThenError();
+  gyroFaultSwitchesHeadingHoldOff();
   signalStatusFollowsEvent();
   qualifyHoldsLastValid();
 }

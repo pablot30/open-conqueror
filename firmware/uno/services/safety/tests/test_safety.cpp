@@ -135,6 +135,65 @@ void criticalBatteryHoldsStop() {  // S9
 
 }  // namespace
 
+void trimTurnsTheRobotLeftWhileDriving() {  // F1
+  SafetySupervisor drive = armedAt(0U);
+  drive.drive(50, 50, 0U);
+  drive.setTrim(40);  // 4% of the allowed maximum
+  MotorOutput output = drive.update(10U, 200U, true);
+  CHECK(output.left == 100 - 8);   // left slower
+  CHECK(output.right == 100 + 8);  // right faster
+  drive.setTrim(-40);
+  output = drive.update(20U, 200U, true);
+  CHECK(output.left == 108 && output.right == 92);
+  drive.drive(-50, -50, 20U);  // backward: the same differential turns the same way
+  drive.setTrim(40);
+  output = drive.update(30U, 200U, true);
+  CHECK(output.left == -108 && output.right == -92);
+}
+
+void trimIsLimitedByTheSupervisor() {  // S10
+  SafetySupervisor drive = armedAt(0U);
+  drive.drive(50, 50, 0U);
+  drive.setTrim(500);  // asks for 50%
+  MotorOutput output = drive.update(10U, 200U, true);
+  CHECK(output.left == 100 - 12 && output.right == 100 + 12);  // 6% at most
+  drive.drive(100, 100, 10U);
+  output = drive.update(20U, 200U, true);
+  CHECK(output.right == 200);  // never above the PWM limit
+  CHECK(output.left == 188);
+}
+
+void trimIsNotACommand() {  // S1, S3, S5
+  SafetySupervisor drive = armedAt(0U);
+  drive.drive(50, 50, 0U);
+  for (uint32_t t = 10U; t <= 290U; t += 10U) {
+    drive.setTrim(30);
+    drive.update(t, 200U, true);  // trimming every frame...
+  }
+  CHECK(drive.update(310U, 200U, true).left == 0);  // ...doesn't keep the link alive
+  CHECK(drive.linkTimedOut());
+  drive.setTrim(30);
+  const MotorOutput stopped = drive.update(320U, 200U, true);
+  CHECK(stopped.left == 0 && stopped.right == 0);  // and doesn't move a stopped robot
+  drive.drive(50, 50, 330U);  // held stop: needs a neutral command first
+  CHECK(drive.update(340U, 200U, true).left == 0);
+}
+
+void trimDoesNotMoveAStandingRobot() {
+  SafetySupervisor drive = armedAt(0U);
+  drive.setTrim(50);
+  const MotorOutput output = drive.update(10U, 200U, true);
+  CHECK(output.left == 0 && output.right == 0);  // neutral stays neutral
+}
+
+void reportsTheCommandedTracks() {
+  SafetySupervisor drive = armedAt(0U);
+  drive.drive(30, 30, 0U);
+  CHECK(drive.commandedLeft() == 30 && drive.commandedRight() == 30);
+  drive.stop();
+  CHECK(drive.commandedLeft() == 0 && drive.commandedRight() == 0);
+}
+
 void runUnitTests() {
   startsInStandby();
   stopBeforeDriveStaysInStandby();
@@ -148,4 +207,9 @@ void runUnitTests() {
   stopHoldsAgainstResentCommands();
   stopDisarmsEvenWhenNotDriving();
   criticalBatteryHoldsStop();
+  trimTurnsTheRobotLeftWhileDriving();
+  trimIsLimitedByTheSupervisor();
+  trimIsNotACommand();
+  trimDoesNotMoveAStandingRobot();
+  reportsTheCommandedTracks();
 }

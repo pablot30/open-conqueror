@@ -9,6 +9,14 @@ int16_t scale(int8_t percent, uint16_t pwmLimit) {
   return static_cast<int16_t>(pwm);
 }
 
+int32_t clampPwm(int32_t pwm, uint16_t pwmLimit) {
+  const int32_t limit = static_cast<int32_t>(pwmLimit);
+  if (pwm > limit) {
+    return limit;
+  }
+  return (pwm < -limit) ? -limit : pwm;
+}
+
 }  // namespace
 
 void SafetySupervisor::drive(int8_t leftPercent, int8_t rightPercent, uint32_t nowMs) {
@@ -25,8 +33,20 @@ void SafetySupervisor::drive(int8_t leftPercent, int8_t rightPercent, uint32_t n
   linkTimedOut_ = false;
 }
 
+void SafetySupervisor::setTrim(int16_t permille) {
+  if (permille > config::kMaxTrimPermille) {
+    permille = config::kMaxTrimPermille;
+  } else if (permille < -config::kMaxTrimPermille) {
+    permille = static_cast<int16_t>(-config::kMaxTrimPermille);
+  } else {
+    // within the limit
+  }
+  trimPermille_ = permille;
+}
+
 void SafetySupervisor::stop() {
   armed_ = false;
+  trimPermille_ = 0;
   if (state_ == DriveState::kDriving) {
     state_ = DriveState::kStopped;
   }
@@ -52,8 +72,15 @@ MotorOutput SafetySupervisor::update(uint32_t nowMs, uint16_t pwmLimit, bool dri
   if (pwmLimit > 255U) {
     pwmLimit = 255U;
   }
-  output.left = scale(leftPercent_, pwmLimit);
-  output.right = scale(rightPercent_, pwmLimit);
+  int32_t left = scale(leftPercent_, pwmLimit);
+  int32_t right = scale(rightPercent_, pwmLimit);
+  if ((state_ == DriveState::kDriving) && ((leftPercent_ != 0) || (rightPercent_ != 0))) {
+    const int32_t trim = (static_cast<int32_t>(trimPermille_) * static_cast<int32_t>(pwmLimit)) / 1000;
+    left = clampPwm(left - trim, pwmLimit);
+    right = clampPwm(right + trim, pwmLimit);
+  }
+  output.left = static_cast<int16_t>(left);
+  output.right = static_cast<int16_t>(right);
   return output;
 }
 
