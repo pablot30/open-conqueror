@@ -45,6 +45,8 @@ Command make(CommandType type) {
   command.right = 0;
   command.pan = 0U;
   command.tilt = 0U;
+  command.hasSpeed = false;
+  command.speed = 0U;
   return command;
 }
 
@@ -69,12 +71,24 @@ Command parseCamera(const char* text) {
   // text points just after "P"
   int16_t pan = 0;
   int16_t tilt = 0;
+  int16_t speed = 0;
+  bool hasSpeed = false;
   if ((*text != ',') || !readInt(++text, pan) || (*text != ',') ||
-      !readInt(++text, tilt) || (*text != '\0') || !inAngleRange(pan) ||
-      !inAngleRange(tilt)) {
+      !readInt(++text, tilt)) {
+    return make(CommandType::kInvalid);
+  }
+  if (*text == ',') {  // optional speed, in degrees a second
+    hasSpeed = true;
+    if (!readInt(++text, speed) || (speed < 0) || (speed > kMaxCameraSpeedDps)) {
+      return make(CommandType::kInvalid);
+    }
+  }
+  if ((*text != '\0') || !inAngleRange(pan) || !inAngleRange(tilt)) {
     return make(CommandType::kInvalid);
   }
   Command command = make(CommandType::kCamera);
+  command.hasSpeed = hasSpeed;
+  command.speed = static_cast<uint16_t>(speed);
   command.pan = static_cast<uint8_t>(pan);
   command.tilt = static_cast<uint8_t>(tilt);
   return command;

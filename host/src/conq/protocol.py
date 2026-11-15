@@ -10,7 +10,7 @@ from dataclasses import asdict, dataclass, fields
 from typing import Any
 
 BAUD = 9600
-PROTOCOL_VERSION = 3  # the firmware reports its own in the version message
+PROTOCOL_VERSION = 4  # the firmware reports its own in the version message
 
 STATES = {0: "standby", 1: "driving", 2: "stopped"}
 FAULTS = {0x01: "link timeout", 0x02: "battery low", 0x04: "battery critical"}
@@ -37,11 +37,16 @@ NEUTRAL = b"{D,0,0}"  # releases a held stop; the firmware needs it before drivi
 VERSION = b"{V}"
 
 
-def camera_message(pan: int, tilt: int) -> bytes:
+def camera_message(pan: int, tilt: int, speed: int | None = None) -> bytes:
+    """Speed is degrees a second; 0 is as fast as possible; None is the firmware's default."""
     for value in (pan, tilt):
         if not 0 <= value <= 180:
             raise ValueError("camera angles are 0 to 180 degrees")
-    return f"{{P,{pan},{tilt}}}".encode("ascii")
+    if speed is None:
+        return f"{{P,{pan},{tilt}}}".encode("ascii")
+    if not 0 <= speed <= 999:
+        raise ValueError("camera speed is 0 to 999 degrees a second")
+    return f"{{P,{pan},{tilt},{speed}}}".encode("ascii")
 
 
 def drive_message(left: int, right: int) -> bytes:

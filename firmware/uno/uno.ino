@@ -22,8 +22,9 @@ namespace {
 
 // The link protocol's version, sent in the version message. 1 was the
 // walking skeleton; 2 added the battery status to telemetry, the health
-// message, and this field; 3 adds the sensor message.
-const int32_t kProtocolVersion = 3;
+// message, and this field; 3 adds the sensor message;
+// 4 adds the optional speed in the camera message.
+const int32_t kProtocolVersion = 4;
 
 // Periodic work, in frames of 10 ms. Phases keep messages apart.
 const uint32_t kBatteryEveryFrames = 2U;     // 20 ms
@@ -47,7 +48,7 @@ oc::BatteryMonitor battery;
 oc::Diagnostics diagnostics;
 oc::Debouncer modeButton(kModeButtonDebounceMs);
 oc::HeadingGyro gyro;
-oc::ServoMove servoMove;
+oc::ServoRamp servoRamp;
 
 bool gyroReady = false;
 oc::Rgb ledShown = {1U, 1U, 1U};  // not a real colour, so the first update is sent
@@ -125,7 +126,7 @@ void sendHealth() {
   send(message);
 }
 
-void handle(const oc::Command& command, uint32_t nowMs, uint32_t frames) {
+void handle(const oc::Command& command, uint32_t nowMs) {
   switch (command.type) {
     case oc::CommandType::kDrive:
       safety.drive(command.left, command.right, nowMs);
@@ -137,8 +138,8 @@ void handle(const oc::Command& command, uint32_t nowMs, uint32_t frames) {
       sendVersion();
       break;
     case oc::CommandType::kCamera:
-      oc::servos_hw::move(command.pan, command.tilt);
-      servoMove.start(frames);
+      servoRamp.setTarget(command.pan, command.tilt,
+                          command.hasSpeed ? command.speed : oc::config::kServoDefaultSpeedDps);
       break;
     case oc::CommandType::kInvalid:
       sendError();
@@ -210,10 +211,24 @@ void updateLed(uint32_t nowMs) {
   }
 }
 
+// Moves the camera one step and releases the servos once they've settled.
+void updateServos(uint32_t frames) {
+  switch (servoRamp.update(frames)) {
+    case oc::ServoRamp::Action::kWrite:
+      oc::servos_hw::move(servoRamp.pan(), servoRamp.tilt());
+      break;
+    case oc::ServoRamp::Action::kRelease:
+      oc::servos_hw::release();
+      break;
+    case oc::ServoRamp::Action::kIdle:
+      break;
+  }
+}
+
 // One frame's work.
 void runFrame(uint32_t frames, uint32_t nowMs) {
   while (Serial.available() > 0) {
-    handle(parser.feed(static_cast<char>(Serial.read())), nowMs, frames);
+    handle(parser.feed(static_cast<char>(Serial.read())), nowMs);
   }
 
   if (modeButton.update(oc::board::modeButtonPressed(), nowMs)) {
@@ -233,9 +248,7 @@ void runFrame(uint32_t frames, uint32_t nowMs) {
   diagnostics.report(oc::EventId::kLinkTimeout, resultOf(!safety.linkTimedOut()));
 
   updateGyro(frames);
-  if (servoMove.finished(frames)) {
-    oc::servos_hw::release();
-  }
+  updateServos(frames);
   if (oc::every(frames, kLedEveryFrames, kLedPhase)) {
     updateLed(nowMs);
   }
@@ -258,8 +271,8 @@ void setup() {
   Serial.begin(9600);  // the stock camera bridge's rate
   battery.sample(oc::board::readBatteryAdc());
   oc::led_hw::begin();
-  oc::servos_hw::move(oc::config::kPanCentreDeg, oc::config::kTiltCentreDeg);  // F14
-  servoMove.start(0U);
+  // F14: jump to the centre; the first frame writes it.
+  servoRamp.setTarget(oc::config::kPanCentreDeg, oc::config::kTiltCentreDeg, 0U);
   gyroReady = oc::gyro_hw::begin();  // F13: calibration runs in the first frames
   sendVersion();
   wdt_enable(WDTO_250MS);  // S4
