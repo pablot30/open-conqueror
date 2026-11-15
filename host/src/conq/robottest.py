@@ -104,6 +104,24 @@ class Context:
                              "detail": f"{question} Answer: {answer}", "requirements": requirements or []})
         return yes
 
+    def measure(self, key: str, question: str, unit: str = "cm") -> float | None:
+        """Asks the person for a measured number, such as a distance read off a
+        tape measure. Returns None, and leaves the test incomplete, if there's
+        no answer."""
+        answer = self.answers.get(key)
+        while answer is None and self.interactive:
+            typed = input(f"{question} [{unit}] ").strip().replace(",", ".")
+            try:
+                float(typed)
+                answer = typed
+            except ValueError:
+                print("Please type a number, such as 29.5.")
+        if answer is None:
+            self.results.append({"check": key, "status": "unanswered", "detail": question, "requirements": []})
+            self.say(f"  ASK  {key}: {question} (give it with --answer {key}=<number>)")
+            return None
+        return float(answer.replace(",", "."))
+
     def wait(self, seconds: float) -> None:
         time.sleep(seconds)
 
