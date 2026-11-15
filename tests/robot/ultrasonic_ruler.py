@@ -9,12 +9,13 @@ don't move. You need the book (or another hard, flat target at least 15 cm
 wide) and about 1.6 m of clear table in front of the robot."""
 BRIEF = """The tracks don't move, and the test only listens to the ultrasonic sensor,
 the two round "eyes" on the front of the robot. For each distance in turn the
-test tells you where to put the book: the book's flat face, upright and square
-to the robot, at that distance from the front of the sensor, measured with the
-ruler. The distances are 5, 10, 30, 60, 100 and 150 cm. Place the book when
-told, then keep it and your hands still until the test says "got it". Each
-distance waits up to 40 seconds for you, then reads for about 2 seconds. Keep
-your hands out of the sensor's view while it reads. About 4 minutes in all."""
+test names a rough place for the book: about 5, 10, 30, 60, 100 and 150 cm
+from the front of the sensor. Stand the book upright, face square to the
+robot, roughly there; it doesn't need to be exact. Keep it and your hands
+still until the test says "got it", then read the tape measure: type the
+distance from the sensor's front to the book's face, to the nearest half
+centimetre. The test compares that with what the robot measured. Each
+distance waits up to 40 seconds for you. About 5 minutes in all."""
 
 DISTANCES_CM = [5, 10, 30, 60, 100, 150]
 TOLERANCE_MM = 10  # T3: within 1 cm
@@ -59,6 +60,12 @@ def run(t):
             continue
         t.say("got it")
         previous = mean
-        error = mean - cm * 10
-        t.check(f"reading at {cm} cm", abs(error) <= TOLERANCE_MM,
-                f"read {mean / 10:.1f} cm, error {error / 10:+.1f} cm", ["T3"])
+        # The book only needs to be near the asked distance. What counts is
+        # the distance the person reads off the tape measure.
+        actual_cm = t.measure(f"tape_{cm}", "Read the tape: how far is the book's face from the sensor's front?")
+        if actual_cm is None:
+            continue
+        error = mean - actual_cm * 10
+        t.check(f"reading near {cm} cm", abs(error) <= TOLERANCE_MM,
+                f"read {mean / 10:.1f} cm, tape {actual_cm:.1f} cm, error {error / 10:+.1f} cm "
+                f"({100 * error / (actual_cm * 10):+.1f}%)", ["T3"])
