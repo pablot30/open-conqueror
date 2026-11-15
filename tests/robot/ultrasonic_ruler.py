@@ -13,10 +13,11 @@ test names a rough place for the book: about 5, 10, 30, 60, 100 and 150 cm
 from the front of the sensor. Stand the book upright, face square to the
 robot, roughly there; it doesn't need to be exact. Press Enter when it's in
 place and your hands are away; the test then reads for about 2 seconds and
-says "got it". Then read the tape measure and type the
+says "got it" with its own reading. Then read the tape measure and type the
 distance from the sensor's front to the book's face, to the nearest half
-centimetre. The test compares that with what the robot measured. Each
-distance waits for you, with no time limit. About 5 minutes in all."""
+centimetre. It shows the error and lets you keep the result or redo that
+distance, as often as you like. Type s to skip a distance that doesn't fit.
+Each distance waits for you, with no time limit. About 5 minutes in all."""
 
 DISTANCES_CM = [5, 10, 30, 60, 100, 150]
 TOLERANCE_MM = 10  # T3: within 1 cm
@@ -42,29 +43,67 @@ def read_still(robot, since, seconds):
     return sum(samples) / len(samples)
 
 
-def run(t):
+def ask_number(prompt):
+    """A number typed by the person, or a one-letter choice."""
+    while True:
+        typed = input(prompt).strip().lower().replace(",", ".")
+        if typed in ("r", "s"):
+            return typed
+        try:
+            return float(typed)
+        except ValueError:
+            print("Please type a number such as 29.5, or r or s.")
+
+
+def measure_interactively(t, robot, cm):
+    """One distance, at the person's pace. Returns (robot mm, tape cm), or None
+    if skipped. The person can redo the distance as often as they like."""
     import time
 
+    while True:
+        typed = input(f"Place the book at about {cm} cm, keep your hands away, then press Enter "
+                      "(s and Enter to skip this distance): ").strip().lower()
+        if typed == "s":
+            return None
+        t.step(f"reading at about {cm} cm")
+        mean = None
+        for _ in range(3):
+            start = robot.now()
+            time.sleep(STILL_FOR_S + 0.3)
+            mean = read_still(robot, start + 0.2, STILL_FOR_S)
+            if mean is not None:
+                break
+            t.say("The readings moved or were missing; keep the book and your hands still. Reading again.")
+        if mean is None:
+            t.say("No steady reading. Let's try this distance again.")
+            continue
+        t.say(f"got it: the robot reads {mean / 10:.1f} cm")
+        answer = ask_number("Tape measure, sensor's front to the book's face, in cm "
+                            "(r to redo this distance, s to skip it): ")
+        if answer == "s":
+            return None
+        if answer == "r":
+            continue
+        error = mean - answer * 10
+        keep = input(f"Robot {mean / 10:.1f} cm, tape {answer:.1f} cm, error {error / 10:+.1f} cm. "
+                     "Enter to keep, r to redo this distance: ").strip().lower()
+        if keep == "r":
+            continue
+        return mean, answer
+
+
+def run(t):
     robot = t.robot
     previous = None
     for cm in DISTANCES_CM:
         if t.interactive:
-            # The person sets the pace: nothing is read until they say the
-            # book is in place.
-            typed = input(f"Place the book at about {cm} cm, keep your hands away, then press Enter "
-                          "(or type s and Enter to skip): ").strip().lower()
-            if typed == "s":
+            point = measure_interactively(t, robot, cm)
+            if point is None:
                 t.say(f"skipped {cm} cm")
+                t.results.append({"check": f"reading near {cm} cm", "status": "skipped",
+                                  "detail": "skipped by the person", "requirements": ["T3"]})
                 continue
-            t.step(f"reading at about {cm} cm")
-            mean = None
-            for _ in range(3):
-                start = robot.now()
-                time.sleep(STILL_FOR_S + 0.3)
-                mean = read_still(robot, start + 0.2, STILL_FOR_S)
-                if mean is not None:
-                    break
-                t.say("The readings moved or were missing; keep the book and your hands still. Reading again.")
+            mean, actual_cm = point
         else:
             t.say(f"Put the book at about {cm} cm from the sensor's front, then keep still.")
             t.step(f"waiting for a still target at {cm} cm")
@@ -83,18 +122,13 @@ def run(t):
                 return mean
 
             mean = robot.wait_for(still_target, WAIT_S)
-        if mean is None:
-            statuses = sorted({s.distance_status_name for _, s in robot.sensors(robot.now() - 3)})
-            t.check(f"reading near {cm} cm", False,
-                    f"no still, valid reading (statuses seen: {', '.join(statuses) or 'none'})", ["T3"])
-            continue
-        t.say("got it")
-        previous = mean
-        # The book only needs to be near the asked distance. What counts is
-        # the distance the person reads off the tape measure.
-        actual_cm = t.measure(f"tape_{cm}", "Read the tape: how far is the book's face from the sensor's front?")
-        if actual_cm is None:
-            continue
+            if mean is None:
+                t.check(f"reading near {cm} cm", False, "no still, valid reading", ["T3"])
+                continue
+            previous = mean
+            actual_cm = t.measure(f"tape_{cm}", "Read the tape: how far is the book's face from the sensor's front?")
+            if actual_cm is None:
+                continue
         error = mean - actual_cm * 10
         t.check(f"reading near {cm} cm", abs(error) <= TOLERANCE_MM,
                 f"read {mean / 10:.1f} cm, tape {actual_cm:.1f} cm, error {error / 10:+.1f} cm "
