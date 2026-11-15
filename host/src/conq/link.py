@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import IO, Any, Callable
 
 from . import protocol
-from .protocol import Health, Sensors, Telemetry
+from .protocol import Health, IrCode, Sensors, Telemetry
 
 BOOT_SECONDS = 2.0  # opening the port restarts the UNO through the USB chip's DTR line
 RESEND_PERIOD_S = 0.1  # well inside the firmware's 300 ms link timeout
@@ -150,6 +150,14 @@ class Robot:
         result = []
         for message in self.received(since, "G"):
             parsed = protocol.parse_sensors(protocol.parse_message(message.body)[1])
+            if parsed is not None:
+                result.append((message.t, parsed))
+        return result
+
+    def ir_codes(self, since: float = 0.0) -> list[tuple[float, IrCode]]:
+        result = []
+        for message in self.received(since, "K"):
+            parsed = protocol.parse_ir(protocol.parse_message(message.body)[1])
             if parsed is not None:
                 result.append((message.t, parsed))
         return result

@@ -13,6 +13,7 @@ profiles:
       - dir: hal/pinchange
       - dir: devices/button
       - dir: devices/gyro
+      - dir: devices/ir
       - dir: devices/led
       - dir: devices/servos
       - dir: devices/ultrasonic

@@ -10,6 +10,7 @@
 #include <button.h>
 #include <diagnostics.h>
 #include <gyro.h>
+#include <ir.h>
 #include <led.h>
 #include <link.h>
 #include <pinchange.h>
@@ -26,8 +27,8 @@ namespace {
 // walking skeleton; 2 added the battery status to telemetry, the health
 // message, and this field; 3 adds the sensor message;
 // 4 adds the optional speed in the camera message; 5 adds the ultrasonic
-// distance and its status to the sensor message.
-const int32_t kProtocolVersion = 5;
+// distance and its status to the sensor message; 6 adds the IR message.
+const int32_t kProtocolVersion = 6;
 
 // Periodic work, in frames of 10 ms. Phases keep messages apart.
 const uint32_t kBatteryEveryFrames = 2U;     // 20 ms
@@ -53,8 +54,12 @@ oc::Debouncer modeButton(kModeButtonDebounceMs);
 oc::HeadingGyro gyro;
 oc::ServoRamp servoRamp;
 oc::Ranger ranger;
+oc::RemoteDriver remote;
 
 bool gyroReady = false;
+uint16_t irWidths[oc::kIrMaxPulses];
+oc::IrCode lastIrCode = {oc::IrKind::kNone, 0U, 0U};
+bool lastIrWasRepeat = false;
 uint16_t lastValidDistanceMm = 0U;
 oc::Signal<uint16_t> distance = {0U, oc::SignalStatus::kInit};
 oc::Rgb ledShown = {1U, 1U, 1U};  // not a real colour, so the first update is sent
@@ -130,6 +135,72 @@ void sendHealth() {
   }
   message.finish();
   send(message);
+}
+
+// {K,address,command,kind}: kind 0 is a key's code (the first two frame
+// bytes, then the command), 1 is its repeat code, sent once per hold, and 2
+// is a burst of pulses we couldn't read (address holds how many), and 3 says
+// the held key stopped sending codes, so the robot stopped (F10).
+void sendIr(uint16_t address, uint8_t command, int32_t kind) {
+  oc::MessageWriter message('K');
+  message.field(static_cast<int32_t>(address));
+  message.field(static_cast<int32_t>(command));
+  message.field(kind);
+  message.finish();
+  send(message);
+}
+
+// Hands the remote's request to the safety supervisor, like every other
+// source of commands. A key pressed afresh sends a neutral command first,
+// which is the deliberate command the supervisor wants after a stop (S5).
+void applyRemote(const oc::RemoteRequest& request, uint32_t nowMs) {
+  if (request.action == oc::RemoteAction::kStop) {
+    safety.stop();
+  } else if (request.action == oc::RemoteAction::kDrive) {
+    if (request.newPress) {
+      safety.drive(0, 0, nowMs);
+    }
+    safety.drive(request.left, request.right, nowMs);
+  } else {
+    // Nothing to do.
+  }
+}
+
+// Reads a finished IR frame, if there is one, and reports it.
+void updateIr(uint32_t nowMs) {
+  uint8_t pulses = 0U;
+  if (oc::ir_hw::takeFrame(irWidths, pulses)) {
+    const oc::IrCode code = oc::decodeNec(irWidths, pulses);
+    switch (code.kind) {
+      case oc::IrKind::kFrame:
+        lastIrCode = code;
+        lastIrWasRepeat = false;
+        sendIr(code.address, code.command, 0);
+        applyRemote(remote.onKey(oc::keyFor(code), nowMs), nowMs);
+        break;
+      case oc::IrKind::kRepeat:
+        if (!lastIrWasRepeat) {
+          sendIr(lastIrCode.address, lastIrCode.command, 1);
+          lastIrWasRepeat = true;
+        }
+        applyRemote(remote.onRepeat(nowMs), nowMs);
+        break;
+      case oc::IrKind::kUnreadable:
+        // Ambient light flickers into a few pulses; a real remote sends many.
+        if (pulses >= oc::config::kIrReportMinPulses) {
+          sendIr(pulses, 0U, 2);
+        }
+        break;
+      case oc::IrKind::kNone:
+      default:
+        break;
+    }
+  }
+  const oc::RemoteRequest release = remote.update(nowMs);
+  if (release.action == oc::RemoteAction::kStop) {
+    sendIr(0U, 0U, 3);  // the held key stopped sending codes
+  }
+  applyRemote(release, nowMs);
 }
 
 void handle(const oc::Command& command, uint32_t nowMs) {
@@ -255,6 +326,8 @@ void runFrame(uint32_t frames, uint32_t nowMs) {
     handle(parser.feed(static_cast<char>(Serial.read())), nowMs);
   }
 
+  updateIr(nowMs);
+
   if (modeButton.update(oc::board::modeButtonPressed(), nowMs)) {
     safety.stop();  // S1
   }
@@ -300,6 +373,7 @@ void setup() {
   servoRamp.setTarget(oc::config::kPanCentreDeg, oc::config::kTiltCentreDeg, 0U);
   gyroReady = oc::gyro_hw::begin();  // F13: calibration runs in the first frames
   oc::ultrasonic_hw::begin();
+  oc::ir_hw::begin();
   sendVersion();
   wdt_enable(WDTO_250MS);  // S4
 }

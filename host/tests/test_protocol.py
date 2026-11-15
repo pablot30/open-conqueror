@@ -91,6 +91,17 @@ class MessageTests(unittest.TestCase):
         assert health is not None
         self.assertEqual(health.events["ultrasonic echo"], 2)
 
+    def test_parse_ir(self) -> None:
+        key = protocol.parse_ir(["65280", "69", "0"])
+        assert key is not None
+        self.assertTrue(key.is_key)
+        self.assertEqual(key.describe(), "key address 0xFF00 command 0x45")
+        self.assertEqual(protocol.parse_ir(["65280", "69", "1"]).kind_name, "repeat")  # type: ignore[union-attr]
+        self.assertIn("unreadable burst of 34 pulses", protocol.parse_ir(["34", "0", "2"]).describe())  # type: ignore[union-attr]
+        self.assertEqual(protocol.parse_ir(["0", "0", "3"]).describe(), "key released")  # type: ignore[union-attr]
+        self.assertIsNone(protocol.parse_ir(["1", "2"]))
+        self.assertIsNone(protocol.parse_ir(["a", "b", "c"]))
+
     def test_parse_telemetry_rejects_bad_fields(self) -> None:
         self.assertIsNone(protocol.parse_telemetry(["1", "2"]))
         self.assertIsNone(protocol.parse_telemetry(["x"] * 7))

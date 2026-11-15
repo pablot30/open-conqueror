@@ -1,6 +1,6 @@
 # Firmware
 
-Our firmware for the robot. Only the UNO has firmware so far, at increment 1, the walking skeleton ([decision 0006](../docs/decisions/0006-walking-skeleton-first.md)). It drives both tracks from a computer and stops when it should. It doesn't use the line sensors or IR remote yet.
+Our firmware for the robot. Only the UNO has firmware so far, at increment 1, the walking skeleton ([decision 0006](../docs/decisions/0006-walking-skeleton-first.md)). It drives both tracks from a computer and stops when it should. It doesn't use the line sensors yet.
 
 ## Layout
 
@@ -11,7 +11,7 @@ The firmware is built from self-contained **units**, grouped in the four layers 
 | `uno/uno.ino` | Connects the units. No logic of its own beyond that |
 | `uno/sketch.yaml` | The build profile: board, pinned core version, and every unit |
 | `uno/services/` | `safety` (the only code that decides what the motors do), `battery`, `link` (the protocol), `scheduler` (the 10 ms frame), `diagnostics` (monitors, events, signal status) |
-| `uno/devices/` | `button` (MODE button debouncing), `gyro` (turn rate and heading), `servos` (camera pan and tilt), `led` (the status LED), `ultrasonic` (distance, timed without blocking) |
+| `uno/devices/` | `button` (MODE button debouncing), `gyro` (turn rate and heading), `servos` (camera pan and tilt), `led` (the status LED), `ultrasonic` (distance, timed without blocking), `ir` (the remote: decoder, key table, arrow driving) |
 | `uno/hal/` | `board`: the motor driver, battery divider and MODE button pins. `pinchange`: the one pin-change interrupt that the ultrasonic echo and the IR receiver share. Device units keep their own hardware code in files ending in `_hw.cpp`, which only build for the board |
 | `uno/modes/` | Arrives in increment 3, with the modes |
 | `testing/` | The shared unit test harness, built with CMake on the host computer |
@@ -34,7 +34,7 @@ CI builds the same image on every pull request and keeps it, with the build repo
 
 ## Protocol
 
-This is protocol version 5. Messages are short text inside braces, at 9600 baud. That's what the stock camera firmware's bridge forwards, so the same messages should work over Wi-Fi in increment 4. The firmware ignores anything outside braces.
+This is protocol version 6. Messages are short text inside braces, at 9600 baud. That's what the stock camera firmware's bridge forwards, so the same messages should work over Wi-Fi in increment 4. The firmware ignores anything outside braces.
 
 **From the computer:**
 
@@ -55,7 +55,8 @@ This is protocol version 5. Messages are short text inside braces, at 9600 baud.
 | `{V,version,commit,protocol}` | Firmware version, git commit and protocol version, at startup and on request (D4). The commit ends in `-dirty` if the build had uncommitted changes |
 | `{T,ms,state,left,right,mV,faults,frame,bstat}` | Telemetry, 10 times a second. `state`: 0 standby, 1 driving, 2 stopped. `left` and `right`: motor PWM, -255 to 255. `mV`: battery at Vin. `faults`: 1 link timeout, 2 battery low, 4 battery critical. `frame`: the longest frame's work since the last message, in µs (T2). `bstat`: the battery reading's signal status: 0 valid, 1 init, 2 substitute, 3 error, 4 not available |
 | `{H,skipped,e0,e1,...}` | Health, once a second. `skipped`: frames skipped since power-on. Then each diagnostic event's state, in the order of `EventId` in [diagnostics.h](uno/services/diagnostics/src/diagnostics.h): 0 not tested, 1 prefailed, 2 failed, 3 prepassed, 4 passed. Events today: battery sensor, frame overrun, link timeout, gyro comms, ultrasonic echo |
-| `{G,heading,rate,gstat,dist,dstat}` | Sensors, 5 times a second. `heading`: 0 to 35999 hundredths of a degree since power-on, positive counterclockwise seen from above. `rate`: hundredths of a degree per second. `gstat`: the gyro's signal status, *init* until it has calibrated. `dist`: the ultrasonic distance in millimetres, meaningful only when `dstat` is 0 (valid); the last valid distance when 2 (substitute), and 0 otherwise. `dstat`: its signal status. Protocols 3 and 4 had the first three fields only |
+| `{G,heading,rate,gstat,dist,dstat}` | Sensors, 5 times a second. `heading`: 0 to 35999 hundredths of a degree since power-on, positive counterclockwise seen from above. `rate`: hundredths of a degree per second. `gstat`: the gyro's signal status, *init* until it has calibrated. `dist`: the ultrasonic distance in millimetres, meaningful only when `dstat` is 0 (valid); the last valid distance when 2 (substitute), and 0 otherwise. `dstat`: its signal status. Protocol 3 had the first three fields only |
+| `{K,address,command,kind}` | An IR remote event. `kind` 0: a key's code (`address` is the frame's first two bytes, `command` its third), 1: that key's repeat code, sent once per hold, 2: a burst of pulses that couldn't be read (`address` is the pulse count), 3: the held key stopped sending codes and the robot stopped |
 | `{E,1}` | A message wasn't understood |
 
 **Link budget.** At 9600 baud the link carries about 960 bytes a second. Worst case, telemetry (about 40 bytes, 10 a second), health and the sensor message (about 25 bytes, 5 a second) use about 53% of it, a little over our 50% aim. Protocol 4's distance fields cost about 3 percentage points. A shorter encoding or slower telemetry while stopped would bring it back under; that needs the maintainer's decision.
@@ -73,6 +74,7 @@ Our code is Apache-2.0. The firmware image also contains the Arduino AVR core, i
 | Requirement | How |
 |---|---|
 | S1 | `{S}` or the MODE button brakes both tracks. The stop holds until a neutral `{D,0,0}`, so drive messages the computer keeps resending can't restart the robot |
+| S2 | OK on the IR remote brakes both tracks through the safety supervisor, and the stop holds like any other |
 | S3 | Drive commands expire after 300 ms |
 | S4 | A 250 ms watchdog resets the UNO if the loop hangs, and the driver's pull-downs keep the motors off through a reset |
 | S5 | The driver stays in standby from power-on until a neutral `{D,0,0}` and then a drive command. If the UNO resets mid-drive, resent drive messages don't restart the motors |

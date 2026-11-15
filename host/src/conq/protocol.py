@@ -10,7 +10,7 @@ from dataclasses import asdict, dataclass, fields
 from typing import Any
 
 BAUD = 9600
-PROTOCOL_VERSION = 5  # the firmware reports its own in the version message
+PROTOCOL_VERSION = 6  # the firmware reports its own in the version message
 
 STATES = {0: "standby", 1: "driving", 2: "stopped"}
 FAULTS = {0x01: "link timeout", 0x02: "battery low", 0x04: "battery critical"}
@@ -185,6 +185,49 @@ def parse_sensors(values: list[str]) -> Sensors | None:
     if len(numbers) >= 5:  # protocol 5; later fields are ignored
         return Sensors(*numbers[:5])
     return None
+
+
+IR_KINDS = {0: "key", 1: "repeat", 2: "unreadable", 3: "release"}
+
+
+@dataclass
+class IrCode:
+    """The IR message: {K,address,command,kind}. Kind 0 is a key's code, 1 its
+    repeat code (sent once per hold, with the code of the key held), and 2 a
+    burst of pulses the firmware couldn't read (address is the pulse count), and 3 that
+    a held key stopped sending codes, so the robot stopped."""
+
+    address: int
+    command: int
+    kind: int
+
+    @property
+    def kind_name(self) -> str:
+        return IR_KINDS.get(self.kind, str(self.kind))
+
+    @property
+    def is_key(self) -> bool:
+        return self.kind == 0
+
+    def to_dict(self) -> dict[str, Any]:
+        data = asdict(self)
+        data["kind_name"] = self.kind_name
+        return data
+
+    def describe(self) -> str:
+        if self.kind == 2:
+            return f"unreadable burst of {self.address} pulses"
+        if self.kind == 3:
+            return "key released"
+        return f"{self.kind_name} address 0x{self.address:04X} command 0x{self.command:02X}"
+
+
+def parse_ir(values: list[str]) -> IrCode | None:
+    try:
+        numbers = [int(v) for v in values]
+    except ValueError:
+        return None
+    return IrCode(*numbers[:3]) if len(numbers) >= 3 else None
 
 
 def parse_health(values: list[str]) -> Health | None:
