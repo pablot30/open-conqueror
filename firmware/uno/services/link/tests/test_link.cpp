@@ -49,6 +49,17 @@ void parsesStopAndVersion() {
   CHECK(oc::parseMessage("P,181,90").type == CommandType::kInvalid);
   CHECK(oc::parseMessage("P,-1,90").type == CommandType::kInvalid);
   CHECK(oc::parseMessage("P,90").type == CommandType::kInvalid);
+  CHECK(!camera.hasSpeed);
+  const Command slow = oc::parseMessage("P,60,120,25");
+  CHECK(slow.type == CommandType::kCamera && slow.hasSpeed && slow.speed == 25U);
+  const Command jump = oc::parseMessage("P,60,120,0");
+  CHECK(jump.type == CommandType::kCamera && jump.hasSpeed && jump.speed == 0U);
+  CHECK(oc::parseMessage("P,60,120,999").type == CommandType::kCamera);
+  CHECK(oc::parseMessage("P,60,120,1000").type == CommandType::kInvalid);
+  CHECK(oc::parseMessage("P,60,120,-1").type == CommandType::kInvalid);
+  CHECK(oc::parseMessage("P,60,120,").type == CommandType::kInvalid);
+  CHECK(oc::parseMessage("P,60,120,5,6").type == CommandType::kInvalid);
+  CHECK(oc::parseMessage("P,181,90,50").type == CommandType::kInvalid);
   CHECK(oc::parseMessage("SS").type == CommandType::kInvalid);
 }
 

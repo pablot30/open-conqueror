@@ -34,7 +34,7 @@ CI builds the same image on every pull request and keeps it, with the build repo
 
 ## Protocol
 
-This is protocol version 6. Messages are short text inside braces, at 9600 baud. That's what the stock camera firmware's bridge forwards, so the same messages should work over Wi-Fi in increment 4. The firmware ignores anything outside braces.
+This is protocol version 7. Messages are short text inside braces, at 9600 baud. That's what the stock camera firmware's bridge forwards, so the same messages should work over Wi-Fi in increment 4. The firmware ignores anything outside braces.
 
 **From the computer:**
 
@@ -45,7 +45,8 @@ This is protocol version 6. Messages are short text inside braces, at 9600 baud.
 | `{S}` | Stop: brake both tracks |
 | `{"N":100}` | Stop. The stock bridge sends this when a client disconnects |
 | `{V}` | Ask for the version |
-| `{P,pan,tilt}` | Point the camera: pan and tilt, each 0 to 180 degrees, 90 is the centre. The servos are released 0.5 s later |
+| `{P,pan,tilt}` | Point the camera: pan and tilt, each 0 to 180 degrees, 90 is the centre. The camera turns at 100 degrees a second, and the servos are released 0.5 s after they arrive |
+| `{P,pan,tilt,speed}` | The same, at `speed` degrees a second, 0 to 999. 0 means as fast as possible (the servos jump). Added in protocol 4 |
 
 **From the robot:**
 
@@ -54,7 +55,7 @@ This is protocol version 6. Messages are short text inside braces, at 9600 baud.
 | `{V,version,commit,protocol}` | Firmware version, git commit and protocol version, at startup and on request (D4). The commit ends in `-dirty` if the build had uncommitted changes |
 | `{T,ms,state,left,right,mV,faults,frame,bstat}` | Telemetry, 10 times a second. `state`: 0 standby, 1 driving, 2 stopped. `left` and `right`: motor PWM, -255 to 255. `mV`: battery at Vin. `faults`: 1 link timeout, 2 battery low, 4 battery critical. `frame`: the longest frame's work since the last message, in µs (T2). `bstat`: the battery reading's signal status: 0 valid, 1 init, 2 substitute, 3 error, 4 not available |
 | `{H,skipped,e0,e1,...}` | Health, once a second. `skipped`: frames skipped since power-on. Then each diagnostic event's state, in the order of `EventId` in [diagnostics.h](uno/services/diagnostics/src/diagnostics.h): 0 not tested, 1 prefailed, 2 failed, 3 prepassed, 4 passed. Events today: battery sensor, frame overrun, link timeout, gyro comms, ultrasonic echo |
-| `{G,heading,rate,gstat,dist,dstat,hold,corr}` | Sensors, 5 times a second. `heading`: 0 to 35999 hundredths of a degree since power-on, positive counterclockwise seen from above. `rate`: hundredths of a degree per second. `gstat`: the gyro's signal status, *init* until it has calibrated. `dist`: the ultrasonic distance in millimetres, meaningful only when `dstat` is 0 (valid); the last valid distance when 2 (substitute), and 0 otherwise. `dstat`: its signal status. `hold`: heading hold: 0 off (not a straight run), 1 holding, 2 holding on a substitute gyro reading, 3 no gyro, so no correction. `corr`: its correction in tenths of a percent, positive turning left. Protocol 3 had the first three fields, protocol 4 the first five |
+| `{G,heading,rate,gstat,dist,dstat,hold,corr}` | Sensors, 5 times a second. `heading`: 0 to 35999 hundredths of a degree since power-on, positive counterclockwise seen from above. `rate`: hundredths of a degree per second. `gstat`: the gyro's signal status, *init* until it has calibrated. `dist`: the ultrasonic distance in millimetres, meaningful only when `dstat` is 0 (valid); the last valid distance when 2 (substitute), and 0 otherwise. `dstat`: its signal status. `hold`: heading hold: 0 off (not a straight run), 1 holding, 2 holding on a substitute gyro reading, 3 no gyro, so no correction. `corr`: its correction in tenths of a percent, positive turning left. Protocols 3 and 4 had the first three fields, protocol 5 the first five |
 | `{K,address,command,kind}` | An IR remote event. `kind` 0: a key's code (`address` is the frame's first two bytes, `command` its third), 1: that key's repeat code, sent once per hold, 2: a burst of pulses that couldn't be read (`address` is the pulse count), 3: the held key stopped sending codes and the robot stopped |
 | `{E,1}` | A message wasn't understood |
 
