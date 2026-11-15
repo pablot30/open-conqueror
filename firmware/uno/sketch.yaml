@@ -10,10 +10,12 @@ profiles:
     libraries:
       - Servo (1.3.0)
       - dir: hal/board
+      - dir: hal/pinchange
       - dir: devices/button
       - dir: devices/gyro
       - dir: devices/led
       - dir: devices/servos
+      - dir: devices/ultrasonic
       - dir: services/battery
       - dir: services/diagnostics
       - dir: services/link

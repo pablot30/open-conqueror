@@ -80,6 +80,7 @@ enum class EventId : uint8_t {
   kFrameOverrun = 1,   // each frame's work finished within its budget (T2)
   kLinkTimeout = 2,    // drive commands keep arriving while driving (S3)
   kGyroComms = 3,      // the gyro answers on I2C
+  kUltrasonicEcho = 4,  // an echo of plausible width arrives after each ping (T3)
   kCount
 };
 
@@ -87,6 +88,7 @@ enum class EventId : uint8_t {
 enum Reaction : uint8_t {
   kReactNone = 0x00U,
   kInhibitDrive = 0x01U,  // the safety supervisor won't drive
+  kInhibitRanging = 0x02U,  // modes that need the distance (obstacle avoidance, follow) are unavailable
 };
 
 // How one event debounces and what it does when it fails.

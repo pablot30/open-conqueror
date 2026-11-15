@@ -10,7 +10,7 @@ from dataclasses import asdict, dataclass, fields
 from typing import Any
 
 BAUD = 9600
-PROTOCOL_VERSION = 4  # the firmware reports its own in the version message
+PROTOCOL_VERSION = 5  # the firmware reports its own in the version message
 
 STATES = {0: "standby", 1: "driving", 2: "stopped"}
 FAULTS = {0x01: "link timeout", 0x02: "battery low", 0x04: "battery critical"}
@@ -18,7 +18,7 @@ FAULTS = {0x01: "link timeout", 0x02: "battery low", 0x04: "battery critical"}
 SIGNAL_STATUSES = {0: "valid", 1: "init", 2: "substitute", 3: "error", 4: "not available"}
 EVENT_STATES = {0: "not tested", 1: "prefailed", 2: "failed", 3: "prepassed", 4: "passed"}
 # Diagnostic events in the order the health message lists them.
-EVENTS = ["battery sensor", "frame overrun", "link timeout", "gyro comms"]
+EVENTS = ["battery sensor", "frame overrun", "link timeout", "gyro comms", "ultrasonic echo"]
 
 # Track speeds as fractions of the requested speed: (left, right).
 DIRECTIONS = {
@@ -140,24 +140,39 @@ class Health:
 
 @dataclass
 class Sensors:
-    """The sensor message: {G,heading,rate,gyro_status}."""
+    """The sensor message: {G,heading,rate,gyro_status,distance,distance_status}.
+    Protocols 3 and 4 had the first three fields only."""
 
     heading_cdeg: int  # 0 to 35999 hundredths of a degree since power-on
     rate_cdps: int     # hundredths of a degree per second
     gyro_status: int   # signal status
+    distance_mm: int | None = None  # ultrasonic distance in millimetres; protocol 5 and later
+    distance_status: int | None = None  # its signal status
 
     @property
     def gyro_status_name(self) -> str:
         return SIGNAL_STATUSES.get(self.gyro_status, str(self.gyro_status))
 
+    @property
+    def distance_status_name(self) -> str | None:
+        if self.distance_status is None:
+            return None
+        return SIGNAL_STATUSES.get(self.distance_status, str(self.distance_status))
+
     def to_dict(self) -> dict[str, Any]:
         data = asdict(self)
         data["gyro_status_name"] = self.gyro_status_name
+        data["distance_status_name"] = self.distance_status_name
         return data
 
     def describe(self) -> str:
-        return (f"heading {self.heading_cdeg / 100:.1f} deg, turning {self.rate_cdps / 100:.2f} deg/s "
+        text = (f"heading {self.heading_cdeg / 100:.1f} deg, turning {self.rate_cdps / 100:.2f} deg/s "
                 f"(gyro {self.gyro_status_name})")
+        if self.distance_mm is not None:
+            # Only a valid distance is a measurement; the rest are placeholders.
+            shown = f"{self.distance_mm / 10:.1f} cm" if self.distance_status == 0 else "no distance"
+            text += f", ultrasonic {shown} ({self.distance_status_name})"
+        return text
 
 
 def parse_sensors(values: list[str]) -> Sensors | None:
@@ -165,7 +180,11 @@ def parse_sensors(values: list[str]) -> Sensors | None:
         numbers = [int(v) for v in values]
     except ValueError:
         return None
-    return Sensors(*numbers[:3]) if len(numbers) >= 3 else None
+    if len(numbers) == 3:  # protocol 3 and 4
+        return Sensors(*numbers)
+    if len(numbers) >= 5:  # protocol 5; later fields are ignored
+        return Sensors(*numbers[:5])
+    return None
 
 
 def parse_health(values: list[str]) -> Health | None:

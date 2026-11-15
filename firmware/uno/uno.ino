@@ -12,9 +12,11 @@
 #include <gyro.h>
 #include <led.h>
 #include <link.h>
+#include <pinchange.h>
 #include <safety.h>
 #include <scheduler.h>
 #include <servos.h>
+#include <ultrasonic.h>
 
 #include "src/version.h"
 
@@ -23,8 +25,9 @@ namespace {
 // The link protocol's version, sent in the version message. 1 was the
 // walking skeleton; 2 added the battery status to telemetry, the health
 // message, and this field; 3 adds the sensor message;
-// 4 adds the optional speed in the camera message.
-const int32_t kProtocolVersion = 4;
+// 4 adds the optional speed in the camera message; 5 adds the ultrasonic
+// distance and its status to the sensor message.
+const int32_t kProtocolVersion = 5;
 
 // Periodic work, in frames of 10 ms. Phases keep messages apart.
 const uint32_t kBatteryEveryFrames = 2U;     // 20 ms
@@ -49,8 +52,11 @@ oc::Diagnostics diagnostics;
 oc::Debouncer modeButton(kModeButtonDebounceMs);
 oc::HeadingGyro gyro;
 oc::ServoRamp servoRamp;
+oc::Ranger ranger;
 
 bool gyroReady = false;
+uint16_t lastValidDistanceMm = 0U;
+oc::Signal<uint16_t> distance = {0U, oc::SignalStatus::kInit};
 oc::Rgb ledShown = {1U, 1U, 1U};  // not a real colour, so the first update is sent
 
 oc::MotorOutput lastOutput = {false, 0, 0};
@@ -161,13 +167,16 @@ oc::SignalStatus gyroStatus() {
   return oc::signalStatusFor(diagnostics.status(oc::EventId::kGyroComms));
 }
 
-// {G,heading,rate,gyroStatus}: heading in hundredths of a degree since
-// power-on, turn rate in hundredths of a degree per second.
+// {G,heading,rate,gyroStatus,distance,distanceStatus}: heading in hundredths
+// of a degree since power-on, turn rate in hundredths of a degree per second,
+// distance in millimetres.
 void sendSensors() {
   oc::MessageWriter message('G');
   message.field(static_cast<int32_t>(gyro.headingCdeg()));
   message.field(gyro.rateCdps());
   message.field(static_cast<int32_t>(gyroStatus()));
+  message.field(static_cast<int32_t>(distance.value));
+  message.field(static_cast<int32_t>(distance.status));
   message.finish();
   send(message);
 }
@@ -188,6 +197,21 @@ void updateGyro(uint32_t frames) {
   } else {
     gyro.missedFrame();  // keeps the last rate, as a substitute
   }
+}
+
+// Times the echo without waiting (T2) and keeps the distance and its status.
+void updateUltrasonic(uint32_t nowMs) {
+  uint32_t echoWidthUs = 0U;
+  const bool echoComplete = oc::ultrasonic_hw::takeEcho(echoWidthUs);
+  const oc::PingStep step = ranger.update(nowMs, echoComplete, echoWidthUs);
+  if (step.resultReady) {
+    diagnostics.report(oc::EventId::kUltrasonicEcho, resultOf(step.echoOk));
+  }
+  if (step.trigger) {
+    oc::ultrasonic_hw::trigger();
+  }
+  distance = oc::qualify<uint16_t>(ranger.lastDistanceMm(), diagnostics.status(oc::EventId::kUltrasonicEcho),
+                                   lastValidDistanceMm, oc::config::kUltrasonicSafeMm);
 }
 
 oc::LedMode ledMode() {
@@ -248,6 +272,7 @@ void runFrame(uint32_t frames, uint32_t nowMs) {
   diagnostics.report(oc::EventId::kLinkTimeout, resultOf(!safety.linkTimedOut()));
 
   updateGyro(frames);
+  updateUltrasonic(nowMs);
   updateServos(frames);
   if (oc::every(frames, kLedEveryFrames, kLedPhase)) {
     updateLed(nowMs);
@@ -274,6 +299,7 @@ void setup() {
   // F14: jump to the centre; the first frame writes it.
   servoRamp.setTarget(oc::config::kPanCentreDeg, oc::config::kTiltCentreDeg, 0U);
   gyroReady = oc::gyro_hw::begin();  // F13: calibration runs in the first frames
+  oc::ultrasonic_hw::begin();
   sendVersion();
   wdt_enable(WDTO_250MS);  // S4
 }

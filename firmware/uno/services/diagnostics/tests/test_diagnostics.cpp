@@ -87,6 +87,26 @@ void eventsAreIndependent() {
   CHECK(!d.inhibited(oc::kInhibitDrive));  // overruns have no reaction yet
 }
 
+void missingEchoesGoSubstituteThenError() {  // A5 example, T3
+  Diagnostics d;
+  const EventId id = EventId::kUltrasonicEcho;
+  report(d, id, kPass, 3);
+  CHECK(d.status(id) == EventStatus::kPassed);
+  d.report(id, kFail);  // one missed echo: a substitute, no reaction
+  CHECK(oc::signalStatusFor(d.status(id)) == SignalStatus::kSubstitute);
+  CHECK(!d.inhibited(oc::kInhibitRanging));
+  report(d, id, kFail, 4);  // several: an error, and ranging modes are unavailable
+  CHECK(oc::signalStatusFor(d.status(id)) == SignalStatus::kError);
+  CHECK(d.inhibited(oc::kInhibitRanging));
+  CHECK(!d.inhibited(oc::kInhibitDrive));  // driving is not affected
+  report(d, id, kPass, 2);  // healing: still a substitute, still unavailable
+  CHECK(oc::signalStatusFor(d.status(id)) == SignalStatus::kSubstitute);
+  CHECK(d.inhibited(oc::kInhibitRanging));
+  d.report(id, kPass);
+  CHECK(oc::signalStatusFor(d.status(id)) == SignalStatus::kValid);
+  CHECK(!d.inhibited(oc::kInhibitRanging));
+}
+
 void signalStatusFollowsEvent() {  // A5 mapping
   CHECK(oc::signalStatusFor(EventStatus::kNotTested) == SignalStatus::kInit);
   CHECK(oc::signalStatusFor(EventStatus::kPassed) == SignalStatus::kValid);
@@ -119,6 +139,7 @@ void runUnitTests() {
   healsThroughPrepassed();
   unconfirmedFaultHasNoReaction();
   eventsAreIndependent();
+  missingEchoesGoSubstituteThenError();
   signalStatusFollowsEvent();
   qualifyHoldsLastValid();
 }
