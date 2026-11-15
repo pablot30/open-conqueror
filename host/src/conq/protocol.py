@@ -10,7 +10,7 @@ from dataclasses import asdict, dataclass, fields
 from typing import Any
 
 BAUD = 9600
-PROTOCOL_VERSION = 7  # the firmware reports its own in the version message
+PROTOCOL_VERSION = 8  # the firmware reports its own in the version message
 
 STATES = {0: "standby", 1: "driving", 2: "stopped"}
 FAULTS = {0x01: "link timeout", 0x02: "battery low", 0x04: "battery critical"}
@@ -69,14 +69,15 @@ def direction_speeds(direction: str, speed: int) -> tuple[int, int]:
 
 @dataclass
 class Telemetry:
-    ms: int
+    ms: int  # since power-on; from protocol 8 it wraps every 65.536 s
     state: int
     left_pwm: int
     right_pwm: int
     battery_mv: int
     faults: int
-    longest_frame_us: int  # longest frame's work since the last telemetry (T2)
-    battery_status: int | None = None  # signal status; protocol 2 and later
+    # Protocols 2 to 7 only; from protocol 8 they're in the health message.
+    longest_frame_us: int | None = None
+    battery_status: int | None = None
 
     @property
     def state_name(self) -> str:
@@ -102,9 +103,9 @@ class Telemetry:
     def describe(self) -> str:
         faults = ", ".join(self.fault_names) or "none"
         battery = f" ({self.battery_status_name})" if self.battery_status_name else ""
+        frame = f", longest frame {self.longest_frame_us} us" if self.longest_frame_us is not None else ""
         return (f"{self.state_name}, PWM left {self.left_pwm} right {self.right_pwm}, "
-                f"battery {self.battery_mv / 1000:.2f} V{battery}, faults: {faults}, "
-                f"longest frame {self.longest_frame_us} us")
+                f"battery {self.battery_mv / 1000:.2f} V{battery}, faults: {faults}{frame}")
 
 
 def parse_message(body: str) -> tuple[str, list[str]]:
@@ -114,8 +115,8 @@ def parse_message(body: str) -> tuple[str, list[str]]:
 
 
 def parse_telemetry(values: list[str]) -> Telemetry | None:
-    """Accepts protocol 1 (7 fields) and protocol 2 (8 fields)."""
-    if len(values) not in (len(fields(Telemetry)) - 1, len(fields(Telemetry))):
+    """Accepts protocol 8 (6 fields), protocol 1 (7) and protocols 2 to 7 (8)."""
+    if len(values) not in (6, 7, 8):
         return None
     try:
         return Telemetry(*(int(v) for v in values))
@@ -125,18 +126,26 @@ def parse_telemetry(values: list[str]) -> Telemetry | None:
 
 @dataclass
 class Health:
-    """The health message: {H,skipped,event0,event1,...}."""
+    """The health message, protocol 8: {H,skipped,frame,bstat,event0,event1,...}."""
 
     skipped_frames: int
+    longest_frame_us: int  # longest frame's work since the last health message (T2)
+    battery_status: int    # the battery reading's signal status
     events: dict[str, int]
 
+    @property
+    def battery_status_name(self) -> str:
+        return SIGNAL_STATUSES.get(self.battery_status, str(self.battery_status))
+
     def to_dict(self) -> dict[str, Any]:
-        return {"skipped_frames": self.skipped_frames,
+        return {"skipped_frames": self.skipped_frames, "longest_frame_us": self.longest_frame_us,
+                "battery_status": self.battery_status, "battery_status_name": self.battery_status_name,
                 "events": {name: EVENT_STATES.get(state, str(state)) for name, state in self.events.items()}}
 
     def describe(self) -> str:
         events = ", ".join(f"{name}: {EVENT_STATES.get(state, state)}" for name, state in self.events.items())
-        return f"{events}; frames skipped: {self.skipped_frames}"
+        return (f"{events}; frames skipped: {self.skipped_frames}; longest frame {self.longest_frame_us} us; "
+                f"battery reading {self.battery_status_name}")
 
 
 @dataclass
@@ -250,10 +259,11 @@ def parse_health(values: list[str]) -> Health | None:
         numbers = [int(v) for v in values]
     except ValueError:
         return None
-    if not numbers:
+    if len(numbers) < 3:
         return None
-    names = EVENTS + [f"event {i}" for i in range(len(EVENTS), len(numbers) - 1)]
-    return Health(numbers[0], dict(zip(names, numbers[1:])))
+    events = numbers[3:]
+    names = EVENTS + [f"event {i}" for i in range(len(EVENTS), len(events))]
+    return Health(numbers[0], numbers[1], numbers[2], dict(zip(names, events)))
 
 
 class MessageSplitter:
