@@ -29,16 +29,19 @@ namespace {
 // message, and this field; 3 adds the sensor message;
 // 4 adds the optional speed in the camera message; 5 adds the ultrasonic
 // distance and its status to the sensor message; 6 adds the IR message;
-// 7 adds the heading hold's state and correction to the sensor message.
-const int32_t kProtocolVersion = 7;
+// 7 adds the heading hold's state and correction to the sensor message;
+// 8 moves the longest frame time and the battery status from telemetry to
+// the health message, wraps telemetry's ms at 65536 and sends the sensor
+// message 4 times a second instead of 5, to keep the link under half full.
+const int32_t kProtocolVersion = 8;
 
 // Periodic work, in frames of 10 ms. Phases keep messages apart.
 const uint32_t kBatteryEveryFrames = 2U;     // 20 ms
 const uint32_t kTelemetryEveryFrames = 10U;  // 100 ms
 const uint32_t kHealthEveryFrames = 100U;    // 1 s
 const uint32_t kHealthPhase = 5U;            // between two telemetry messages
-const uint32_t kSensorsEveryFrames = 20U;    // 200 ms
-const uint32_t kSensorsPhase = 15U;
+const uint32_t kSensorsEveryFrames = 25U;    // 250 ms: 4 a second
+const uint32_t kSensorsPhase = 7U;           // never in the same frame as telemetry or health
 const uint32_t kLedEveryFrames = 2U;         // 50 updates a second
 const uint32_t kLedPhase = 1U;
 const uint32_t kGyroRetryFrames = 100U;      // try to wake a missing gyro once a second
@@ -112,28 +115,33 @@ uint8_t faultFlags() {
   return flags;
 }
 
+// {T,ms,state,left,right,mV,faults}: 10 a second. ms is the time since
+// power-on modulo 65536, so it never takes more than 5 digits. Fields that
+// change slowly go in the health message, to keep the link under half full.
 void sendTelemetry(uint32_t nowMs) {
-  const oc::SignalStatus batteryStatus =
-      oc::signalStatusFor(diagnostics.status(oc::EventId::kBatterySensor));
   oc::MessageWriter message('T');
-  message.field(static_cast<int32_t>(nowMs));
+  message.field(static_cast<int32_t>(nowMs & 0xFFFFU));
   message.field(static_cast<int32_t>(safety.state()));
   message.field(lastOutput.left);
   message.field(lastOutput.right);
   message.field(static_cast<int32_t>(battery.millivolts()));
   message.field(static_cast<int32_t>(faultFlags()));
-  message.field(static_cast<int32_t>(frameWork.longestUs()));
-  message.field(static_cast<int32_t>(batteryStatus));
   message.finish();
   send(message);
-  frameWork.reset();
 }
 
-// {H,skipped,event0,event1,...}: frames skipped since power-on, then every
+// {H,skipped,frame,bstat,event0,event1,...}: once a second. Frames skipped
+// since power-on, the longest frame's work since the last health message in
+// microseconds (T2), the battery reading's signal status, then every
 // diagnostic event's state in EventId order.
 void sendHealth() {
+  const oc::SignalStatus batteryStatus =
+      oc::signalStatusFor(diagnostics.status(oc::EventId::kBatterySensor));
   oc::MessageWriter message('H');
   message.field(static_cast<int32_t>(frameClock.skipped()));
+  message.field(static_cast<int32_t>(frameWork.longestUs()));
+  message.field(static_cast<int32_t>(batteryStatus));
+  frameWork.reset();
   for (uint8_t i = 0U; i < oc::Diagnostics::kEventCount; ++i) {
     message.field(static_cast<int32_t>(diagnostics.status(static_cast<oc::EventId>(i))));
   }

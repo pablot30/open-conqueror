@@ -56,7 +56,7 @@ class MessageTests(unittest.TestCase):
         self.assertIn("(valid)", telemetry.describe())
 
     def test_parse_health(self) -> None:
-        health = protocol.parse_health(["0", "4", "4", "1"])
+        health = protocol.parse_health(["0", "1736", "0", "4", "4", "1"])
         assert health is not None
         self.assertEqual(health.events, {"battery sensor": 4, "frame overrun": 4, "link timeout": 1})
         sensors = protocol.parse_sensors(["9000", "-150", "0"])
@@ -87,7 +87,7 @@ class MessageTests(unittest.TestCase):
         self.assertIsNone(protocol.parse_sensors(["100", "5", "0", "605"]))
 
     def test_parse_health_names_the_ultrasonic_event(self) -> None:
-        health = protocol.parse_health(["0", "4", "4", "4", "4", "2"])
+        health = protocol.parse_health(["0", "1736", "0", "4", "4", "4", "4", "2"])
         assert health is not None
         self.assertEqual(health.events["ultrasonic echo"], 2)
 
@@ -113,6 +113,18 @@ class MessageTests(unittest.TestCase):
         self.assertEqual(protocol.parse_ir(["0", "0", "3"]).describe(), "key released")  # type: ignore[union-attr]
         self.assertIsNone(protocol.parse_ir(["1", "2"]))
         self.assertIsNone(protocol.parse_ir(["a", "b", "c"]))
+
+    def test_protocol_8_moves_slow_fields_to_health(self) -> None:
+        telemetry = protocol.parse_telemetry("61390,1,52,52,7257,0".split(","))
+        assert telemetry is not None
+        self.assertIsNone(telemetry.longest_frame_us)
+        self.assertNotIn("longest frame", telemetry.describe())
+        health = protocol.parse_health(["0", "1736", "2", "4"])
+        assert health is not None
+        self.assertEqual(health.longest_frame_us, 1736)
+        self.assertEqual(health.battery_status_name, "substitute")
+        self.assertIn("longest frame 1736 us", health.describe())
+        self.assertIsNone(protocol.parse_health(["0", "1"]))
 
     def test_parse_telemetry_rejects_bad_fields(self) -> None:
         self.assertIsNone(protocol.parse_telemetry(["1", "2"]))
