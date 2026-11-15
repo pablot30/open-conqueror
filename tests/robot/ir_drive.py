@@ -65,7 +65,8 @@ def run(t):
         if stop:
             stopped_at = stop[0]
             break
-    t.check("OK stops the robot", stopped_at is not None, "no stop within 10 s", ["F10", "S2"])
+    t.check("OK stops the robot", stopped_at is not None,
+            "" if stopped_at is not None else "no stop within 10 s", ["F10", "S2"])
     if stopped_at is not None:
         t.step("the computer keeps driving; the stop must hold")
         robot.stream(drive_message(25, 25), 2.0)
