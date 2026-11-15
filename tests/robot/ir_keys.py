@@ -25,6 +25,7 @@ def run(t):
                 "" if codes[name] is not None else "no code in 20 s", ["F10"])
     distinct = {(c["address"], c["command"]) for n, c in codes.items() if c is not None and n in irkeys.REQUIRED}
     recorded = [n for n in irkeys.REQUIRED if codes[n] is not None]
-    t.check("the required keys have different codes", len(distinct) == len(recorded),
-            "two keys gave the same code", ["F10"])
+    unique = len(distinct) == len(recorded)
+    t.check("the required keys have different codes", unique,
+            "" if unique else "two keys gave the same code", ["F10"])
     t.check("key table (paste into ir_keys.cpp)", True, "\n".join(irkeys.table_lines(codes)), ["F10"])
