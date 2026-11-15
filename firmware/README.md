@@ -34,7 +34,7 @@ CI builds the same image on every pull request and keeps it, with the build repo
 
 ## Protocol
 
-This is protocol version 5. Messages are short text inside braces, at 9600 baud. That's what the stock camera firmware's bridge forwards, so the same messages should work over Wi-Fi in increment 4. The firmware ignores anything outside braces.
+This is protocol version 6. Messages are short text inside braces, at 9600 baud. That's what the stock camera firmware's bridge forwards, so the same messages should work over Wi-Fi in increment 4. The firmware ignores anything outside braces.
 
 **From the computer:**
 
@@ -45,7 +45,8 @@ This is protocol version 5. Messages are short text inside braces, at 9600 baud.
 | `{S}` | Stop: brake both tracks |
 | `{"N":100}` | Stop. The stock bridge sends this when a client disconnects |
 | `{V}` | Ask for the version |
-| `{P,pan,tilt}` | Point the camera: pan and tilt, each 0 to 180 degrees, 90 is the centre. The servos are released 0.5 s later |
+| `{P,pan,tilt}` | Point the camera: pan and tilt, each 0 to 180 degrees, 90 is the centre. The camera turns at 100 degrees a second, and the servos are released 0.5 s after they arrive |
+| `{P,pan,tilt,speed}` | The same, at `speed` degrees a second, 0 to 999. 0 means as fast as possible (the servos jump). Added in protocol 4 |
 
 **From the robot:**
 
