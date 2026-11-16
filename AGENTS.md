@@ -12,6 +12,7 @@ Stage 2, increment 2. Increment 1, the walking skeleton, passed its robot tests 
 - **No vendor files.** Never add ELEGOO's code, manuals or firmware to this repo, and never modify a local copy of the kit. Describe hardware facts in our own words.
 - **Say how you know.** Hardware facts state their source and whether they were measured on a robot.
 - **Requirements.** `docs/requirements.md` defines the first goal, with IDs that issues, tests and commits refer to. Follow the manual's behaviour, and don't reproduce stock bugs.
+- **Novelties.** When something we create looks new, propose it in an issue labelled `novelty`, saying what was searched. It gets a page in `docs/novelties/` only after the maintainer approves. See `docs/novelties/README.md`.
 - **Record what matters.** Decisions go in `docs/decisions/`, and technical lessons in `docs/notebook/`. Lessons about how to run the project go in `docs/playbook.md`, and milestones and memorable moments in `docs/journey.md`.
 - **The robot is physical.** Don't flash it or run its motors without the maintainer's OK. Before any step where the maintainer touches or watches the robot, say which part and where it is, what will move and for how long, what to do and when, and what to watch for.
 - **People and agents.** Every tool gets commands that run without a prompt, readable output for people and JSON for agents. See `docs/vision.md`.
