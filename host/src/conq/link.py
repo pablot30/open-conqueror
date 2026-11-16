@@ -1,4 +1,5 @@
-"""The connection to one robot over a serial port.
+"""The connection to one robot over a serial port: the robot's own USB cable,
+or the Wi-Fi dongle (firmware/dongle/), which conq tells apart by its USB IDs.
 
 Robot keeps every message it sends and receives, with a timestamp, so
 commands and robot tests can check what happened and save it as a JSON Lines
@@ -16,9 +17,11 @@ from pathlib import Path
 from typing import IO, Any, Callable
 
 from . import protocol
-from .protocol import Health, IrCode, Sensors, Telemetry
+from .protocol import Health, IrCode, LinkStatus, Sensors, Telemetry
 
-BOOT_SECONDS = 2.0  # opening the port restarts the UNO through the USB chip's DTR line
+BOOT_SECONDS = 2.0  # opening the robot's USB port restarts the UNO through the USB chip's DTR line
+DONGLE_READY_S = 30.0  # the dongle may still be finding and joining the robot's network
+DONGLE_USB_IDS = {(0x2341, 0x1002)}  # Arduino UNO R4 WiFi
 RESEND_PERIOD_S = 0.1  # well inside the firmware's 300 ms link timeout
 
 
@@ -30,8 +33,13 @@ def usb_ports() -> list[dict[str, Any]]:
     """Serial ports with a USB vendor ID, which excludes Bluetooth and debug ports."""
     from serial.tools import list_ports
 
-    return [{"port": p.device, "description": p.description, "vid": p.vid, "pid": p.pid}
+    return [{"port": p.device, "description": p.description, "vid": p.vid, "pid": p.pid,
+             "dongle": (p.vid, p.pid) in DONGLE_USB_IDS}
             for p in list_ports.comports() if p.vid is not None]
+
+
+def is_dongle(port: str) -> bool:
+    return any(p["port"] == port and p["dongle"] for p in usb_ports())
 
 
 def choose_port(requested: str | None) -> str:
@@ -60,12 +68,16 @@ class Message:
 
 
 class Robot:
-    def __init__(self, port: str, log_path: Path | None = None) -> None:
+    def __init__(self, port: str, log_path: Path | None = None, dongle: bool | None = None) -> None:
         import serial  # imported here so the rest of the package works without pyserial
 
         self.port = port
+        self.via_dongle = is_dongle(port) if dongle is None else dongle
+        self.link: LinkStatus | None = None  # the dongle's latest report
+        self.link_drops: list[float] = []  # times the dongle lost the robot
+        baud = protocol.DONGLE_BAUD if self.via_dongle else protocol.BAUD
         try:
-            self._serial = serial.Serial(port, protocol.BAUD, timeout=0.05)
+            self._serial = serial.Serial(port, baud, timeout=0.05)
         except serial.SerialException as error:
             raise PortError(f"Couldn't open {port}: {error}") from error
         self._start = time.monotonic()
@@ -110,6 +122,17 @@ class Robot:
                 self._log.flush()
         if self.on_message is not None:
             self.on_message(message)
+        if direction == "rx" and body.startswith("W,"):
+            self._track_link(protocol.parse_link_status(protocol.parse_message(body)[1]))
+
+    def _track_link(self, status: LinkStatus | None) -> None:
+        if status is None:
+            return
+        was_connected = self.link is not None and self.link.connected
+        self.link = status
+        if was_connected and not status.connected:
+            self.link_drops.append(self.now())
+            self.note(f"Wi-Fi link lost: {status.describe()}")
 
     def _read_loop(self) -> None:
         splitter = protocol.MessageSplitter()
@@ -177,9 +200,35 @@ class Robot:
 
     # --- Commands ---
 
-    def wait_for_boot(self) -> None:
-        """Waits for the restart that opening the port causes, and the first telemetry."""
-        self.wait_for(lambda: self.telemetry(), BOOT_SECONDS + 1.0)
+    def wait_until_ready(self) -> None:
+        """Over USB, waits for the restart that opening the port causes and the
+        first telemetry. Over the dongle the robot doesn't restart: waits for
+        telemetry, and says why if none comes."""
+        if not self.via_dongle:
+            self.wait_for(lambda: self.telemetry(), BOOT_SECONDS + 1.0)
+            return
+        if self.wait_for(lambda: self.telemetry(), DONGLE_READY_S):
+            return
+        state = self.link.describe() if self.link else "the dongle isn't answering"
+        raise PortError(f"No messages from the robot through the Wi-Fi dongle on {self.port} "
+                        f"after {DONGLE_READY_S:.0f} s ({state}). Is the robot on, with the "
+                        "Upload-Cam switch on Cam?")
+
+    def link_summary(self) -> dict[str, Any]:
+        return {"via": "dongle" if self.via_dongle else "usb",
+                "status": self.link.describe() if self.link else None,
+                "rssi_dbm": self.link.rssi_dbm if self.link else None,
+                "drops": [round(t, 2) for t in self.link_drops]}
+
+    def dongle_version(self, timeout: float = 1.0) -> dict[str, str] | None:
+        since = self.now()
+        self.send(protocol.DONGLE_VERSION)
+        message = self.wait_for(lambda: self.received(since, "WV"), timeout)
+        if not message:
+            return None
+        values = protocol.parse_message(message[-1].body)[1]
+        keys = ["version", "commit", "wifi_firmware"]
+        return {key: values[i] if i < len(values) else "" for i, key in enumerate(keys)}
 
     def version(self, timeout: float = 1.0) -> dict[str, str] | None:
         since = self.now()

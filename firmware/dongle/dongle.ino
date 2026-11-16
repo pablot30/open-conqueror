@@ -12,7 +12,7 @@ namespace {
 const IPAddress kRobotAddress(192, 168, 4, 1);  // the camera board, docs/hardware/camera-board.md
 const uint16_t kRobotPort = 100;
 const uint32_t kStatusPeriodMs = 1000;
-const uint32_t kRetryPeriodMs = 1000;
+const uint32_t kCheckPeriodMs = 1000;
 const int kConnectTimeoutMs = 3000;
 const char kHeartbeat[] = "{Heartbeat}";
 
@@ -20,10 +20,11 @@ WiFiClient robot;
 oc::MessageReader fromComputer;
 oc::MessageReader fromRobot;
 oc::LinkWatch watch;
+oc::LinkPlan plan;
 oc::LinkState state = oc::LinkState::kSearching;
 char network[33] = {};  // the robot's network name, found by scanning
 uint32_t lastStatus = 0;
-uint32_t lastAttempt = 0;
+uint32_t lastCheck = 0;
 
 void sendStatus() {
   const int32_t rssi = state == oc::LinkState::kConnected || state == oc::LinkState::kConnecting
@@ -74,14 +75,14 @@ void pumpComputer() {
   }
 }
 
+// Every call into WiFiClient is a text command to the R4's Wi-Fi chip and
+// takes about 5 ms, so the loop makes as few as it can. One read fetches
+// everything waiting; asking available() first would double the cost.
 void pumpRobot(uint32_t now) {
   uint8_t chunk[64];
-  int available = robot.available();
-  while (available > 0) {
-    const int count = robot.read(chunk, sizeof(chunk));
-    if (count <= 0) {
-      break;
-    }
+  int count = 0;
+  do {
+    count = robot.read(chunk, sizeof(chunk));
     for (int i = 0; i < count; ++i) {
       if (!fromRobot.push(chunk[i])) {
         continue;
@@ -93,11 +94,24 @@ void pumpRobot(uint32_t now) {
         Serial.write(fromRobot.message(), fromRobot.length());
       }
     }
-    available -= count;
-  }
+  } while (count == static_cast<int>(sizeof(chunk)));
 }
 
-void search() {
+// connected() costs two commands, so it runs once a second. The silence
+// timeout notices a dead link in between.
+bool linkLost(uint32_t now) {
+  if (watch.timedOut(now)) {
+    return true;
+  }
+  if (now - lastCheck < kCheckPeriodMs) {
+    return false;
+  }
+  lastCheck = now;
+  return !robot.connected();
+}
+
+// Scans for the robot's network. Returns whether one was found.
+bool search() {
   sendStatus();  // the scan blocks for a few seconds
   const int count = WiFi.scanNetworks();
   const char* names[16] = {};
@@ -108,46 +122,57 @@ void search() {
     rssi[i] = WiFi.RSSI(static_cast<uint8_t>(i));
   }
   const int best = oc::pickNetwork(names, rssi, listed);
-  if (best >= 0) {
-    strncpy(network, names[best], sizeof(network) - 1);
-    setState(oc::LinkState::kJoining);
+  if (best < 0) {
+    return false;
+  }
+  strncpy(network, names[best], sizeof(network) - 1);
+  return true;
+}
+
+// One step towards the robot, when the plan says one is due. Each step may
+// block for a few seconds; the robot is out of reach meanwhile anyway.
+void reach(uint32_t now) {
+  if (!plan.ready(now)) {
+    return;
+  }
+  const bool onNetwork = WiFi.status() == WL_CONNECTED;
+  switch (plan.next(now, onNetwork)) {
+    case oc::Step::kWait:
+      break;
+    case oc::Step::kScan:
+      setState(oc::LinkState::kSearching);
+      plan.scanned(millis(), search());
+      break;
+    case oc::Step::kJoin:
+      setState(oc::LinkState::kJoining);
+      WiFi.disconnect();  // start clean, in case the chip is still half-connected
+      // Open network: the stock camera firmware has no password.
+      plan.joined(millis(), WiFi.begin(network) == WL_CONNECTED);
+      break;
+    case oc::Step::kOpen:
+      setState(oc::LinkState::kConnecting);
+      if (robot.connect(kRobotAddress, kRobotPort)) {
+        watch.connected(millis());
+        lastCheck = millis();
+        plan.opened(millis(), true);
+        setState(oc::LinkState::kConnected);
+      } else {
+        plan.opened(millis(), false);
+      }
+      break;
   }
 }
 
 void step(uint32_t now) {
-  switch (state) {
-    case oc::LinkState::kSearching:
-      if (now - lastAttempt >= kRetryPeriodMs) {
-        lastAttempt = now;
-        search();
-      }
-      break;
-    case oc::LinkState::kJoining:
-      // Open network: the stock camera firmware has no password.
-      setState(WiFi.begin(network) == WL_CONNECTED ? oc::LinkState::kConnecting
-                                                   : oc::LinkState::kSearching);
-      lastAttempt = millis();
-      break;
-    case oc::LinkState::kConnecting:
-      if (WiFi.status() != WL_CONNECTED) {
-        setState(oc::LinkState::kSearching);
-      } else if (now - lastAttempt >= kRetryPeriodMs) {
-        lastAttempt = now;
-        if (robot.connect(kRobotAddress, kRobotPort)) {
-          watch.connected(millis());
-          setState(oc::LinkState::kConnected);
-        }
-      }
-      break;
-    case oc::LinkState::kConnected:
-      pumpRobot(now);
-      if (!robot.connected() || watch.timedOut(millis())) {
-        robot.stop();
-        lastAttempt = millis();
-        setState(WiFi.status() == WL_CONNECTED ? oc::LinkState::kConnecting
-                                               : oc::LinkState::kSearching);
-      }
-      break;
+  if (state != oc::LinkState::kConnected) {
+    reach(now);
+    return;
+  }
+  pumpRobot(now);
+  if (linkLost(millis())) {
+    robot.stop();
+    plan.lost(millis());
+    setState(oc::LinkState::kConnecting);
   }
 }
 

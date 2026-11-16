@@ -8,6 +8,12 @@ Each test is a Python file in tests/robot/ with these names:
     BRIEF         what will happen, what the person does, and what to watch for
     run(t)        the test itself; t is a Context
 
+and optionally:
+
+    NEEDS_FRESH_START  True if it checks what happens at power-on. Only the USB
+                       cable restarts the robot, so over the Wi-Fi dongle the
+                       test is skipped and the run is incomplete.
+
 The test checks the robot's telemetry itself and asks the person only for what
 a script can't see, such as which way a track turned. Answers can be given in
 advance with --answer, so an agent can run a test after asking the person.
@@ -41,10 +47,12 @@ class RobotTest:
     setup: str
     brief: str
     run: Callable[["Context"], None]
+    needs_fresh_start: bool = False
 
     def describe(self) -> dict[str, Any]:
         return {"name": self.name, "file": self.path.as_posix(), "requirements": self.requirements,
-                "moves": self.moves, "setup": self.setup, "brief": self.brief}
+                "moves": self.moves, "needs_fresh_start": self.needs_fresh_start,
+                "setup": self.setup, "brief": self.brief}
 
 
 def load(path: Path) -> RobotTest:
@@ -60,7 +68,8 @@ def load(path: Path) -> RobotTest:
     if not requirements or not all(isinstance(r, str) for r in requirements):
         raise TestDefinitionError(f"{path}: REQUIREMENTS must list requirement IDs")
     return RobotTest(path.stem, path, requirements, bool(module.MOVES),
-                     str(module.SETUP).strip(), str(module.BRIEF).strip(), module.run)
+                     str(module.SETUP).strip(), str(module.BRIEF).strip(), module.run,
+                     bool(getattr(module, "NEEDS_FRESH_START", False)))
 
 
 def find_tests(directory: Path) -> list[Path]:
@@ -133,9 +142,13 @@ def run_test(test: RobotTest, port: str, log_path: Path, answers: dict[str, str]
     context = Context(robot, answers, interactive)
     firmware = None
     try:
-        robot.wait_for_boot()
+        robot.wait_until_ready()
         firmware = robot.version()
-        test.run(context)
+        if test.needs_fresh_start and robot.via_dongle:
+            context.results.append({"check": "fresh start", "status": "skipped", "requirements": [],
+                                    "detail": "checks power-on, and only the USB cable restarts the robot"})
+        else:
+            test.run(context)
     except KeyboardInterrupt:
         context.results.append({"check": "run", "status": "failed", "detail": "interrupted", "requirements": []})
     except Exception:  # a broken test is a failed test, with the reason kept
@@ -143,6 +156,10 @@ def run_test(test: RobotTest, port: str, log_path: Path, answers: dict[str, str]
                                 "detail": traceback.format_exc(limit=3), "requirements": []})
     finally:
         robot.close()
+    if robot.link_drops:
+        context.results.append({"check": "Wi-Fi link stayed up", "status": "skipped", "requirements": [],
+                                "detail": f"the dongle lost the robot at {robot.link_drops} s; "
+                                          "checks after that may be missing"})
 
     statuses = {r["status"] for r in context.results}
     if "failed" in statuses or not context.results:
@@ -158,6 +175,7 @@ def run_test(test: RobotTest, port: str, log_path: Path, answers: dict[str, str]
         "status": status,
         "firmware": firmware,
         "port": port,
+        "link": robot.link_summary(),
         "started": started.isoformat(timespec="seconds"),
         "duration_s": round((datetime.now(timezone.utc) - started).total_seconds(), 1),
         "results": context.results,

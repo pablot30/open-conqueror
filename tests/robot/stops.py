@@ -25,6 +25,12 @@ def first_stop_after(robot, since):
     return None, None
 
 
+def protocol_state(state):
+    from conq.protocol import STATES
+
+    return STATES.get(state, str(state))
+
+
 def run(t):
     from conq.protocol import NEUTRAL, STOP, drive_message
 
@@ -34,8 +40,12 @@ def run(t):
     start = robot.now()
     robot.stream(CREEP, 0.6)
     samples = [s for _, s in robot.telemetry(start + 0.15)]
-    t.check("ignored until a neutral command", bool(samples) and all(s.state == 0 for s in samples),
-            "", ["S4", "S5"])
+    # Standby after a restart over USB; a held stop over the Wi-Fi dongle, where
+    # the robot doesn't restart and the camera board sends stops until it connects.
+    states = sorted({protocol_state(s.state) for s in samples})
+    t.check("ignored until a neutral command",
+            bool(samples) and all(s.state in (0, 2) and s.left_pwm == 0 and s.right_pwm == 0 for s in samples),
+            "robot " + ", ".join(states), ["S4", "S5"])
 
     t.step("forward, then the stop command")
     robot.send(NEUTRAL)

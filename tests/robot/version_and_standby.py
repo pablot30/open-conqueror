@@ -4,6 +4,7 @@ from pathlib import Path
 
 REQUIREMENTS = ["D4", "S5", "T1", "T2"]
 MOVES = False
+NEEDS_FRESH_START = True  # over the Wi-Fi dongle the robot doesn't restart
 SETUP = "Robot connected over USB, Upload-Cam switch on Upload, main power on."
 BRIEF = """Nothing moves. The robot restarts when the port opens, then the test
 listens for 2 seconds. Nothing to do or watch."""

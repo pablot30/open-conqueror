@@ -4,7 +4,11 @@ Every command runs without a prompt (except `shell`), and --json prints one
 JSON object for agents and scripts. The port is found automatically when only
 one USB serial port is connected; otherwise give --port or set CONQ_PORT.
 
-Opening the port restarts the UNO, so each command waits about 2 s first.
+The port is either the robot's own USB cable or the Wi-Fi dongle, an Arduino
+UNO R4 WiFi (firmware/dongle/), which conq recognises by its USB IDs. Opening
+the robot's USB port restarts the UNO, so each command waits about 2 s first.
+Over the dongle the robot doesn't restart, and commands report if the Wi-Fi
+link drops.
 """
 
 from __future__ import annotations
@@ -18,7 +22,7 @@ from pathlib import Path
 from typing import Any
 
 from . import __version__, protocol, robottest
-from .link import PortError, Robot, choose_port, usb_ports
+from .link import PortError, Robot, choose_port, is_dongle, usb_ports
 
 
 def repo_root() -> Path:
@@ -41,15 +45,28 @@ def output(args: argparse.Namespace, data: dict[str, Any], text: str) -> int:
 
 def connect(args: argparse.Namespace) -> Robot:
     robot = Robot(choose_port(args.port))
-    robot.wait_for_boot()
+    try:
+        robot.wait_until_ready()
+    except PortError:
+        robot.close()
+        raise
     return robot
+
+
+def link_note(robot: Robot) -> str:
+    """A line for people when the Wi-Fi link dropped during a command."""
+    if not robot.link_drops:
+        return ""
+    times = ", ".join(f"{t:.1f} s" for t in robot.link_drops)
+    return f"\nWarning: the Wi-Fi dongle lost the robot at {times}; some messages may be missing."
 
 
 # --- Commands ---------------------------------------------------------------
 
 def cmd_ports(args: argparse.Namespace) -> int:
     ports = usb_ports()
-    text = "\n".join(f"{p['port']}  {p['description']}" for p in ports) or "No USB serial ports."
+    text = "\n".join(f"{p['port']}  {p['description']}{'  (Wi-Fi dongle)' if p['dongle'] else ''}"
+                     for p in ports) or "No USB serial ports."
     return output(args, {"ok": True, "ports": ports}, text)
 
 
@@ -57,11 +74,18 @@ def cmd_version(args: argparse.Namespace) -> int:
     robot = connect(args)
     try:
         firmware = robot.version()
+        dongle = robot.dongle_version() if robot.via_dongle else None
     finally:
         robot.close()
-    data = {"ok": firmware is not None, "port": robot.port, "firmware": firmware, "conq": __version__}
+    data = {"ok": firmware is not None, "port": robot.port, "firmware": firmware, "conq": __version__,
+            "link": robot.link_summary(), "dongle": dongle}
     text = (f"Firmware {firmware['version']} ({firmware['commit']}) on {robot.port}" if firmware
             else f"No answer from {robot.port}.")
+    if robot.via_dongle:
+        text += (f"\nThrough the Wi-Fi dongle {dongle['version']} ({dongle['commit']}), "
+                 f"{robot.link.describe() if robot.link else 'link state unknown'}" if dongle
+                 else "\nThrough the Wi-Fi dongle, which didn't report its version")
+    text += link_note(robot)
     return output(args, data, text)
 
 
@@ -81,12 +105,16 @@ def cmd_status(args: argparse.Namespace) -> int:
     data = {"ok": latest is not None, "port": robot.port,
             "telemetry": latest.to_dict() if latest else None, "samples": len(samples),
             "health": last_health.to_dict() if last_health else None,
-            "sensors": last_sensors.to_dict() if last_sensors else None}
+            "sensors": last_sensors.to_dict() if last_sensors else None,
+            "link": robot.link_summary()}
     text = latest.describe() if latest else "No telemetry received."
     if last_sensors:
         text += "\nSensors: " + last_sensors.describe()
     if last_health:
         text += "\nHealth: " + last_health.describe()
+    if robot.via_dongle and robot.link:
+        text += "\nWi-Fi: " + robot.link.describe()
+    text += link_note(robot)
     return output(args, data, text)
 
 
@@ -108,9 +136,10 @@ def cmd_drive(args: argparse.Namespace) -> int:
                     "left": left, "right": right},
         "pwm_seen": sorted({(t.left_pwm, t.right_pwm) for t in driving}),
         "final": final.to_dict() if final else None,
+        "link": robot.link_summary(),
     }
     text = (f"Drove {args.direction} at {args.speed}% for {args.seconds} s. PWM seen: {data['pwm_seen']}. "
-            f"Now: {final.describe() if final else 'no telemetry'}")
+            f"Now: {final.describe() if final else 'no telemetry'}") + link_note(robot)
     return output(args, data, text)
 
 
@@ -139,7 +168,6 @@ def cmd_ir(args: argparse.Namespace) -> int:
 
     robot = connect(args)
     try:
-        robot.wait_for_boot()
         if args.action == "listen":
             since = robot.now()
             time.sleep(args.seconds)
@@ -196,6 +224,7 @@ def cmd_test(args: argparse.Namespace) -> int:
     if args.list:
         data = {"ok": True, "tests": [t.describe() for t in tests]}
         text = "\n".join(f"{t.name:<22} {'moves ' if t.moves else 'still '} {', '.join(t.requirements)}"
+                         + ("  (USB only: checks power-on)" if t.needs_fresh_start else "")
                          for t in tests)
         return output(args, data, text)
 
@@ -207,6 +236,9 @@ def cmd_test(args: argparse.Namespace) -> int:
                       "These tests move the robot: " + ", ".join(moving) + ". Add --confirm-moves.")
 
     port = choose_port(args.port)
+    if is_dongle(port):
+        print("Over the Wi-Fi dongle: Upload-Cam switch on Cam, not Upload, and no cable to the robot. "
+              "Tests that check power-on are skipped.", file=sys.stderr, flush=True)
     answers = parse_answers(args.answer)
     run_dir = Path(args.log_dir) if args.log_dir else (
         root / "build" / "robot-tests" / datetime.now().strftime("%Y%m%d-%H%M%S"))
@@ -231,7 +263,9 @@ def cmd_test(args: argparse.Namespace) -> int:
         "folder": run_dir.as_posix(),
     }
     (run_dir / "report.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
-    text = "\n".join(f"{r['test']:<22} {r['status']}" for r in reports) + f"\nReport: {run_dir / 'report.json'}"
+    text = "\n".join(f"{r['test']:<22} {r['status']}" + (f"  ({r['results'][0]['detail']})"
+                     if r["results"] and r["results"][0]["check"] == "fresh start" else "")
+                     for r in reports) + f"\nReport: {run_dir / 'report.json'}"
     return output(args, summary, text)
 
 

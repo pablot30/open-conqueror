@@ -3,6 +3,7 @@
 import os
 import re
 import tempfile
+import time
 import unittest
 from pathlib import Path
 from unittest import mock
@@ -72,6 +73,82 @@ class PortTests(unittest.TestCase):
         with mock.patch.dict(os.environ, {}, clear=True), mock.patch.object(link, "usb_ports", return_value=ports):
             with self.assertRaises(link.PortError):
                 link.choose_port(None)
+
+
+class FakeSerial:
+    def __init__(self, *_: object, **__: object) -> None:
+        self.baudrate = _[1] if len(_) > 1 else None
+        self.written: list[bytes] = []
+
+    def read(self, _: int) -> bytes:
+        time.sleep(0.01)
+        return b""
+
+    def write(self, data: bytes) -> None:
+        self.written.append(data)
+
+    def close(self) -> None:
+        pass
+
+
+class DongleTests(unittest.TestCase):
+    def ports(self, vid: int, pid: int) -> list[mock.Mock]:
+        port = mock.Mock(device="/dev/cu.usbmodem1", description="board", vid=vid, pid=pid)
+        return [port]
+
+    def test_dongle_is_recognised_by_its_usb_ids(self) -> None:
+        with mock.patch("serial.tools.list_ports.comports", return_value=self.ports(0x2341, 0x1002)):
+            self.assertTrue(link.is_dongle("/dev/cu.usbmodem1"))
+            self.assertTrue(link.usb_ports()[0]["dongle"])
+        with mock.patch("serial.tools.list_ports.comports", return_value=self.ports(0x1A86, 0x7523)):
+            self.assertFalse(link.is_dongle("/dev/cu.usbmodem1"))
+
+    def test_dongle_opens_at_its_own_rate_and_reports_drops(self) -> None:
+        with mock.patch("serial.Serial", FakeSerial) as _:
+            robot = link.Robot("/dev/cu.usbmodem1", dongle=True)
+            try:
+                self.assertEqual(robot._serial.baudrate, 115200)
+                robot._record("rx", "W,3,-40")
+                robot._record("rx", "W,3,-41")
+                self.assertEqual(robot.link_drops, [])
+                robot._record("rx", "W,0,0")
+                self.assertEqual(len(robot.link_drops), 1)
+                self.assertTrue(any(m.direction == "note" and "Wi-Fi link lost" in m.body for m in robot.messages))
+                summary = robot.link_summary()
+                self.assertEqual(summary["via"], "dongle")
+                self.assertEqual(summary["status"], "looking for the robot's network")
+            finally:
+                robot.close()
+
+    def test_robot_usb_cable_keeps_9600(self) -> None:
+        with mock.patch("serial.Serial", FakeSerial):
+            robot = link.Robot("/dev/ttyUSB0", dongle=False)
+            try:
+                self.assertEqual(robot._serial.baudrate, 9600)
+                self.assertEqual(robot.link_summary()["via"], "usb")
+            finally:
+                robot.close()
+
+    def test_power_on_tests_are_skipped_over_the_dongle(self) -> None:
+        test = robottest.load(ROOT / "tests" / "robot" / "version_and_standby.py")
+        self.assertTrue(test.needs_fresh_start)
+        fake = mock.Mock(via_dongle=True, link_drops=[])
+        fake.link_summary.return_value = {"via": "dongle"}
+        with tempfile.TemporaryDirectory() as folder, mock.patch.object(robottest, "Robot", return_value=fake):
+            report = robottest.run_test(test, "x", Path(folder) / "log.jsonl", {}, interactive=False)
+        self.assertEqual(report["status"], "incomplete")
+        self.assertEqual(report["results"][0]["check"], "fresh start")
+        fake.close.assert_called_once()
+
+    def test_a_link_drop_leaves_a_test_incomplete(self) -> None:
+        test = robottest.load(ROOT / "tests" / "robot" / "health.py")
+        fake = mock.Mock(via_dongle=True, link_drops=[1.5])
+        fake.link_summary.return_value = {"via": "dongle"}
+        with tempfile.TemporaryDirectory() as folder, mock.patch.object(robottest, "Robot", return_value=fake), \
+                mock.patch.object(test, "run", lambda t: t.check("x", True, "", [])):
+            report = robottest.run_test(test, "x", Path(folder) / "log.jsonl", {}, interactive=False)
+        self.assertEqual(report["status"], "incomplete")
+        self.assertEqual(report["results"][-1]["check"], "Wi-Fi link stayed up")
 
 
 class CliTests(unittest.TestCase):

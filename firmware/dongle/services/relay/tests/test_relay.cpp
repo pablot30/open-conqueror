@@ -107,6 +107,57 @@ void survivesTheMillisWrap() {
   CHECK(watch.timedOut(0xFFFFFF00U + oc::relay::kLinkTimeoutMs + 1U));
 }
 
+void scansFirstThenOpens() {
+  oc::LinkPlan plan;
+  CHECK(plan.next(0U, false) == oc::Step::kScan);
+  plan.scanned(100U, true);
+  CHECK(plan.next(100U, false) == oc::Step::kJoin);
+  plan.joined(200U, true);
+  CHECK(plan.next(200U, true) == oc::Step::kOpen);
+}
+
+void rescansSlowlyWhenNothingFound() {
+  oc::LinkPlan plan;
+  plan.scanned(0U, false);
+  CHECK(plan.next(oc::relay::kScanPeriodMs - 1U, false) == oc::Step::kWait);
+  CHECK(plan.next(oc::relay::kScanPeriodMs, false) == oc::Step::kScan);
+}
+
+void rejoinsTheKnownNetworkWithoutScanning() {
+  oc::LinkPlan plan;
+  plan.scanned(0U, true);
+  plan.joined(0U, true);
+  plan.opened(0U, true);
+  plan.lost(10000U);
+  CHECK(plan.next(10000U + oc::relay::kSettleMs - 1U, false) == oc::Step::kWait);
+  CHECK(plan.next(10000U + oc::relay::kSettleMs, false) == oc::Step::kJoin);
+  CHECK(plan.next(10000U + oc::relay::kSettleMs, true) == oc::Step::kOpen);  // still on the network
+}
+
+void scansAgainAfterFailedJoins() {
+  oc::LinkPlan plan;
+  plan.scanned(0U, true);
+  uint32_t now = 0U;
+  for (uint8_t i = 0U; i < oc::relay::kJoinsBeforeScan; ++i) {
+    CHECK(plan.next(now, false) == oc::Step::kJoin);
+    plan.joined(now, false);
+    CHECK(plan.next(now + oc::relay::kJoinPeriodMs - 1U, false) == oc::Step::kWait);
+    now += oc::relay::kJoinPeriodMs;
+  }
+  CHECK(plan.next(now, false) == oc::Step::kScan);
+  plan.scanned(now, true);
+  CHECK(plan.next(now, false) == oc::Step::kJoin);  // the count starts again
+}
+
+void spacesOutFailedOpens() {
+  oc::LinkPlan plan;
+  plan.scanned(0U, true);
+  plan.joined(0U, true);
+  plan.opened(500U, false);
+  CHECK(plan.next(500U + oc::relay::kOpenPeriodMs - 1U, true) == oc::Step::kWait);
+  CHECK(plan.next(500U + oc::relay::kOpenPeriodMs, true) == oc::Step::kOpen);
+}
+
 }  // namespace
 
 void runUnitTests() {
@@ -121,4 +172,9 @@ void runUnitTests() {
   findsNoRobotNetwork();
   timesOutASilentLink();
   survivesTheMillisWrap();
+  scansFirstThenOpens();
+  rescansSlowlyWhenNothingFound();
+  rejoinsTheKnownNetworkWithoutScanning();
+  scansAgainAfterFailedJoins();
+  spacesOutFailedOpens();
 }
