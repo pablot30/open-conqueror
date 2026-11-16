@@ -91,7 +91,7 @@ void findsNoRobotNetwork() {
   CHECK(oc::pickNetwork(names, rssi, 0) == -1);
 }
 
-void timesOutASilentLink() {
+void timesOutASilentLink() {  // S3
   LinkWatch watch;
   watch.connected(1000U);
   CHECK(!watch.timedOut(1000U + oc::relay::kLinkTimeoutMs));
@@ -107,7 +107,7 @@ void survivesTheMillisWrap() {
   CHECK(watch.timedOut(0xFFFFFF00U + oc::relay::kLinkTimeoutMs + 1U));
 }
 
-void scansFirstThenOpens() {
+void scansFirstThenOpens() {  // F11
   oc::LinkPlan plan;
   CHECK(plan.next(0U, false) == oc::Step::kScan);
   plan.scanned(100U, true);
@@ -116,14 +116,14 @@ void scansFirstThenOpens() {
   CHECK(plan.next(200U, true) == oc::Step::kOpen);
 }
 
-void rescansSlowlyWhenNothingFound() {
+void rescansSlowlyWhenNothingFound() {  // F11
   oc::LinkPlan plan;
   plan.scanned(0U, false);
   CHECK(plan.next(oc::relay::kScanPeriodMs - 1U, false) == oc::Step::kWait);
   CHECK(plan.next(oc::relay::kScanPeriodMs, false) == oc::Step::kScan);
 }
 
-void rejoinsTheKnownNetworkWithoutScanning() {
+void rejoinsTheKnownNetworkWithoutScanning() {  // F11
   oc::LinkPlan plan;
   plan.scanned(0U, true);
   plan.joined(0U, true);
@@ -134,7 +134,7 @@ void rejoinsTheKnownNetworkWithoutScanning() {
   CHECK(plan.next(10000U + oc::relay::kSettleMs, true) == oc::Step::kOpen);  // still on the network
 }
 
-void scansAgainAfterFailedJoins() {
+void scansAgainAfterFailedJoins() {  // F11
   oc::LinkPlan plan;
   plan.scanned(0U, true);
   uint32_t now = 0U;
@@ -149,7 +149,7 @@ void scansAgainAfterFailedJoins() {
   CHECK(plan.next(now, false) == oc::Step::kJoin);  // the count starts again
 }
 
-void spacesOutFailedOpens() {
+void spacesOutFailedOpens() {  // F11
   oc::LinkPlan plan;
   plan.scanned(0U, true);
   plan.joined(0U, true);

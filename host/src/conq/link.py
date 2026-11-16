@@ -39,7 +39,10 @@ def usb_ports() -> list[dict[str, Any]]:
 
 
 def is_dongle(port: str) -> bool:
-    return any(p["port"] == port and p["dongle"] for p in usb_ports())
+    """Whether a port is the dongle. Aliases such as /dev/serial/by-id/... resolve
+    to the device the port list names."""
+    real = os.path.realpath(port)
+    return any(p["dongle"] and os.path.realpath(str(p["port"])) == real for p in usb_ports())
 
 
 def choose_port(requested: str | None) -> str:

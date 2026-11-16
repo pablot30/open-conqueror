@@ -3,11 +3,11 @@
 REQUIREMENTS = ["F1", "T4"]
 MOVES = True
 SETUP = """Robot on a flat floor with a clear lane at least 3 m long and 0.5 m wide,
-battery charged. Best over Wi-Fi: the dongle in the computer, Upload-Cam
-switch on Cam, and the robot switched on where it stands, then left still for
-3 seconds while the gyro calibrates. Or with a LONG USB cable (3 m or more)
-laid along the lane with slack, switch on Upload. A tape measure, and a strip
-of tape across the floor under the robot's middle as a start mark."""
+battery charged. A LONG USB cable (3 m or more) laid along the lane with
+slack, Upload-Cam switch on Upload. (The Wi-Fi dongle also works, with the
+switch on Cam, but it's parked because it hangs: see decision 0011.) A tape
+measure, and a strip of tape across the floor under the robot's middle as a
+start mark."""
 BRIEF = """The tracks move: the robot drives forward for 5 seconds at 40% and stops.
 Forward is roughly 2 m depending on the battery. The test then asks you
 to measure, and waits for your answer: how far to the side of a straight
