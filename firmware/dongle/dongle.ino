@@ -13,6 +13,7 @@ const IPAddress kRobotAddress(192, 168, 4, 1);  // the camera board, docs/hardwa
 const uint16_t kRobotPort = 100;
 const uint32_t kStatusPeriodMs = 1000;
 const uint32_t kRetryPeriodMs = 1000;
+const uint32_t kCheckPeriodMs = 1000;
 const int kConnectTimeoutMs = 3000;
 const char kHeartbeat[] = "{Heartbeat}";
 
@@ -24,6 +25,7 @@ oc::LinkState state = oc::LinkState::kSearching;
 char network[33] = {};  // the robot's network name, found by scanning
 uint32_t lastStatus = 0;
 uint32_t lastAttempt = 0;
+uint32_t lastCheck = 0;
 
 void sendStatus() {
   const int32_t rssi = state == oc::LinkState::kConnected || state == oc::LinkState::kConnecting
@@ -74,14 +76,14 @@ void pumpComputer() {
   }
 }
 
+// Every call into WiFiClient is a text command to the R4's Wi-Fi chip and
+// takes about 5 ms, so the loop makes as few as it can. One read fetches
+// everything waiting; asking available() first would double the cost.
 void pumpRobot(uint32_t now) {
   uint8_t chunk[64];
-  int available = robot.available();
-  while (available > 0) {
-    const int count = robot.read(chunk, sizeof(chunk));
-    if (count <= 0) {
-      break;
-    }
+  int count = 0;
+  do {
+    count = robot.read(chunk, sizeof(chunk));
     for (int i = 0; i < count; ++i) {
       if (!fromRobot.push(chunk[i])) {
         continue;
@@ -93,8 +95,20 @@ void pumpRobot(uint32_t now) {
         Serial.write(fromRobot.message(), fromRobot.length());
       }
     }
-    available -= count;
+  } while (count == static_cast<int>(sizeof(chunk)));
+}
+
+// connected() costs two commands, so it runs once a second. The silence
+// timeout notices a dead link in between.
+bool linkLost(uint32_t now) {
+  if (watch.timedOut(now)) {
+    return true;
   }
+  if (now - lastCheck < kCheckPeriodMs) {
+    return false;
+  }
+  lastCheck = now;
+  return !robot.connected();
 }
 
 void search() {
@@ -141,7 +155,7 @@ void step(uint32_t now) {
       break;
     case oc::LinkState::kConnected:
       pumpRobot(now);
-      if (!robot.connected() || watch.timedOut(millis())) {
+      if (linkLost(millis())) {
         robot.stop();
         lastAttempt = millis();
         setState(WiFi.status() == WL_CONNECTED ? oc::LinkState::kConnecting
