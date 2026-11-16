@@ -1,6 +1,6 @@
 # Test reports
 
-One report for each increment, written when its robot tests pass ([0007](../decisions/0007-testing-releases-and-traceability.md)). Each names the exact firmware commit, links the CI run that built it, maps every requirement to its result, and keeps the raw logs.
+One report for each increment, written when its robot tests pass ([0007](../decisions/0007-testing-releases-and-traceability.md)). Each names the exact firmware commit, links the CI run that built it, maps every requirement to its result, and keeps the raw logs. `python scripts/dev.py trace --increment N` writes the requirements table from the tests and reports; check it against what the report says before pasting it in.
 
 | Report | Firmware | Result |
 |---|---|---|
