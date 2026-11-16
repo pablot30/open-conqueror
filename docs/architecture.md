@@ -103,7 +103,7 @@ host/                   Python package for the host computer: transports, protoc
 tests/robot/            robot tests, run by `conq` against a real robot or the simulator
 scripts/dev.py          build, test, lint, upload
 docs/                   vision, requirements, architecture, decisions, notebook, hardware
-VERSION
+VERSION                 the product release's version (decision 0012)
 ```
 
 - **Units are self-contained.** Everything about a unit lives in its folder, so it can be understood, tested, versioned and owned on its own, by a person or an agent. Google's Pigweed and the Zephyr RTOS organise embedded code the same way. `CODEOWNERS` can assign folders once there's more than one owner.
