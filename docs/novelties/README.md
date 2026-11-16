@@ -11,6 +11,7 @@ Each idea has its own page with a stable ID, so it can be cited. A page says wha
 | [N3](N3-two-boards-that-always-match.md) | A two-board update that always ends as a matched pair | Idea | Releases from stage 3 |
 | [N4](N4-led-colour-timecode.md) | The status LED as a colour timecode for syncing video | Idea | Recordings and replay, increment 4 |
 | [N5](N5-fault-memory-on-the-replay-timeline.md) | Fault memory on the replay timeline, all from one description file | Idea | Recordings and replay, increment 4 |
+| [N6](N6-robot-tests-an-agent-can-run.md) | Robot tests an agent can run, with a person answering what the robot can't report | Measured | Every robot test, since increment 1 |
 
 ## Statuses
 
