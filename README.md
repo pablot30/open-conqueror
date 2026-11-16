@@ -36,6 +36,8 @@ The software is built through AI-driven development, using [Claude Code](https:/
 | [Notebook](docs/notebook/README.md) | What we learn along the way |
 | [Playbook](docs/playbook.md) | How we run the project, step by step, as it grows |
 | [Journey](docs/journey.md) | The project's story, milestone by milestone |
+| [Contributing](CONTRIBUTING.md) | How to propose and make a change |
+| [Security](SECURITY.md) | How to report a vulnerability, and the known gaps |
 
 ## Supported hardware
 
