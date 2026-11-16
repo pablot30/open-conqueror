@@ -58,6 +58,17 @@ For the reviewer of a pull request. Flag a change that breaks any of these:
 - Docs that the pull request touches, or that describe code it changes, still match the code.
 - No ELEGOO code, manuals or firmware; no secrets, Wi-Fi credentials or personal data.
 
+## Docs check
+
+The docs drift, and review only sees the docs a pull request touches. The docs check looks at all of them on `main`. It runs once a week by itself, and by hand before each increment's test report and each release candidate. When asked to "run the docs check":
+
+1. **Update `main`.** If no commit has reached `main` in the last eight days, stop and report "nothing changed".
+2. **Run `python scripts/dev.py docs`** and fix what it reports: broken links and anchors, unknown requirement IDs, records missing from their folder's index, decision numbers, unit folders without their files.
+3. **Read the docs for what a script can't see:** pages that contradict each other or the code and CI, statements that were true and no longer are (the current stage, what's private, what "waits"), "later" lists whose trigger has happened, and breaks of the Writing rule below. Quote both places, with file and line.
+4. **Fix current docs; flag records.** The vision, roadmap, requirements, architecture, playbook, tools list, this file and the READMEs describe today, so fix them. Decisions, notebook entries, research reports and test reports are dated records: leave them, and only flag a missing "replaced by" note.
+5. **Open one small, docs-only pull request** with the fixes, and an issue for anything the maintainer must decide. No findings, no pull request. If last week's docs-check pull request is still open, add to it rather than open a second.
+6. **Say what wasn't covered:** list the open pull requests, since their docs aren't on `main` yet. Nobody can be asked during a scheduled run, so questions go in the pull request or an issue.
+
 ## Writing
 
 Keep docs short and in plain English, and write them for someone who found the repo today.
