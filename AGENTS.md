@@ -30,6 +30,32 @@ Stage 2, increment 2. Increment 1, the walking skeleton, passed its robot tests 
 - Never force-push, push to `main` directly, or delete `main` or a `release/` branch. `main` changes only through merged pull requests. GitHub can't enforce this on a private repo on the free plan, so `.githooks/pre-push` does it locally.
 - Delete work branches once they're merged, locally and on GitHub, so only live work is left.
 - Commits use a GitHub noreply address.
+- The other vendor's model reviews every pull request: Codex when Claude wrote it, and the other way round. Answer every review comment with a commit or a reason, and stop after two rounds to ask the maintainer. Aim for pull requests under about 400 changed lines. See `docs/decisions/0013-review-by-the-other-vendor.md`.
+
+## Code Review Rules
+
+For the reviewer of a pull request. Flag a change that breaks any of these:
+
+### Safety
+
+- Only the `safety` unit decides what the motors do. Every source of commands (the computer, the IR remote, the MODE button, modes) goes through it.
+- A stop holds until a deliberate new command: a neutral `{D,0,0}`, then drive (S1, S5). Drive commands still expire after 300 ms (S3).
+- Nothing blocks the 10 ms frame (T1, T2): no `delay()`, busy waits or polling loops in units.
+
+### Limits
+
+- The UNO firmware stays within T8: at most 80% of flash and at least 512 bytes of RAM free. No dynamic memory (`new`, `malloc`, `String`) on the UNO.
+
+### Tests and traceability
+
+- Tests check behaviour, would fail if the code were wrong, and name the requirement IDs they cover.
+- A unit whose code changes gets a new version in its `library.properties` (decision 0012).
+
+### Docs and the repo
+
+- Hardware facts say how they're known, and whether they were measured on a robot.
+- Docs that the pull request touches, or that describe code it changes, still match the code.
+- No ELEGOO code, manuals or firmware; no secrets, Wi-Fi credentials or personal data.
 
 ## Writing
 
