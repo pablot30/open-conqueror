@@ -1,0 +1,1 @@
+Defined requirements and safety goals, designed a scalable architecture for multi-robot missions, and built firmware that drives the robot safely and reads its sensors, each step tested on the real robot.

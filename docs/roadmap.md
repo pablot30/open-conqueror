@@ -52,3 +52,4 @@ These have no committed order. We'll choose based on what the earlier stages tea
 - Work happens on short branches with pull requests. The other vendor's model reviews each one, the author answers every comment, and the maintainer reads the review summary and open points before merging ([decision 0013](decisions/0013-review-by-the-other-vendor.md)).
 - The AI agent writes code and docs and tests what it can on a computer. The maintainer handles the physical steps and signs off on the robot.
 - Decisions go in [decisions](decisions/README.md), and lessons go in the [notebook](notebook/README.md).
+- When an increment or stage finishes, update [cv-summary.txt](cv-summary.txt) in the same pull request. It stays one line of plain text, at most 260 characters, and describes only finished work. The maintainer's [CV](https://github.com/pablot30/cv) reads it every Monday.
