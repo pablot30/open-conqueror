@@ -1,4 +1,4 @@
-# The Wi-Fi dongle's first runs: latency, and a hang
+# The Wi-Fi dongle's first runs: latency, freezes and hangs
 
 **Date:** 2026-11-16. **How we know:** measured on our robot (UNO firmware `bf9a708`, protocol 8, stock camera firmware), standing still with the Upload-Cam switch on Cam, through our dongle firmware on a UNO R4 WiFi about 1 m away, signal -40 dBm. Scripts on the computer sent only `{V}` (version), `{S}` (stop) and `{W}`, so nothing moved. The camera board's behaviour was read in the stock source, not measured.
 
@@ -19,8 +19,19 @@
 - **A filler byte to hurry those acknowledgements made things worse:** replies went missing and one run counted more telemetry than was sent. We don't know why, so the dongle doesn't use one.
 - **The UNO drops a message when its send buffer is full** (`uno.ino`), by design. Asking for `{V}` 10 times a second on top of telemetry fills the 9600-baud line to about 80%, and 11% of messages were dropped. That's our test overloading the robot, not the link.
 
-## The hang
+## Freezes from the camera board
 
-After the last good run, the dongle sat for about 15 minutes with no program on the computer reading its port. Then it sent nothing at all, even its own status, and an upload failed with `No device found` after the 1200-baud reset. On the R4 WiFi, that reset is done by the ESP32-S3, so the USB chip itself seems stuck, though the board was still listed. Unplugging the R4 should restart both chips; not yet tried.
+In the afternoon, the same dongle firmware gave link freezes of 1.2 to 1.6 s, 13 to 19 a minute, at the driving rate. Every message still arrived, but late. During each freeze the dongle kept sending its own status messages and its loop never stopped for more than 153 ms, so the stall was between the dongle and the camera board, not in the dongle or its USB side. Signal was steady at -37 to -48 dBm, and moving the R4 made no difference.
 
-We don't know the cause. Two ideas to test, one at a time: the ESP32-S3 stops taking serial data while no program has the port open, so the dongle's writes to USB block; or the steady stream of commands to the Wi-Fi chip wears it down over time. The first version of the dongle survived a similar idle period earlier the same day, with a similar number of Wi-Fi commands a second.
+A `stops` test run during this period, tracks lifted, failed three checks. A stop command was held up in a freeze, and the robot stopped through its 300 ms link timeout instead, 0.3 to 0.4 s later than asked. Drive commands held up in another freeze arrived after their stop had been sent, so the robot did that drive about 0.4 s late. In both cases the timeout bounded the overrun: a freeze longer than 0.3 s stops the robot, and the stop holds until a new neutral command.
+
+**Restarting the robot cleared the freezes:** 0 in the next 60 s, longest gap 195 ms. The camera board had been running for hours, and earlier the dongle had hung while connected to it. We don't know which of those caused the freezes, or whether they come back. Until we do, restart the robot before a session over Wi-Fi.
+
+## Hangs
+
+The R4 hung twice. It sent nothing at all, even its own status, and uploads failed with `No device found` after the 1200-baud reset. On the R4 WiFi that reset is done by the ESP32-S3, so the Wi-Fi chip itself seems stuck, though the board stayed listed. Unplugging the R4 and plugging it back in brought it back both times.
+
+- The first time, the robot's network may have dropped while nobody was watching. The dongle then sat for about 15 minutes before we noticed.
+- The second time, it was straight after the robot was switched off and on, which drops the robot's network.
+
+Arduino's forum has several reports of the R4 WiFi losing Wi-Fi and staying off until it's power-cycled, and of scans hanging it. Our first reconnect logic, after a lost link, checked the Wi-Fi state on every pass of the loop, scanned again after any failed join, and tried again every second. The dongle firmware now rejoins the network it already knows without scanning. It spaces attempts 1 to 5 s apart and scans only after three failed joins. Whether that stops the hangs is to be tested by switching the robot off and on.

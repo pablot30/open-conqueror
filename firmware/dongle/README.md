@@ -49,7 +49,8 @@ python scripts/dev.py upload --target dongle      # add --port if more than one 
 - **Two robots in range:** it joins the stronger one. Choosing a robot by name comes when someone needs it.
 - **The R4's Wi-Fi is a separate chip,** an ESP32-S3 driven over a serial line with text commands, so every read costs a few milliseconds.
 - **Round trips take about 0.07 to 0.1 s.** While driving, with 10 messages a second, messages from the robot were never more than 0.2 s apart, under the robot's 0.3 s stop timeout (S3). Measured on 2026-11-16; see the [notebook](../../docs/notebook/2026-11-16-wifi-dongle-latency.md).
-- **It has hung once,** after 15 minutes with no program reading its port: unplug it and plug it back in. The cause is still open; see the notebook.
+- **Link freezes of about 1.5 s** came from the camera board after hours of running, and went away when the robot was restarted. Restart the robot before a session over Wi-Fi.
+- **It has hung twice,** once straight after the robot was switched off and on: unplug it and plug it back in. The reconnect logic has changed since; see the [notebook](../../docs/notebook/2026-11-16-wifi-dongle-latency.md).
 - The robot's network has no password, so anyone in range can join it. That's the stock firmware's behaviour, and it changes with our own camera firmware in stage 3.
 
 ## Layout

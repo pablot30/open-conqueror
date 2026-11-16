@@ -55,6 +55,39 @@ Route routeFromRobot(const char* message, size_t length) {
   return Route::kToComputer;
 }
 
+Step LinkPlan::next(uint32_t now, bool onNetwork) const {
+  if (!ready(now)) {
+    return Step::kWait;
+  }
+  if (onNetwork) {
+    return Step::kOpen;
+  }
+  if (!known_ || failedJoins_ >= relay::kJoinsBeforeScan) {
+    return Step::kScan;
+  }
+  return Step::kJoin;
+}
+
+void LinkPlan::scanned(uint32_t now, bool found) {
+  known_ = found;
+  failedJoins_ = 0;
+  after(now, found ? 0U : relay::kScanPeriodMs);
+}
+
+void LinkPlan::joined(uint32_t now, bool ok) {
+  if (ok) {
+    failedJoins_ = 0;
+    after(now, 0U);
+  } else {
+    if (failedJoins_ < 255U) {
+      ++failedJoins_;
+    }
+    after(now, relay::kJoinPeriodMs);
+  }
+}
+
+void LinkPlan::opened(uint32_t now, bool ok) { after(now, ok ? 0U : relay::kOpenPeriodMs); }
+
 int pickNetwork(const char* const names[], const int32_t rssi[], int count) {
   int best = -1;
   for (int i = 0; i < count; ++i) {
