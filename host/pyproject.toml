@@ -9,8 +9,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "open-conqueror-host"
-# Matches the VERSION file at the repo root, in Python's spelling
-# (0.1.0-dev becomes 0.1.0.dev0). A unit test checks they agree.
+# conq's own version (decision 0012), in Python's spelling: 0.1.0-dev is
+# 0.1.0.dev0. A unit test checks it matches __version__.
 version = "0.1.0.dev0"
 description = "Host computer tools for the open-conqueror robot tank"
 requires-python = ">=3.10"

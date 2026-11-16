@@ -41,11 +41,15 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0  # the unit version check compares with the base branch
       - uses: arduino/setup-arduino-cli@v2
         with:
           version: 1.6.0
-      - name: Units (every unit folder is in the build profile)
-        run: python3 scripts/dev.py units
+      - name: Units (names unique, and a new version for every changed unit)
+        run: python3 scripts/dev.py units ${{ github.event_name == 'pull_request' && format('--base origin/{0}', github.base_ref) || '' }}
+      - name: Install the pinned Arduino cores and libraries
+        run: python3 scripts/dev.py setup
       - name: Build (T8 size limits, no warnings in our code)
         shell: bash
         run: |
@@ -59,6 +63,18 @@ jobs:
             build/uno/uno.ino.hex
             build/uno/uno.ino.elf
             build/build-report.json
+          if-no-files-found: error
+      - name: Build the Wi-Fi dongle
+        shell: bash
+        run: python3 scripts/dev.py build --target dongle --json | tee build/build-report-dongle.json
+      - name: Keep the dongle image
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware-dongle-${{ github.sha }}
+          path: |
+            build/dongle/dongle.ino.bin
+            build/dongle/dongle.ino.elf
+            build/build-report-dongle.json
           if-no-files-found: error
       - name: Install cppcheck
         run: sudo apt-get update && sudo apt-get install --yes cppcheck

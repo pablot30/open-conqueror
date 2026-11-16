@@ -90,6 +90,7 @@ Four layers. Everything except the bottom one builds and is unit-tested on the h
 firmware/
   uno/                  the guard
     uno.ino             connects the units
+    VERSION             the firmware's own version (decision 0012)
     modes/  services/  devices/  hal/
       <unit>/           one folder per unit, such as services/battery/
         README.md       what it does, the requirements and checks it covers, its interface
@@ -97,6 +98,7 @@ firmware/
         src/            its code
         tests/          its unit tests, run on the host computer
         sim/  hil/      only when someone builds them
+  dongle/               the Wi-Fi dongle, a UNO R4 WiFi on the computer's side (decision 0011)
   testing/              the shared unit test harness
 host/                   Python package for the host computer: transports, protocol, client, the `conq` command
   tests/                its unit tests

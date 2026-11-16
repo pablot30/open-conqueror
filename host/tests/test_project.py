@@ -18,12 +18,9 @@ def requirement_ids() -> set[str]:
 
 
 class VersionTests(unittest.TestCase):
-    def test_package_version_matches_version_file(self) -> None:
-        version = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
-        python_spelling = version.replace("-dev", ".dev0")
-        self.assertEqual(__version__, python_spelling)
+    def test_package_version_matches_pyproject(self) -> None:
         pyproject = (ROOT / "host" / "pyproject.toml").read_text(encoding="utf-8")
-        self.assertIn(f'version = "{python_spelling}"', pyproject)
+        self.assertIn(f'version = "{__version__}"', pyproject)
 
 
 class RobotTestDefinitionTests(unittest.TestCase):
