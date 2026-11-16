@@ -90,13 +90,17 @@ def latest_result(requirement: str, reports: list[tuple[str, dict[str, Any]]]) -
     for folder, report in reversed(reports):
         statuses, firmware = [], None
         for test in report.get("reports", []):
-            checks = [c for c in test.get("results", []) if requirement in c.get("requirements", [])]
-            if checks:
-                statuses += [c["status"] for c in checks]
-            elif requirement in test.get("requirements", []):
-                statuses.append(test.get("status", "unknown"))
-            else:
+            results = test.get("results", [])
+            tagged = [c["status"] for c in results if requirement in c.get("requirements", [])]
+            if requirement in test.get("requirements", []):
+                # Untagged checks that didn't pass, such as an unanswered measurement
+                # that stopped a tagged check from running, count against every
+                # requirement the test names. So does the test's own status.
+                tagged += [c["status"] for c in results if not c.get("requirements") and c["status"] != "passed"]
+                tagged.append(test.get("status", "unknown"))
+            if not tagged:
                 continue
+            statuses += tagged
             firmware = firmware or test.get("firmware")
         if statuses:
             worst = max(statuses, key=lambda s: NOT_PASSED.get(s, 0 if s == "passed" else 2))

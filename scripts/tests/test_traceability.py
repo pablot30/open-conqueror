@@ -112,6 +112,14 @@ class TraceTests(unittest.TestCase):
         row = self.row(self.trace(self.make_repo({"2026-01-01-a": report("passed")})), "S2")
         self.assertEqual(row["latest_robot_result"]["status"], "passed")
 
+    def test_an_unanswered_untagged_check_keeps_the_requirement_incomplete(self) -> None:
+        content = report("passed")
+        content["reports"][0]["status"] = "incomplete"
+        content["reports"][0]["results"].append({"check": "distance", "status": "unanswered", "requirements": []})
+        row = self.row(self.trace(self.make_repo({"2026-01-01-a": content})), "S1")
+        self.assertEqual(row["latest_robot_result"]["status"], "incomplete")
+        self.assertEqual(row["flags"], ["not passed"])
+
     def test_possibly_stale(self) -> None:
         row = self.row(self.trace(self.make_repo({"2026-01-01-a": report("passed")}), commits=3), "S1")
         self.assertEqual(row["flags"], ["possibly stale: 3 firmware commits since"])
