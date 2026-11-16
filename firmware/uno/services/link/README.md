@@ -9,6 +9,6 @@ The link protocol: parses messages from the computer and builds messages to it. 
 | **Requirements** | D4 (version message), F3 and F4 (drive and stop messages), F14 (camera message with optional speed) |
 | **Interface** | `Parser::feed(c)` returns a `Command`; `MessageWriter` builds `{type,field,...}` |
 | **Unit tests** | `tests/test_link.cpp` |
-| **Monitors** | None yet. They arrive with diagnostics in increment 2 |
+| **Monitors** | None. The link timeout is the safety supervisor's (`link timeout` in diagnostics) |
 
 Test this unit on its own with `python scripts/dev.py test link`.

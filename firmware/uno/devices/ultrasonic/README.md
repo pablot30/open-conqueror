@@ -1,6 +1,6 @@
 # ultrasonic
 
-**Layer:** devices. **Version:** in `library.properties`. **Not run on the robot yet.**
+**Layer:** devices. **Version:** in `library.properties`. **First run on the robot on 2026-11-15:** a table test against a tape measure (#30).
 
 The distance sensor on header P9: trigger on D13, echo on D12. The logic sends one ping at most every 60 ms and turns an echo's width into millimetres. A pin-change interrupt times the echo, so no frame ever waits for it. The stock firmware blocks for up to 1 s here (T2) and reads 25 to 35% short (T3).
 
