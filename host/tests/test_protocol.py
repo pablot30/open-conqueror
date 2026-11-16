@@ -130,6 +130,21 @@ class MessageTests(unittest.TestCase):
         self.assertIsNone(protocol.parse_telemetry(["1", "2"]))
         self.assertIsNone(protocol.parse_telemetry(["x"] * 7))
 
+    def test_dongle_link_status(self) -> None:
+        kind, values = protocol.parse_message("W,3,-40")
+        self.assertEqual(kind, "W")
+        status = protocol.parse_link_status(values)
+        assert status is not None
+        self.assertTrue(status.connected)
+        self.assertEqual(status.describe(), "connected, -40 dBm")
+        searching = protocol.parse_link_status(["0", "0"])
+        assert searching is not None
+        self.assertFalse(searching.connected)
+        self.assertEqual(searching.describe(), "looking for the robot's network")
+        self.assertIsNone(protocol.parse_link_status(["3"]))
+        self.assertIsNone(protocol.parse_link_status(["x", "1"]))
+        self.assertEqual(protocol.parse_message("WV,0.1.0-dev,abc1234,0.6.0")[0], "WV")
+
 
 if __name__ == "__main__":
     unittest.main()

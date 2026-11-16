@@ -2,21 +2,22 @@
 
 REQUIREMENTS = ["F1", "T4"]
 MOVES = True
-SETUP = """Robot on a flat floor with a clear lane at least 3 m long and 0.5 m wide. It
-needs the LONG USB cable (3 m or more), because the robot drives away from
-the computer: lay the cable along the lane and keep slack so it can't pull
-the robot. Upload-Cam switch on Upload, main power on, battery charged. A
-tape measure, and a strip of tape across the floor under the robot's middle
-as a start mark."""
+SETUP = """Robot on a flat floor with a clear lane at least 3 m long and 0.5 m wide,
+battery charged. Best over Wi-Fi: the dongle in the computer, Upload-Cam
+switch on Cam, and the robot switched on where it stands, then left still for
+3 seconds while the gyro calibrates. Or with a LONG USB cable (3 m or more)
+laid along the lane with slack, switch on Upload. A tape measure, and a strip
+of tape across the floor under the robot's middle as a start mark."""
 BRIEF = """The tracks move: the robot drives forward for 5 seconds at 40% and stops.
 Forward is roughly 2 m depending on the battery. The test then asks you
 to measure, and waits for your answer: how far to the side of a straight
 line from its start mark the robot ended up. Leave it where it is until
 you've answered. Then it drives backward for 5 seconds at 40% and stops. Stand beside the lane, not in front of it, and
-keep a hand free to catch the cable or stop the robot with the MODE button.
-Let the robot sit still for the first 3 seconds after you start the test:
-the gyro calibrates then, and the robot must not be touched. Lay the tape
-measure along the lane before the test. Watch for the robot veering and for the cable pulling it. About 1 minute."""
+keep a hand free to stop the robot with the MODE button (and, over USB, to
+catch the cable). Over USB, let the robot sit still for the first 3 seconds
+after you start the test: opening the port restarts it and the gyro
+calibrates then, and the robot must not be touched. Lay the tape
+measure along the lane before the test. Watch for the robot veering, and over USB for the cable pulling it. About 1 minute."""
 
 DRIVE_S = 5.0
 SPEED = 40

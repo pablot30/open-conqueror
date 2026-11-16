@@ -2,6 +2,7 @@
 
 REQUIREMENTS = ["F5", "F13", "F14", "T6", "T4"]
 MOVES = False
+NEEDS_FRESH_START = True  # over the Wi-Fi dongle the robot doesn't restart
 SETUP = """Robot standing still on a table, USB connected, Upload-Cam switch on
 Upload, main power on. Don't touch the robot or the table while it starts."""
 BRIEF = """The tracks don't move. Opening the port restarts the robot. Watch two

@@ -86,7 +86,7 @@ The battery reading has no correction yet. It hasn't been compared with a multim
 
 ## Driving and testing from the host computer
 
-`conq`, from the [host package](../host/pyproject.toml), talks to the robot over USB. Every command also takes `--json`.
+`conq`, from the [host package](../host/pyproject.toml), talks to the robot over its USB cable or through the [Wi-Fi dongle](dongle/README.md), which it recognises by its USB IDs. Every command also takes `--json`. Over the dongle, put the Upload-Cam switch on Cam; the robot doesn't restart when the port opens, so tests that check power-on are skipped, and commands report if the Wi-Fi link drops.
 
 ```
 conq version                  # firmware version and commit

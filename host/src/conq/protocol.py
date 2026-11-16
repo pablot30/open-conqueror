@@ -2,6 +2,8 @@
 
 Messages are short text inside braces at 9600 baud, so they pass through the
 stock camera board's bridge unchanged. See firmware/README.md for the list.
+Over Wi-Fi, the dongle (firmware/dongle/README.md) adds its own messages,
+which start with W.
 """
 
 from __future__ import annotations
@@ -10,6 +12,7 @@ from dataclasses import asdict, dataclass, fields
 from typing import Any
 
 BAUD = 9600
+DONGLE_BAUD = 115200  # the R4's USB goes through its ESP32-S3, which needs this rate
 PROTOCOL_VERSION = 8  # the firmware reports its own in the version message
 
 STATES = {0: "standby", 1: "driving", 2: "stopped"}
@@ -36,6 +39,12 @@ DIRECTIONS = {
 STOP = b"{S}"
 NEUTRAL = b"{D,0,0}"  # releases a held stop; the firmware needs it before driving
 VERSION = b"{V}"
+DONGLE_VERSION = b"{WV}"
+
+# The dongle's link to the robot, from {W,state,rssi}.
+LINK_STATES = {0: "looking for the robot's network", 1: "joining the robot's network",
+               2: "connecting to the camera board", 3: "connected"}
+LINK_CONNECTED = 3
 
 
 def camera_message(pan: int, tilt: int, speed: int | None = None) -> bytes:
@@ -106,6 +115,27 @@ class Telemetry:
         frame = f", longest frame {self.longest_frame_us} us" if self.longest_frame_us is not None else ""
         return (f"{self.state_name}, PWM left {self.left_pwm} right {self.right_pwm}, "
                 f"battery {self.battery_mv / 1000:.2f} V{battery}, faults: {faults}{frame}")
+
+
+@dataclass
+class LinkStatus:
+    state: int
+    rssi_dbm: int  # 0 when not on the robot's network
+
+    @property
+    def connected(self) -> bool:
+        return self.state == LINK_CONNECTED
+
+    def describe(self) -> str:
+        name = LINK_STATES.get(self.state, f"state {self.state}")
+        return f"{name}, {self.rssi_dbm} dBm" if self.rssi_dbm else name
+
+
+def parse_link_status(values: list[str]) -> LinkStatus | None:
+    try:
+        return LinkStatus(int(values[0]), int(values[1]))
+    except (IndexError, ValueError):
+        return None
 
 
 def parse_message(body: str) -> tuple[str, list[str]]:
