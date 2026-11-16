@@ -16,3 +16,4 @@ Short records of why we chose things, so nobody has to guess later. Add a new fi
 | [0010](0010-agents-md.md) | The agent rules live in AGENTS.md | Accepted |
 | [0011](0011-wifi-dongle.md) | A UNO R4 WiFi as the computer's Wi-Fi dongle | Accepted |
 | [0012](0012-versions-and-a-stable-main.md) | Versions for units, components and releases, and a stable `main` | Accepted |
+| [0013](0013-review-by-the-other-vendor.md) | Every pull request is reviewed by the other vendor's model | Accepted |
