@@ -165,4 +165,3 @@ We use the standard terms, so the design is familiar to people from the field an
 | A folder per robot type | A second robot type |
 | Fault memory in EEPROM | Health monitoring needs history across power cycles (D11) |
 | A signal description file that generates firmware and host code (D13) | The protocol grows, in increment 4 or stage 3 |
-| A check that a changed unit's version was bumped | Units start being reused or released on their own |

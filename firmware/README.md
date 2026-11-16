@@ -1,6 +1,6 @@
 # Firmware
 
-Our firmware for the robot. Only the UNO has firmware so far, at increment 1, the walking skeleton ([decision 0006](../docs/decisions/0006-walking-skeleton-first.md)). It drives both tracks from a computer and stops when it should. It doesn't use the line sensors yet.
+Our firmware for the robot's UNO, in stage 2, increment 2 ([roadmap](../docs/roadmap.md)). It drives both tracks from a computer or the IR remote, stops when it should, and reads the gyro, ultrasonic and battery. It doesn't use the line sensors yet; they come with the modes in increment 3. A second firmware, for the parked Wi-Fi dongle, lives in `dongle/`.
 
 ## Layout
 
@@ -13,7 +13,7 @@ The firmware is built from self-contained **units**, grouped in the four layers 
 | `uno/devices/` | `button` (MODE button debouncing), `gyro` (turn rate and heading), `servos` (camera pan and tilt), `led` (the status LED), `ultrasonic` (distance, timed without blocking), `ir` (the remote: decoder, key table, arrow driving) |
 | `uno/hal/` | `board`: the motor driver, battery divider and MODE button pins. `pinchange`: the one pin-change interrupt that the ultrasonic echo and the IR receiver share. Device units keep their own hardware code in files ending in `_hw.cpp`, which only build for the board |
 | `uno/modes/` | Arrives in increment 3, with the modes |
-| `dongle/` | A second firmware, for the UNO R4 WiFi that links the computer to the robot over Wi-Fi. See its [README](dongle/README.md) |
+| `dongle/` | A second firmware, for the UNO R4 WiFi that links the computer to the robot over Wi-Fi. Parked since 2026-11-16, because it hangs. See its [README](dongle/README.md) |
 | `testing/` | The shared unit test harness, built with CMake on the host computer |
 
 `python scripts/dev.py units` lists the units and their versions. Unit tests name the requirements they check in a comment, as described in [testing](testing/README.md).
@@ -35,7 +35,7 @@ CI builds the same image on every pull request and keeps it, with the build repo
 
 ## Protocol
 
-This is protocol version 8. Messages are short text inside braces, at 9600 baud. That's what the stock camera firmware's bridge forwards, so the same messages should work over Wi-Fi in increment 4. The firmware ignores anything outside braces.
+This is protocol version 8. Messages are short text inside braces, at 9600 baud. That's what the stock camera firmware's bridge forwards, so the same messages work over Wi-Fi: they did through the [Wi-Fi dongle](dongle/README.md), now parked, and they're planned for increment 4. The firmware ignores anything outside braces.
 
 **From the computer:**
 
@@ -86,7 +86,7 @@ The battery reading has no correction yet. It hasn't been compared with a multim
 
 ## Driving and testing from the host computer
 
-`conq`, from the [host package](../host/pyproject.toml), talks to the robot over its USB cable or through the [Wi-Fi dongle](dongle/README.md), which it recognises by its USB IDs. Every command also takes `--json`. Over the dongle, put the Upload-Cam switch on Cam; the robot doesn't restart when the port opens, so tests that check power-on are skipped, and commands report if the Wi-Fi link drops.
+`conq`, from the [host package](../host/pyproject.toml), talks to the robot over its USB cable or through the [Wi-Fi dongle](dongle/README.md), parked for now, which it recognises by its USB IDs. Every command also takes `--json`. Over the dongle, put the Upload-Cam switch on Cam; the robot doesn't restart when the port opens, so tests that check power-on are skipped, and commands report if the Wi-Fi link drops.
 
 ```
 conq version                  # firmware version and commit

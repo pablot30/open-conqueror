@@ -1,6 +1,6 @@
 # pinchange
 
-**Layer:** hal. **Version:** in `library.properties`. **Not run on the robot yet.**
+**Layer:** hal. **Version:** in `library.properties`. **First run on the robot on 2026-11-15,** under the ultrasonic and IR remote tests.
 
 The one place that defines the pin-change interrupt for port B (the `PCINT0` vector), covering D8 to D13. The ultrasonic echo (D12) and the IR receiver (D9) are both on port B, and an interrupt vector can only be defined once, so each unit registers a handler here instead of defining its own. Pin numbers come from [the pin map](../../../../docs/hardware/pin-map.md).
 

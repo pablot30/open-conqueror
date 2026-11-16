@@ -146,7 +146,7 @@ Two hardware limits shape this. The robot has **no current sensing and no wheel 
 
 ## Quality requirements
 
-These apply to every change before it's merged. The research behind them, and the exact scope and tools, come in the [stage 2 plan](roadmap.md).
+These apply to every change before it's merged. For now they apply in the light form of the [build order](#build-order). [Decision 0006](decisions/0006-walking-skeleton-first.md) sets that minimum, and [0007](decisions/0007-testing-releases-and-traceability.md) says what waits and why.
 
 | ID | Requirement |
 |---|---|

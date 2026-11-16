@@ -27,7 +27,7 @@ gh api repos/pablot30/open-conqueror/rulesets --method POST --input .github/rule
 
 ### arduino-cli, its cores and the Servo library
 
-arduino-cli compiles and flashes both firmwares. Its cores add each board's compiler and upload tools; the AVR core also includes avrdude, which we use for firmware backups. **Needed since:** stage 1, and through stage 2 at least. The `arduino:renesas_uno` core is for the Wi-Fi dongle, an Arduino UNO R4 WiFi ([firmware/dongle](../firmware/dongle/README.md)), until our camera firmware joins the home Wi-Fi in stage 3.
+arduino-cli compiles and flashes both firmwares. Its cores add each board's compiler and upload tools; the AVR core also includes avrdude, which we use for firmware backups. **Needed since:** stage 1, and through stage 2 at least. The `arduino:renesas_uno` core is for the Wi-Fi dongle, an Arduino UNO R4 WiFi ([firmware/dongle](../firmware/dongle/README.md)). The dongle is parked, but its firmware stays in the repo and CI still builds it, so the core stays until our camera firmware joins the home Wi-Fi in stage 3.
 
 | | macOS | Linux | Windows |
 |---|---|---|---|
