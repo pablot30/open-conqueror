@@ -10,7 +10,7 @@ After cloning, turn on the project's git hooks once:
 git config core.hooksPath .githooks
 ```
 
-The pre-push hook refuses direct pushes to `main`, force pushes, and deleting `main` or a `release/` branch. Deleting merged work branches is allowed. GitHub can only enforce this itself on public repos, or on a paid plan. Once the repo is public, apply `.github/rulesets/protect-main.json` with:
+The pre-push hook refuses direct pushes to `main`, force pushes, and deleting `main` or a `release/` branch. Deleting merged work branches is allowed. GitHub enforces the same rules with the ruleset in `.github/rulesets/protect-main.json`, applied once when the repo went public; the hook just catches mistakes earlier. To apply it again, for example on a fork:
 
 ```
 gh api repos/pablot30/open-conqueror/rulesets --method POST --input .github/rulesets/protect-main.json

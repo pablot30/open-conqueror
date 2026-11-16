@@ -76,7 +76,7 @@ This isn't a blueprint we designed in advance. It grows from what the project ac
 
 **What:** changes reach `main` only through reviewed pull requests, with no force pushes, and `main` and release branches can't be deleted. Delete work branches once they're merged, so the branch list shows only live work. If the platform can't enforce this, enforce it locally until it can.
 
-**Why:** GitHub only protects branches on private repos with a paid plan. We use a [pre-push hook](tools.md#repository-setup) until the repo is public.
+**Why:** GitHub only protects branches on private repos with a paid plan. While the repo was private we used a [pre-push hook](tools.md#repository-setup); since it went public, a GitHub ruleset enforces this and the hook stays as an early warning.
 
 ## 10. Keep the computer clean
 
