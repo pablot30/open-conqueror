@@ -1,6 +1,6 @@
 # 0007: How we test, release and trace our software
 
-**Date:** 2026-11-11. **Status:** accepted.
+**Date:** 2026-11-11. **Status:** accepted. Versions extended by [0012](0012-versions-and-a-stable-main.md): units and components now have their own versions, and the release stays one product release.
 
 ## Context
 
