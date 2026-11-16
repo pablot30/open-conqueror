@@ -2,7 +2,7 @@
 
 Reports written before big decisions. Each one gathers sources, states what's uncertain, and ends with the decisions it informs. The decisions themselves go in [decisions](../decisions/README.md).
 
-All eight were written on 8 and 9 November 2026, while stage 2 planning was at its largest. [Decision 0006](../decisions/0006-walking-skeleton-first.md) then cut stage 2 back to a walking skeleton, so read them as background: where a decision or the [architecture](../architecture.md) says otherwise, those win.
+The eight R reports were written on 8 and 9 November 2026, while stage 2 planning was at its largest. [Decision 0006](../decisions/0006-walking-skeleton-first.md) then cut stage 2 back to a walking skeleton, so read them as background: where a decision or the [architecture](../architecture.md) says otherwise, those win.
 
 | Report | Topic | Where it's used |
 |---|---|---|
@@ -14,5 +14,6 @@ All eight were written on 8 and 9 November 2026, while stage 2 planning was at i
 | [R6](2026-11-09-embedded-firmware-architecture.md) | Firmware architecture: layers, scheduling, safety, versions, system split | Cut down into the [architecture](../architecture.md) |
 | R7 | Releases and the software factory | **Not published yet,** because its release flow depends on an idea in R3. [0007](../decisions/0007-testing-releases-and-traceability.md) covers releases for now |
 | R8 | Dashboards and replay tools | **Not published yet.** Two of its ideas need the same check as R3's. Needed in increment 4 |
+| [Review](2026-11-16-project-review.md) | A review of the project and its progress after increment 2's first parts, by Claude Fable 5.2 at the maintainer's request | Automatic pull request review in [0013](../decisions/0013-review-by-the-other-vendor.md); the other items wait for the maintainer |
 
 R3, R7 and R8 are kept privately until the maintainer decides on their possibly novel ideas, because the repo's history will become public.
