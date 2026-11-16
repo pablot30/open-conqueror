@@ -49,6 +49,6 @@ These have no committed order. We'll choose based on what the earlier stages tea
 ## How we work
 
 - GitHub Issues hold the backlog, with one milestone per stage.
-- Work happens on short branches with pull requests. The maintainer reviews and merges.
+- Work happens on short branches with pull requests. The other vendor's model reviews each one, the author answers every comment, and the maintainer reads the review summary and open points before merging ([decision 0013](decisions/0013-review-by-the-other-vendor.md)).
 - The AI agent writes code and docs and tests what it can on a computer. The maintainer handles the physical steps and signs off on the robot.
 - Decisions go in [decisions](decisions/README.md), and lessons go in the [notebook](notebook/README.md).
