@@ -11,8 +11,10 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-set(UNO_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../uno)
-file(GLOB UNIT_DIRS LIST_DIRECTORIES true CONFIGURE_DEPENDS ${UNO_DIR}/*/*)
+# Units are firmware/<firmware>/<layer>/<unit>, for every firmware: the UNO's
+# and the Wi-Fi dongle's. Unit names are unique across firmwares.
+set(FIRMWARE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/..)
+file(GLOB UNIT_DIRS LIST_DIRECTORIES true CONFIGURE_DEPENDS ${FIRMWARE_DIR}/*/*/*)
 
 # Every unit's headers are visible, so a unit's tests can use another
 # unit's types. Each test executable compiles only its own unit's sources.
@@ -43,7 +45,7 @@ foreach(UNIT_DIR ${UNIT_DIRS})
     file(STRINGS ${UNIT_DIR}/tests/uses.txt USED_UNITS)
     set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${UNIT_DIR}/tests/uses.txt)
     foreach(USED ${USED_UNITS})
-      file(GLOB USED_SOURCES CONFIGURE_DEPENDS ${UNO_DIR}/*/${USED}/src/*.cpp)
+      file(GLOB USED_SOURCES CONFIGURE_DEPENDS ${FIRMWARE_DIR}/*/*/${USED}/src/*.cpp)
       list(FILTER USED_SOURCES EXCLUDE REGEX "_hw\\.cpp$")
       list(APPEND UNIT_SOURCES ${USED_SOURCES})
     endforeach()
