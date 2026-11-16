@@ -15,5 +15,6 @@ The eight R reports were written on 8 and 9 November 2026, while stage 2 plannin
 | [R7](2026-11-09-releases-and-software-factory.md) | Releases and the software factory | [0007](../decisions/0007-testing-releases-and-traceability.md) and [0012](../decisions/0012-versions-and-a-stable-main.md) cover releases for now, and differ from it on versions |
 | [R8](2026-11-09-dashboards-and-replay.md) | Dashboards and replay tools | Needed in increment 4. Its two new ideas are novelties [N4 and N5](../novelties/README.md) |
 | [Review](2026-11-16-project-review.md) | A review of the project and its progress after increment 2's first parts, by Claude Fable 5.2 at the maintainer's request | Automatic pull request review in [0013](../decisions/0013-review-by-the-other-vendor.md); the other items wait for the maintainer |
+| [Handover](2026-11-16-docs-check-and-traceability-handover.md) | A plan for a regular docs check and a requirement-to-result trace command, by Claude Fable 5.2 | `dev.py trace` ([#51](https://github.com/pablot30/open-conqueror/issues/51)); the docs check is [#52](https://github.com/pablot30/open-conqueror/issues/52) |
 
 R3, R7 and R8 were kept out of the repo at first, because of ideas that might have been patentable. On 2026-11-16 the maintainer decided to publish those ideas openly, as [novelties](../novelties/README.md).

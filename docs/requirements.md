@@ -20,13 +20,14 @@ Each increment runs on the robot before the next one starts. A requirement joins
 
 | Increment | Requirements | Notes |
 |---|---|---|
-| **1. Walking skeleton** | F2, F3, F4, S1 (computer tool and MODE button), S3, S4, S5, S9, S10, T2, T8, D4, D6 | Driving without the gyro, over USB. Pull requests, CI, unit tests, cppcheck |
-| 2. Sensors and status | F1, F5, F13, F14, F15, T1, T3, T4, T6, S2, F10 | Gyro, LED, servos, ultrasonic, IR remote |
-| 3. Modes | F6 to F9, S6 to S8, T5 | Line tracking, obstacle avoidance, follow, MODE button cycling |
-| 4. Wi-Fi and tools | F11, T7, D1, D7, D8, D9 | Through the stock camera bridge. Plot recordings with existing tools first |
-| Later | D2, D3, D10 to D16, Q1, Q3, Q5, S11, S12, and the stage 3 features F12 and F16 to F18 | Each comes back when we need it: wireless updates and security with our camera firmware in stage 3, the MISRA mapping and coverage gates once the code settles, description files once the protocol settles |
+| **1. Walking skeleton** | F2, F3, F4, S1, S3, S4, S5, S9, S10, T2, T8, D4, D6 | Driving without the gyro, over USB. S1 from the computer tool and the MODE button. Pull requests, CI, unit tests, cppcheck |
+| 2. Sensors and status | F1, F5, F10, F13, F14, F15, S2, T1, T3, T4, T6 | Gyro, LED, servos, ultrasonic, IR remote |
+| 3. Modes | F6, F7, F8, F9, S6, S7, S8, T5 | Line tracking, obstacle avoidance, follow, MODE button cycling |
+| 4. Wi-Fi and tools | F11, D1, D7, D8, D9, T7 | Through the stock camera bridge. Plot recordings with existing tools first |
+| Every increment | D5, Q2, Q4, Q6 | In a light form: unit tests and CI on three systems, no new cppcheck findings, merges through pull requests, and requirement IDs in tests and commits |
+| Later | D2, D3, D10, D11, D12, D13, D14, D15, D16, Q1, Q3, Q5, S11, S12, F12, F16, F17, F18 | Each comes back when we need it: wireless updates and security with our camera firmware in stage 3 (F12, F16 to F18), the MISRA mapping and coverage gates once the code settles, description files once the protocol settles |
 
-The rest of D5 and Q2, Q4 and Q6 apply from the first increment in a light form: unit tests and CI on three systems, no new cppcheck findings, merges through pull requests, and requirement IDs in tests and commits.
+Each requirement is in exactly one row. `python scripts/dev.py trace --increment N` lists an increment's requirements with their tests and latest robot results.
 
 ## Features
 

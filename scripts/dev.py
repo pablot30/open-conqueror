@@ -7,6 +7,7 @@ Usage:
     python scripts/dev.py lint                          run cppcheck on the firmware units
     python scripts/dev.py units [--base REF] [--json]   list the units; with --base, check version bumps
     python scripts/dev.py upload [--target T] [--port P]  flash a firmware
+    python scripts/dev.py trace [--increment N] [--json]  each requirement's tests and latest robot result
 
 Targets: uno, the robot's UNO (Upload-Cam switch on Upload), and dongle, the
 UNO R4 WiFi that links the computer to the robot over Wi-Fi.
@@ -24,6 +25,8 @@ import sys
 import xml.etree.ElementTree as ElementTree
 from pathlib import Path
 from typing import Any
+
+import traceability
 
 ROOT = Path(__file__).resolve().parent.parent
 FIRMWARE = ROOT / "firmware"
@@ -415,6 +418,11 @@ def upload(args: argparse.Namespace) -> int:
     return proc.returncode
 
 
+def trace(args: argparse.Namespace) -> int:
+    result = traceability.trace(ROOT, args.increment)
+    return emit(result, args.json, traceability.as_table(result))
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -439,6 +447,10 @@ def main() -> int:
     p.add_argument("--target", choices=sorted(TARGETS), default="uno", help="which firmware (default: uno)")
     p.add_argument("--port", help="serial port, such as COM3 or /dev/ttyUSB0; found automatically if only one")
     p.set_defaults(func=upload)
+    p = sub.add_parser("trace", help="each requirement's tests and latest robot result (report only)")
+    p.add_argument("--increment", type=int, help="only the requirements of this increment, such as 1")
+    p.add_argument("--json", action="store_true", help="print a JSON report")
+    p.set_defaults(func=trace)
     args = parser.parse_args()
     return args.func(args)
 

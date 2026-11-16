@@ -2,6 +2,7 @@
 
 import os
 import re
+import sys
 import tempfile
 import time
 import unittest
@@ -11,11 +12,13 @@ from unittest import mock
 from conq import __version__, cli, link, robottest
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "scripts"))
+
+import traceability  # noqa: E402  # one reader for requirement IDs, shared with dev.py trace
 
 
 def requirement_ids() -> set[str]:
-    text = (ROOT / "docs" / "requirements.md").read_text(encoding="utf-8")
-    return set(re.findall(r"^\| ([A-Z]{1,2}\d+) \|", text, flags=re.MULTILINE))
+    return set(traceability.requirement_ids((ROOT / "docs" / "requirements.md").read_text(encoding="utf-8")))
 
 
 class VersionTests(unittest.TestCase):

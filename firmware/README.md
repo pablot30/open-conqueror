@@ -16,7 +16,7 @@ The firmware is built from self-contained **units**, grouped in the four layers 
 | `dongle/` | A second firmware, for the UNO R4 WiFi that links the computer to the robot over Wi-Fi. See its [README](dongle/README.md) |
 | `testing/` | The shared unit test harness, built with CMake on the host computer |
 
-`python scripts/dev.py units` lists the units and their versions.
+`python scripts/dev.py units` lists the units and their versions. Unit tests name the requirements they check in a comment, as described in [testing](testing/README.md).
 
 ## Build, test and flash
 
