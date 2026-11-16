@@ -18,7 +18,7 @@ def run(t):
             str(firmware), ["D4"])
     t.check("protocol version reported", bool(firmware) and firmware.get("protocol") == "8",
             f"protocol {firmware.get('protocol') if firmware else '-'}", ["D4"])
-    version_file = Path(__file__).resolve().parents[2] / "VERSION"
+    version_file = Path(__file__).resolve().parents[2] / "firmware" / "uno" / "VERSION"
     if firmware and version_file.is_file():
         expected = version_file.read_text(encoding="utf-8").strip()
         t.check("version matches the VERSION file", firmware["version"] == expected,

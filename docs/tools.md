@@ -25,9 +25,9 @@ gh api repos/pablot30/open-conqueror/rulesets --method POST --input .github/rule
 
 ## Installed
 
-### arduino-cli and the `arduino:avr` core
+### arduino-cli, its cores and the Servo library
 
-Compiles and flashes the UNO. The core includes avrdude, which we use for firmware backups. **Needed since:** stage 1, and through stage 2 at least.
+arduino-cli compiles and flashes both firmwares. Its cores add each board's compiler and upload tools; the AVR core also includes avrdude, which we use for firmware backups. **Needed since:** stage 1, and through stage 2 at least. The `arduino:renesas_uno` core is for the Wi-Fi dongle, an Arduino UNO R4 WiFi ([firmware/dongle](../firmware/dongle/README.md)), until our camera firmware joins the home Wi-Fi in stage 3.
 
 | | macOS | Linux | Windows |
 |---|---|---|---|
@@ -35,11 +35,25 @@ Compiles and flashes the UNO. The core includes avrdude, which we use for firmwa
 | Update | `brew upgrade arduino-cli` | same as install method | `winget upgrade ArduinoSA.CLI` |
 | Uninstall | `brew uninstall arduino-cli` | same as install method | `winget uninstall ArduinoSA.CLI` |
 
-On every system, install the core with `arduino-cli core install arduino:avr@1.8.8`, update it with `arduino-cli core upgrade`, and remove it with `arduino-cli core uninstall arduino:avr`.
+**Cores and libraries: one copy each, managed by arduino-cli.** The versions we build with are pinned in `scripts/dev.py`: `arduino:avr` 1.8.8, `arduino:renesas_uno` 1.6.0 and the Servo library 1.3.0. On every system:
 
-The core lives in `~/Library/Arduino15` on macOS, `~/.arduino15` on Linux and `%LOCALAPPDATA%\Arduino15` on Windows. Other Arduino work on the same computer may share that folder, so remove individual cores rather than the whole folder.
+| | Command |
+|---|---|
+| Install or fix the pinned versions | `python scripts/dev.py setup` |
+| Update | change the pin in `scripts/dev.py`, then run `python scripts/dev.py setup` |
+| Uninstall | `arduino-cli core uninstall arduino:avr`, `arduino-cli core uninstall arduino:renesas_uno`, `arduino-cli lib uninstall Servo` |
 
-Our firmware build pins the core in `firmware/uno/sketch.yaml`. arduino-cli installs a pinned core and its tools (avr-gcc, avrdude, arduinoOTA) by itself on the first build, in the `internal` folder inside the folder above. To remove them, delete the folders starting with `arduino_avr`, `arduino_avr-gcc`, `arduino_avrdude` and `arduino_arduinoOTA` in `internal`. The next build downloads them again.
+`dev.py build` checks the installed versions and stops if they differ, rather than downloading its own copy. We don't use arduino-cli build profiles (`sketch.yaml` with `platforms:`): they keep a second copy of every core in an `internal` folder, about 1 GB for our two boards.
+
+Where arduino-cli keeps things:
+
+| | macOS | Linux | Windows |
+|---|---|---|---|
+| Cores and their tools | `~/Library/Arduino15` | `~/.arduino15` | `%LOCALAPPDATA%\Arduino15` |
+| Libraries | `~/Documents/Arduino/libraries` | `~/Arduino/libraries` | `Documents\Arduino\libraries` |
+| Build cache, cleared by arduino-cli after 30 days | `~/Library/Caches/arduino` | `~/.cache/arduino` | `%LOCALAPPDATA%\arduino` |
+
+`arduino-cli cache clean` empties its download cache (`staging` in the cores folder). Other Arduino work on the same computer may share these folders, so remove individual cores and libraries rather than whole folders. To remove arduino-cli completely, uninstall it and then delete the three folders above.
 
 We've only used the macOS commands so far.
 

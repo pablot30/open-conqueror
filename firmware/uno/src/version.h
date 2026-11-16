@@ -1,6 +1,6 @@
 // Firmware version and git commit (D4). scripts/dev.py writes both into
-// generated/build_info.h before each build: the version from the VERSION file
-// at the repo root, the commit from git. Builds without it, such as from the
+// generated/build_info.h before each build: the version from this firmware's
+// VERSION file, the commit from git. Builds without it, such as from the
 // Arduino IDE, report "unknown".
 #ifndef OC_VERSION_H
 #define OC_VERSION_H

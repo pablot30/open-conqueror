@@ -13,6 +13,6 @@ An SG90 can't report its position, so the ramp counts its own angle in hundredth
 | **Unit tests** | `tests/test_servos.cpp`, for the logic. Files ending in `_hw.cpp` use the hardware and only build for the board |
 | **Monitors** | None: an SG90 gives no feedback. |
 
-Uses the Arduino Servo library 1.3.0 (pinned in `sketch.yaml`), which takes Timer1. Whether 90 degrees points the camera straight ahead is checked on the robot.
+Uses the Arduino Servo library 1.3.0 (pinned in `scripts/dev.py`), which takes Timer1. Whether 90 degrees points the camera straight ahead is checked on the robot.
 
 Test this unit on its own with `python scripts/dev.py test servos`.

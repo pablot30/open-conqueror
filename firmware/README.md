@@ -9,11 +9,11 @@ The firmware is built from self-contained **units**, grouped in the four layers 
 | Folder | Contents |
 |---|---|
 | `uno/uno.ino` | Connects the units. No logic of its own beyond that |
-| `uno/sketch.yaml` | The build profile: board, pinned core version, and every unit |
 | `uno/services/` | `safety` (the only code that decides what the motors do), `motion` (heading hold), `battery`, `link` (the protocol), `scheduler` (the 10 ms frame), `diagnostics` (monitors, events, signal status) |
 | `uno/devices/` | `button` (MODE button debouncing), `gyro` (turn rate and heading), `servos` (camera pan and tilt), `led` (the status LED), `ultrasonic` (distance, timed without blocking), `ir` (the remote: decoder, key table, arrow driving) |
 | `uno/hal/` | `board`: the motor driver, battery divider and MODE button pins. `pinchange`: the one pin-change interrupt that the ultrasonic echo and the IR receiver share. Device units keep their own hardware code in files ending in `_hw.cpp`, which only build for the board |
 | `uno/modes/` | Arrives in increment 3, with the modes |
+| `dongle/` | A second firmware, for the UNO R4 WiFi that links the computer to the robot over Wi-Fi. See its [README](dongle/README.md) |
 | `testing/` | The shared unit test harness, built with CMake on the host computer |
 
 `python scripts/dev.py units` lists the units and their versions.
@@ -23,12 +23,13 @@ The firmware is built from self-contained **units**, grouped in the four layers 
 Install the tools in [tools.md](../docs/tools.md) first. From the repo root, on any system:
 
 ```
+python scripts/dev.py setup          # once: the pinned Arduino cores and libraries
 python scripts/dev.py build          # add --json for a report agents can read
 python scripts/dev.py test           # all units; or test one: dev.py test safety
 python scripts/dev.py upload         # finds the port if only one is connected
 ```
 
-Use `python3` instead of `python` where that's the name. The build fails if our code has compiler warnings, or breaks the T8 limits: 80% of flash and 512 bytes of free RAM. It reports the firmware version (from the `VERSION` file), the git commit and every unit's version. Flashing needs the Upload-Cam switch on **Upload**.
+Use `python3` instead of `python` where that's the name. The build fails if our code has compiler warnings, or breaks the T8 limits: 80% of flash and 512 bytes of free RAM. It reports the firmware version (from `uno/VERSION`), the git commit and every unit's version. Flashing needs the Upload-Cam switch on **Upload**.
 
 CI builds the same image on every pull request and keeps it, with the build report, as a download on the run's page.
 
