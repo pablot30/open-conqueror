@@ -2,7 +2,7 @@
 
 Open-source software for the ELEGOO Conqueror tank, rebuilt from scratch through AI-driven development, with everything we learn published along the way.
 
-> **Status: stage 2, increment 2.** Our UNO firmware drives the robot from a computer or the IR remote, stops safely, and reads the gyro, ultrasonic and battery. Heading hold for straight runs is built and waits for its floor test. Next: floor tests over Wi-Fi, then the modes. See the [roadmap](docs/roadmap.md) and the [firmware](firmware/README.md).
+> **Status: stage 2, increment 2.** Our UNO firmware drives the robot from a computer or the IR remote, stops safely, and reads the gyro, ultrasonic and battery. Heading hold for straight runs is built and waits for its floor test. Next: floor tests on a long USB cable, then the modes. See the [roadmap](docs/roadmap.md) and the [firmware](firmware/README.md).
 
 ## What's new here
 
