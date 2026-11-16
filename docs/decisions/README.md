@@ -10,7 +10,8 @@ Short records of why we chose things, so nobody has to guess later. Add a new fi
 | [0004](0004-own-protocol-and-control-page.md) | Our own protocol and control page, not the stock app | Accepted |
 | [0005](0005-publish-with-first-working-firmware.md) | Publish once our first firmware works on the robot | Accepted |
 | [0006](0006-walking-skeleton-first.md) | A walking skeleton first, everything else when it's needed | Accepted |
-| [0007](0007-testing-releases-and-traceability.md) | How we test, release and trace our software | Accepted |
+| [0007](0007-testing-releases-and-traceability.md) | How we test, release and trace our software | Accepted, versions extended by 0012 |
 | [0008](0008-architecture.md) | The architecture: roles, layers, units, host side and diagnostics | Accepted |
 | [0009](0009-issues-branches-and-commits.md) | Issues, branch names and commit messages | Accepted |
 | [0010](0010-agents-md.md) | The agent rules live in AGENTS.md | Accepted |
+| [0012](0012-versions-and-a-stable-main.md) | Versions for units, components and releases, and a stable `main` | Accepted |
