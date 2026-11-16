@@ -8,6 +8,7 @@ Usage:
     python scripts/dev.py units [--base REF] [--json]   list the units; with --base, check version bumps
     python scripts/dev.py upload [--target T] [--port P]  flash a firmware
     python scripts/dev.py trace [--increment N] [--json]  each requirement's tests and latest robot result
+    python scripts/dev.py docs [--json]                 check the docs' links, IDs and indexes
 
 Targets: uno, the robot's UNO (Upload-Cam switch on Upload), and dongle, the
 UNO R4 WiFi that links the computer to the robot over Wi-Fi.
@@ -26,6 +27,7 @@ import xml.etree.ElementTree as ElementTree
 from pathlib import Path
 from typing import Any
 
+import docscheck
 import traceability
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -423,6 +425,11 @@ def trace(args: argparse.Namespace) -> int:
     return emit(result, args.json, traceability.as_table(result))
 
 
+def docs(args: argparse.Namespace) -> int:
+    result = docscheck.check(ROOT)
+    return emit(result, args.json, docscheck.as_text(result))
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -451,6 +458,9 @@ def main() -> int:
     p.add_argument("--increment", type=int, help="only the requirements of this increment, such as 1")
     p.add_argument("--json", action="store_true", help="print a JSON report")
     p.set_defaults(func=trace)
+    p = sub.add_parser("docs", help="check the docs' links, requirement IDs and indexes (the script half)")
+    p.add_argument("--json", action="store_true", help="print a JSON report")
+    p.set_defaults(func=docs)
     args = parser.parse_args()
     return args.func(args)
 
