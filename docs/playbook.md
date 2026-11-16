@@ -134,3 +134,27 @@ This isn't a blueprint we designed in advance. It grows from what the project ac
 
 **Why:** our first branch names said when a change was made, not what or why. With issues, anyone can follow a change back to its reason. Rename branches before opening pull requests: renaming afterwards closed two of ours.
 
+## 17. Merge stacked pull requests from the bottom
+
+**When:** a pull request builds on another one that isn't merged yet.
+
+**What:** avoid stacks where you can. When you can't, merge the bottom pull request first, delete its branch so GitHub moves the next one onto `main`, and only then merge that.
+
+**Why:** three of ours were merged while the branches below them still existed, so they landed in each other's branches instead of `main`. It took a fourth pull request to bring them home ([#35](https://github.com/pablot30/open-conqueror/pull/35)).
+
+## 18. Keep one copy of every tool
+
+**When:** before relying on how a tool installs its add-ons.
+
+**What:** check what's already installed, and that the tool won't keep a second copy of it. Pin versions in the project, install them once, and have the build check them rather than download its own. List where everything lives and how to remove it.
+
+**Why:** arduino-cli build profiles kept a second copy of every board package, about 1 GB, and an uninstalled IDE had left its own files behind. Nobody noticed until the maintainer asked why. See [tools](tools.md).
+
+## 19. Measure before you fix, under the real load
+
+**When:** something is slow or unreliable, and the cause isn't certain.
+
+**What:** add timing to find where the time goes before changing anything. Test with the load the system will really carry, for minutes rather than seconds, and more than once in a session.
+
+**Why:** our first fix for a slow Wi-Fi link, a filler byte, made it worse. A timing probe then showed each call to the Wi-Fi chip cost 5 ms, and fewer calls cut the delay from 0.3 s to 0.07 s. A test of ours that dropped 11% of messages was overloading the robot, not the link. And a link that ran cleanly in the morning froze in the afternoon. See the [dongle](../firmware/dongle/README.md).
+

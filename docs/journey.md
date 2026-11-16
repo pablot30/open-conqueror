@@ -45,6 +45,28 @@ A day with no robot. We decide how to test, trace and release ([0007](decisions/
 
 The repo is restructured to match the architecture: firmware units, the `conq` command and robot tests in the repo. The agent flashes the build and runs all four robot tests itself; the maintainer watches the tracks and presses the MODE button when asked. Everything passes, and for the first time the result is a [test report](test-reports/2026-11-12-increment-1/README.md) that traces each requirement to a test, a log and the exact commit. **Story:** the same session as three days earlier, but this time anyone can rerun it.
 
+## 2026-11-12: Increment 2 starts, and two pull requests vanish
+
+The same evening, the 10 ms frame, diagnostics, the gyro, the camera servos and the status LED arrive in two pull requests. Renaming their branches to the new naming standard closes both on GitHub, so they're opened again as #17 and #18 and merged six minutes later. One of them is 1,876 lines. **Story:** a rule written down at 22:24 ([0009](decisions/0009-issues-branches-and-commits.md)) and a pull request nobody could review in six minutes, side by side.
+
+## 2026-11-15: Three devices and a stack of pull requests
+
+- **An agent worked unattended:** the pull request for smooth camera moves, opened on its own by a scheduled cloud agent on 2026-11-12, is merged.
+- **The ruler test:** the ultrasonic is checked against a tape measure at six distances. The first version read the book while it was still being placed, so the test now waits for the person to say it's in place, and compares with the tape, not the asked distance.
+- **The IR remote:** the maintainer records our remote's key codes with a robot test, and the arrows drive with the tracks lifted.
+- **Heading hold** is built, but the 20 cm USB cable rules out the floor test it needs.
+- **The stack:** three pull requests built on each other were merged into each other's branches, not into `main`. It takes a fourth pull request (#35) to bring them home. **Story:** a stack merges cleanly only from the bottom up.
+
+## 2026-11-16: A dongle, a cleaner computer and a second opinion
+
+- **One copy of everything:** the computer held two copies of every Arduino board package, about 1 GB, kept by build profiles, plus the leftovers of an Arduino IDE removed two weeks earlier. The build now uses one pinned copy of each ([tools](tools.md)).
+- **Versions:** units, components and releases each get their own version ([0012](decisions/0012-versions-and-a-stable-main.md)).
+- **The Wi-Fi dongle:** a spare UNO R4 WiFi on the computer's USB joins the robot's own Wi-Fi, so tests can leave the table ([0011](decisions/0011-wifi-dongle.md)). At first a message and its reply take 0.3 s. A timing probe finds the R4's Wi-Fi chip costing 5 ms a call, and fewer calls bring it to 0.07 s. A filler byte meant to help makes it worse. In the afternoon the link freezes for 1.5 s at a time until the robot is restarted, and the dongle hangs twice. The first stop test over Wi-Fi fails. The robot's 300 ms timeout still stops it every time. See the [dongle](../firmware/dongle/README.md) and #34.
+- **A second opinion:** asked to review the project, Claude Fable 5.2 finds that none of the 20 merged pull requests had a review. From now on the other vendor's model reviews each one ([review](research/2026-11-16-project-review.md)).
+- **Ready to publish?** An audit of the whole history, every branch and every pull request finds no secrets, vendor code or personal email addresses.
+
+**Story:** the link that worked in the morning failed in the afternoon, with the same firmware.
+
 ## Ideas for content
 
 - How an AI agent and an engineer split the work on real hardware: who touches the robot, and who writes and checks.
