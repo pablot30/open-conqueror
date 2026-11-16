@@ -158,3 +158,11 @@ This isn't a blueprint we designed in advance. It grows from what the project ac
 
 **Why:** our first fix for a slow Wi-Fi link, a filler byte, made it worse. A timing probe then showed each call to the Wi-Fi chip cost 5 ms, and fewer calls cut the delay from 0.3 s to 0.07 s. A test of ours that dropped 11% of messages was overloading the robot, not the link. And a link that ran cleanly in the morning froze in the afternoon. See the [dongle](../firmware/dongle/README.md).
 
+## 20. Check all the docs regularly, not just the ones that change
+
+**When:** once a week, by itself, and before each test report and release candidate.
+
+**What:** a script checks what it can decide: links, IDs, indexes, numbering. An agent reads the rest for contradictions and statements that stopped being true. It fixes the docs that describe today, flags dated records, and opens one small pull request, or nothing if nothing was found. See "Docs check" in [AGENTS.md](../AGENTS.md).
+
+**Why:** a review of the project found three docs that had drifted by hand: a "later" list that CI had already overtaken, a journey four days behind, and a link to a decision a branch didn't have. Pull request review never saw them, because no pull request touched them.
+

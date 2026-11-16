@@ -106,6 +106,17 @@ class DongleTests(unittest.TestCase):
         with mock.patch("serial.tools.list_ports.comports", return_value=self.ports(0x1A86, 0x7523)):
             self.assertFalse(link.is_dongle("/dev/cu.usbmodem1"))
 
+    @unittest.skipIf(os.name == "nt", "port aliases are symlinks on macOS and Linux")
+    def test_dongle_is_recognised_through_a_port_alias(self) -> None:
+        with tempfile.TemporaryDirectory() as folder:
+            device = Path(folder) / "ttyACM0"
+            device.touch()
+            alias = Path(folder) / "usb-Arduino_UNO_R4_WiFi-if00"
+            alias.symlink_to(device)
+            port = mock.Mock(device=str(device), description="board", vid=0x2341, pid=0x1002)
+            with mock.patch("serial.tools.list_ports.comports", return_value=[port]):
+                self.assertTrue(link.is_dongle(str(alias)))
+
     def test_dongle_opens_at_its_own_rate_and_reports_drops(self) -> None:
         with mock.patch("serial.Serial", FakeSerial) as _:
             robot = link.Robot("/dev/cu.usbmodem1", dongle=True)
