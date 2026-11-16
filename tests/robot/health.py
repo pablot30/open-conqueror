@@ -25,6 +25,5 @@ def run(t):
     t.check("no frames skipped", last.skipped_frames == 0, f"{last.skipped_frames} skipped", ["T1"])
     t.check("link timeout not failed while idle", last.events.get("link timeout") == 4)
 
-    samples = [s for _, s in robot.telemetry(since)]
-    t.check("battery reading valid", bool(samples) and samples[-1].battery_status == 0,
-            f"status {samples[-1].battery_status_name if samples else '-'}", ["S9"])
+    t.check("battery reading valid", last.battery_status == 0, f"status {last.battery_status_name}", ["S9"])
+    t.check("longest frame's work under 5 ms", last.longest_frame_us < 5000, f"{last.longest_frame_us} us", ["T2"])

@@ -10,8 +10,10 @@
 #include <button.h>
 #include <diagnostics.h>
 #include <gyro.h>
+#include <ir.h>
 #include <led.h>
 #include <link.h>
+#include <motion.h>
 #include <pinchange.h>
 #include <safety.h>
 #include <scheduler.h>
@@ -26,16 +28,20 @@ namespace {
 // walking skeleton; 2 added the battery status to telemetry, the health
 // message, and this field; 3 adds the sensor message;
 // 4 adds the optional speed in the camera message; 5 adds the ultrasonic
-// distance and its status to the sensor message.
-const int32_t kProtocolVersion = 5;
+// distance and its status to the sensor message; 6 adds the IR message;
+// 7 adds the heading hold's state and correction to the sensor message;
+// 8 moves the longest frame time and the battery status from telemetry to
+// the health message, wraps telemetry's ms at 65536 and sends the sensor
+// message 4 times a second instead of 5, to keep the link under half full.
+const int32_t kProtocolVersion = 8;
 
 // Periodic work, in frames of 10 ms. Phases keep messages apart.
 const uint32_t kBatteryEveryFrames = 2U;     // 20 ms
 const uint32_t kTelemetryEveryFrames = 10U;  // 100 ms
 const uint32_t kHealthEveryFrames = 100U;    // 1 s
 const uint32_t kHealthPhase = 5U;            // between two telemetry messages
-const uint32_t kSensorsEveryFrames = 20U;    // 200 ms
-const uint32_t kSensorsPhase = 15U;
+const uint32_t kSensorsEveryFrames = 25U;    // 250 ms: 4 a second
+const uint32_t kSensorsPhase = 7U;           // never in the same frame as telemetry or health
 const uint32_t kLedEveryFrames = 2U;         // 50 updates a second
 const uint32_t kLedPhase = 1U;
 const uint32_t kGyroRetryFrames = 100U;      // try to wake a missing gyro once a second
@@ -53,8 +59,14 @@ oc::Debouncer modeButton(kModeButtonDebounceMs);
 oc::HeadingGyro gyro;
 oc::ServoRamp servoRamp;
 oc::Ranger ranger;
+oc::RemoteDriver remote;
+oc::HeadingHold headingHold;
+oc::HoldOutput holdOutput = {0, oc::HoldState::kOff};
 
 bool gyroReady = false;
+uint16_t irWidths[oc::kIrMaxPulses];
+oc::IrCode lastIrCode = {oc::IrKind::kNone, 0U, 0U};
+bool lastIrWasRepeat = false;
 uint16_t lastValidDistanceMm = 0U;
 oc::Signal<uint16_t> distance = {0U, oc::SignalStatus::kInit};
 oc::Rgb ledShown = {1U, 1U, 1U};  // not a real colour, so the first update is sent
@@ -103,33 +115,104 @@ uint8_t faultFlags() {
   return flags;
 }
 
+// {T,ms,state,left,right,mV,faults}: 10 a second. ms is the time since
+// power-on modulo 65536, so it never takes more than 5 digits. Fields that
+// change slowly go in the health message, to keep the link under half full.
 void sendTelemetry(uint32_t nowMs) {
-  const oc::SignalStatus batteryStatus =
-      oc::signalStatusFor(diagnostics.status(oc::EventId::kBatterySensor));
   oc::MessageWriter message('T');
-  message.field(static_cast<int32_t>(nowMs));
+  message.field(static_cast<int32_t>(nowMs & 0xFFFFU));
   message.field(static_cast<int32_t>(safety.state()));
   message.field(lastOutput.left);
   message.field(lastOutput.right);
   message.field(static_cast<int32_t>(battery.millivolts()));
   message.field(static_cast<int32_t>(faultFlags()));
-  message.field(static_cast<int32_t>(frameWork.longestUs()));
-  message.field(static_cast<int32_t>(batteryStatus));
   message.finish();
   send(message);
-  frameWork.reset();
 }
 
-// {H,skipped,event0,event1,...}: frames skipped since power-on, then every
+// {H,skipped,frame,bstat,event0,event1,...}: once a second. Frames skipped
+// since power-on, the longest frame's work since the last health message in
+// microseconds (T2), the battery reading's signal status, then every
 // diagnostic event's state in EventId order.
 void sendHealth() {
+  const oc::SignalStatus batteryStatus =
+      oc::signalStatusFor(diagnostics.status(oc::EventId::kBatterySensor));
   oc::MessageWriter message('H');
   message.field(static_cast<int32_t>(frameClock.skipped()));
+  message.field(static_cast<int32_t>(frameWork.longestUs()));
+  message.field(static_cast<int32_t>(batteryStatus));
+  frameWork.reset();
   for (uint8_t i = 0U; i < oc::Diagnostics::kEventCount; ++i) {
     message.field(static_cast<int32_t>(diagnostics.status(static_cast<oc::EventId>(i))));
   }
   message.finish();
   send(message);
+}
+
+// {K,address,command,kind}: kind 0 is a key's code (the first two frame
+// bytes, then the command), 1 is its repeat code, sent once per hold, and 2
+// is a burst of pulses we couldn't read (address holds how many), and 3 says
+// the held key stopped sending codes, so the robot stopped (F10).
+void sendIr(uint16_t address, uint8_t command, int32_t kind) {
+  oc::MessageWriter message('K');
+  message.field(static_cast<int32_t>(address));
+  message.field(static_cast<int32_t>(command));
+  message.field(kind);
+  message.finish();
+  send(message);
+}
+
+// Hands the remote's request to the safety supervisor, like every other
+// source of commands. A key pressed afresh sends a neutral command first,
+// which is the deliberate command the supervisor wants after a stop (S5).
+void applyRemote(const oc::RemoteRequest& request, uint32_t nowMs) {
+  if (request.action == oc::RemoteAction::kStop) {
+    safety.stop();
+  } else if (request.action == oc::RemoteAction::kDrive) {
+    if (request.newPress) {
+      safety.drive(0, 0, nowMs);
+    }
+    safety.drive(request.left, request.right, nowMs);
+  } else {
+    // Nothing to do.
+  }
+}
+
+// Reads a finished IR frame, if there is one, and reports it.
+void updateIr(uint32_t nowMs) {
+  uint8_t pulses = 0U;
+  if (oc::ir_hw::takeFrame(irWidths, pulses)) {
+    const oc::IrCode code = oc::decodeNec(irWidths, pulses);
+    switch (code.kind) {
+      case oc::IrKind::kFrame:
+        lastIrCode = code;
+        lastIrWasRepeat = false;
+        sendIr(code.address, code.command, 0);
+        applyRemote(remote.onKey(oc::keyFor(code), nowMs), nowMs);
+        break;
+      case oc::IrKind::kRepeat:
+        if (!lastIrWasRepeat) {
+          sendIr(lastIrCode.address, lastIrCode.command, 1);
+          lastIrWasRepeat = true;
+        }
+        applyRemote(remote.onRepeat(nowMs), nowMs);
+        break;
+      case oc::IrKind::kUnreadable:
+        // Ambient light flickers into a few pulses; a real remote sends many.
+        if (pulses >= oc::config::kIrReportMinPulses) {
+          sendIr(pulses, 0U, 2);
+        }
+        break;
+      case oc::IrKind::kNone:
+      default:
+        break;
+    }
+  }
+  const oc::RemoteRequest release = remote.update(nowMs);
+  if (release.action == oc::RemoteAction::kStop) {
+    sendIr(0U, 0U, 3);  // the held key stopped sending codes
+  }
+  applyRemote(release, nowMs);
 }
 
 void handle(const oc::Command& command, uint32_t nowMs) {
@@ -167,9 +250,11 @@ oc::SignalStatus gyroStatus() {
   return oc::signalStatusFor(diagnostics.status(oc::EventId::kGyroComms));
 }
 
-// {G,heading,rate,gyroStatus,distance,distanceStatus}: heading in hundredths
-// of a degree since power-on, turn rate in hundredths of a degree per second,
-// distance in millimetres.
+// {G,heading,rate,gyroStatus,distance,distanceStatus,hold,correction}:
+// heading in hundredths of a degree since power-on, turn rate in hundredths
+// of a degree per second, distance in millimetres, the heading hold's state
+// (0 off, 1 holding, 2 substitute, 3 no gyro) and its correction in tenths of
+// a percent, positive turning left.
 void sendSensors() {
   oc::MessageWriter message('G');
   message.field(static_cast<int32_t>(gyro.headingCdeg()));
@@ -177,6 +262,8 @@ void sendSensors() {
   message.field(static_cast<int32_t>(gyroStatus()));
   message.field(static_cast<int32_t>(distance.value));
   message.field(static_cast<int32_t>(distance.status));
+  message.field(static_cast<int32_t>(holdOutput.state));
+  message.field(static_cast<int32_t>(holdOutput.correctionPermille));
   message.finish();
   send(message);
 }
@@ -212,6 +299,25 @@ void updateUltrasonic(uint32_t nowMs) {
   }
   distance = oc::qualify<uint16_t>(ranger.lastDistanceMm(), diagnostics.status(oc::EventId::kUltrasonicEcho),
                                    lastValidDistanceMm, oc::config::kUltrasonicSafeMm);
+}
+
+// Heading hold (F1): while the robot is told to drive straight, asks the
+// safety supervisor for a small correction. The gyro counts only while its
+// signal is valid, or briefly a substitute, and not at all while the
+// diagnostics table switches heading hold off.
+void updateHeadingHold() {
+  oc::SignalStatus status = gyroStatus();
+  if (diagnostics.inhibited(oc::kInhibitHeadingHold)) {
+    status = oc::SignalStatus::kError;
+  }
+  oc::HoldInput input;
+  input.driving = (safety.state() == oc::DriveState::kDriving);
+  input.left = safety.commandedLeft();
+  input.right = safety.commandedRight();
+  input.headingCdeg = gyro.headingCdeg();
+  input.gyro = status;
+  holdOutput = headingHold.update(input);
+  safety.setTrim(holdOutput.correctionPermille);
 }
 
 oc::LedMode ledMode() {
@@ -255,6 +361,8 @@ void runFrame(uint32_t frames, uint32_t nowMs) {
     handle(parser.feed(static_cast<char>(Serial.read())), nowMs);
   }
 
+  updateIr(nowMs);
+
   if (modeButton.update(oc::board::modeButtonPressed(), nowMs)) {
     safety.stop();  // S1
   }
@@ -267,11 +375,14 @@ void runFrame(uint32_t frames, uint32_t nowMs) {
 
   const bool driveAllowed = (battery.level() != oc::BatteryLevel::kCritical) &&
                             !diagnostics.inhibited(oc::kInhibitDrive);
+  // The gyro and heading hold come before the supervisor sets the motors, so
+  // a correction applies in the frame it was worked out in.
+  updateGyro(frames);
+  updateHeadingHold();
   lastOutput = safety.update(nowMs, battery.pwmLimit(), driveAllowed);
   oc::board::setMotors(lastOutput.enabled, lastOutput.left, lastOutput.right);
   diagnostics.report(oc::EventId::kLinkTimeout, resultOf(!safety.linkTimedOut()));
 
-  updateGyro(frames);
   updateUltrasonic(nowMs);
   updateServos(frames);
   if (oc::every(frames, kLedEveryFrames, kLedPhase)) {
@@ -300,6 +411,7 @@ void setup() {
   servoRamp.setTarget(oc::config::kPanCentreDeg, oc::config::kTiltCentreDeg, 0U);
   gyroReady = oc::gyro_hw::begin();  // F13: calibration runs in the first frames
   oc::ultrasonic_hw::begin();
+  oc::ir_hw::begin();
   sendVersion();
   wdt_enable(WDTO_250MS);  // S4
 }

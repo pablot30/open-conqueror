@@ -134,6 +134,31 @@ def cmd_camera(args: argparse.Namespace) -> int:
                   f"Camera sent to pan {args.pan}, tilt {args.tilt}.")
 
 
+def cmd_ir(args: argparse.Namespace) -> int:
+    from . import irkeys
+
+    robot = connect(args)
+    try:
+        robot.wait_for_boot()
+        if args.action == "listen":
+            since = robot.now()
+            time.sleep(args.seconds)
+            codes = [c for _, c in robot.ir_codes(since)]
+            data = {"ok": True, "port": robot.port, "codes": [c.to_dict() for c in codes]}
+            return output(args, data, "\n".join(c.describe() for c in codes) or "No IR codes received.")
+        names = args.keys or (irkeys.REQUIRED + irkeys.OPTIONAL)
+        say = lambda text: print(text, file=sys.stderr, flush=True)  # noqa: E731
+        codes_by_key = irkeys.record_keys(robot, names, say)
+    finally:
+        robot.close()
+    missing = [n for n in irkeys.REQUIRED if n in names and codes_by_key.get(n) is None]
+    lines = irkeys.table_lines(codes_by_key)
+    data = {"ok": not missing, "port": robot.port, "keys": codes_by_key, "missing": missing, "table": lines}
+    text = ("Paste these into firmware/uno/devices/ir/src/ir_keys.cpp:\n" + "\n".join(lines)
+            + (f"\nMissing: {', '.join(missing)}" if missing else ""))
+    return output(args, data, text)
+
+
 def cmd_stop(args: argparse.Namespace) -> int:
     robot = Robot(choose_port(args.port))
     robot.close()  # close() sends a stop
@@ -233,6 +258,11 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("speed", type=int, help="1 to 100 percent")
     p.add_argument("seconds", type=float, help="how long to drive")
     p.set_defaults(func=cmd_drive)
+    p = sub.add_parser("ir", parents=[common], help="the IR remote: record its key codes, or listen")
+    p.add_argument("action", choices=["record", "listen"])
+    p.add_argument("--keys", nargs="*", help="keys to record (default: up down left right ok 1 to 6)")
+    p.add_argument("--seconds", type=float, default=10.0, help="how long to listen (default 10)")
+    p.set_defaults(func=cmd_ir)
     sub.add_parser("stop", parents=[common], help="brake both tracks").set_defaults(func=cmd_stop)
     p = sub.add_parser("camera", parents=[common], help="point the camera; 90 90 is the centre")
     p.add_argument("pan", type=int, help="0 to 180 degrees")

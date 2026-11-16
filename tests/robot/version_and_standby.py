@@ -16,7 +16,7 @@ def run(t):
     firmware = robot.version()
     t.check("version reported", bool(firmware and firmware["version"] and firmware["commit"]),
             str(firmware), ["D4"])
-    t.check("protocol version reported", bool(firmware) and firmware.get("protocol") == "5",
+    t.check("protocol version reported", bool(firmware) and firmware.get("protocol") == "8",
             f"protocol {firmware.get('protocol') if firmware else '-'}", ["D4"])
     version_file = Path(__file__).resolve().parents[2] / "VERSION"
     if firmware and version_file.is_file():
@@ -33,5 +33,9 @@ def run(t):
     if samples:
         mv = samples[-1].battery_mv
         t.check("battery reading plausible with main power on", 6000 <= mv <= 8700, f"{mv} mV")
-        longest = max(s.longest_frame_us for s in samples)
+    health = [h for _, h in robot.health(since)]
+    if health:
+        longest = max(h.longest_frame_us for h in health)
         t.check("longest frame's work under 5 ms", longest < MAX_LOOP_US, f"{longest} us", ["T2"])
+    else:
+        t.check("health message received", False, "none in 2 s", ["T2"])

@@ -10,12 +10,13 @@ from dataclasses import asdict, dataclass, fields
 from typing import Any
 
 BAUD = 9600
-PROTOCOL_VERSION = 5  # the firmware reports its own in the version message
+PROTOCOL_VERSION = 8  # the firmware reports its own in the version message
 
 STATES = {0: "standby", 1: "driving", 2: "stopped"}
 FAULTS = {0x01: "link timeout", 0x02: "battery low", 0x04: "battery critical"}
 # Signal statuses and diagnostic event states (docs/architecture.md, A5).
 SIGNAL_STATUSES = {0: "valid", 1: "init", 2: "substitute", 3: "error", 4: "not available"}
+HOLD_STATES = {0: "off", 1: "holding", 2: "substitute", 3: "no gyro"}
 EVENT_STATES = {0: "not tested", 1: "prefailed", 2: "failed", 3: "prepassed", 4: "passed"}
 # Diagnostic events in the order the health message lists them.
 EVENTS = ["battery sensor", "frame overrun", "link timeout", "gyro comms", "ultrasonic echo"]
@@ -68,14 +69,15 @@ def direction_speeds(direction: str, speed: int) -> tuple[int, int]:
 
 @dataclass
 class Telemetry:
-    ms: int
+    ms: int  # since power-on; from protocol 8 it wraps every 65.536 s
     state: int
     left_pwm: int
     right_pwm: int
     battery_mv: int
     faults: int
-    longest_frame_us: int  # longest frame's work since the last telemetry (T2)
-    battery_status: int | None = None  # signal status; protocol 2 and later
+    # Protocols 2 to 7 only; from protocol 8 they're in the health message.
+    longest_frame_us: int | None = None
+    battery_status: int | None = None
 
     @property
     def state_name(self) -> str:
@@ -101,9 +103,9 @@ class Telemetry:
     def describe(self) -> str:
         faults = ", ".join(self.fault_names) or "none"
         battery = f" ({self.battery_status_name})" if self.battery_status_name else ""
+        frame = f", longest frame {self.longest_frame_us} us" if self.longest_frame_us is not None else ""
         return (f"{self.state_name}, PWM left {self.left_pwm} right {self.right_pwm}, "
-                f"battery {self.battery_mv / 1000:.2f} V{battery}, faults: {faults}, "
-                f"longest frame {self.longest_frame_us} us")
+                f"battery {self.battery_mv / 1000:.2f} V{battery}, faults: {faults}{frame}")
 
 
 def parse_message(body: str) -> tuple[str, list[str]]:
@@ -113,8 +115,8 @@ def parse_message(body: str) -> tuple[str, list[str]]:
 
 
 def parse_telemetry(values: list[str]) -> Telemetry | None:
-    """Accepts protocol 1 (7 fields) and protocol 2 (8 fields)."""
-    if len(values) not in (len(fields(Telemetry)) - 1, len(fields(Telemetry))):
+    """Accepts protocol 8 (6 fields), protocol 1 (7) and protocols 2 to 7 (8)."""
+    if len(values) not in (6, 7, 8):
         return None
     try:
         return Telemetry(*(int(v) for v in values))
@@ -124,34 +126,49 @@ def parse_telemetry(values: list[str]) -> Telemetry | None:
 
 @dataclass
 class Health:
-    """The health message: {H,skipped,event0,event1,...}."""
+    """The health message, protocol 8: {H,skipped,frame,bstat,event0,event1,...}."""
 
     skipped_frames: int
+    longest_frame_us: int  # longest frame's work since the last health message (T2)
+    battery_status: int    # the battery reading's signal status
     events: dict[str, int]
 
+    @property
+    def battery_status_name(self) -> str:
+        return SIGNAL_STATUSES.get(self.battery_status, str(self.battery_status))
+
     def to_dict(self) -> dict[str, Any]:
-        return {"skipped_frames": self.skipped_frames,
+        return {"skipped_frames": self.skipped_frames, "longest_frame_us": self.longest_frame_us,
+                "battery_status": self.battery_status, "battery_status_name": self.battery_status_name,
                 "events": {name: EVENT_STATES.get(state, str(state)) for name, state in self.events.items()}}
 
     def describe(self) -> str:
         events = ", ".join(f"{name}: {EVENT_STATES.get(state, state)}" for name, state in self.events.items())
-        return f"{events}; frames skipped: {self.skipped_frames}"
+        return (f"{events}; frames skipped: {self.skipped_frames}; longest frame {self.longest_frame_us} us; "
+                f"battery reading {self.battery_status_name}")
 
 
 @dataclass
 class Sensors:
-    """The sensor message: {G,heading,rate,gyro_status,distance,distance_status}.
-    Protocols 3 and 4 had the first three fields only."""
+    """The sensor message:
+    {G,heading,rate,gyro_status,distance,distance_status,hold,correction}.
+    Protocols 3 and 4 had the first three fields, protocol 5 five."""
 
     heading_cdeg: int  # 0 to 35999 hundredths of a degree since power-on
     rate_cdps: int     # hundredths of a degree per second
     gyro_status: int   # signal status
     distance_mm: int | None = None  # ultrasonic distance in millimetres; protocol 5 and later
     distance_status: int | None = None  # its signal status
+    hold: int | None = None  # heading hold state: protocol 7 and later
+    correction_permille: int | None = None  # its correction, tenths of a percent, positive turns left
 
     @property
     def gyro_status_name(self) -> str:
         return SIGNAL_STATUSES.get(self.gyro_status, str(self.gyro_status))
+
+    @property
+    def hold_name(self) -> str | None:
+        return None if self.hold is None else HOLD_STATES.get(self.hold, str(self.hold))
 
     @property
     def distance_status_name(self) -> str | None:
@@ -163,6 +180,7 @@ class Sensors:
         data = asdict(self)
         data["gyro_status_name"] = self.gyro_status_name
         data["distance_status_name"] = self.distance_status_name
+        data["hold_name"] = self.hold_name
         return data
 
     def describe(self) -> str:
@@ -172,6 +190,10 @@ class Sensors:
             # Only a valid distance is a measurement; the rest are placeholders.
             shown = f"{self.distance_mm / 10:.1f} cm" if self.distance_status == 0 else "no distance"
             text += f", ultrasonic {shown} ({self.distance_status_name})"
+        if self.hold is not None:
+            text += f", heading hold {self.hold_name}"
+            if self.hold in (1, 2):
+                text += f" ({(self.correction_permille or 0) / 10:+.1f}%)"
         return text
 
 
@@ -182,9 +204,54 @@ def parse_sensors(values: list[str]) -> Sensors | None:
         return None
     if len(numbers) == 3:  # protocol 3 and 4
         return Sensors(*numbers)
-    if len(numbers) >= 5:  # protocol 5; later fields are ignored
+    if len(numbers) in (5, 6):  # protocol 5
         return Sensors(*numbers[:5])
+    if len(numbers) >= 7:  # protocol 7; later fields are ignored
+        return Sensors(*numbers[:7])
     return None
+
+
+IR_KINDS = {0: "key", 1: "repeat", 2: "unreadable", 3: "release"}
+
+
+@dataclass
+class IrCode:
+    """The IR message: {K,address,command,kind}. Kind 0 is a key's code, 1 its
+    repeat code (sent once per hold, with the code of the key held), and 2 a
+    burst of pulses the firmware couldn't read (address is the pulse count), and 3 that
+    a held key stopped sending codes, so the robot stopped."""
+
+    address: int
+    command: int
+    kind: int
+
+    @property
+    def kind_name(self) -> str:
+        return IR_KINDS.get(self.kind, str(self.kind))
+
+    @property
+    def is_key(self) -> bool:
+        return self.kind == 0
+
+    def to_dict(self) -> dict[str, Any]:
+        data = asdict(self)
+        data["kind_name"] = self.kind_name
+        return data
+
+    def describe(self) -> str:
+        if self.kind == 2:
+            return f"unreadable burst of {self.address} pulses"
+        if self.kind == 3:
+            return "key released"
+        return f"{self.kind_name} address 0x{self.address:04X} command 0x{self.command:02X}"
+
+
+def parse_ir(values: list[str]) -> IrCode | None:
+    try:
+        numbers = [int(v) for v in values]
+    except ValueError:
+        return None
+    return IrCode(*numbers[:3]) if len(numbers) >= 3 else None
 
 
 def parse_health(values: list[str]) -> Health | None:
@@ -192,10 +259,11 @@ def parse_health(values: list[str]) -> Health | None:
         numbers = [int(v) for v in values]
     except ValueError:
         return None
-    if not numbers:
+    if len(numbers) < 3:
         return None
-    names = EVENTS + [f"event {i}" for i in range(len(EVENTS), len(numbers) - 1)]
-    return Health(numbers[0], dict(zip(names, numbers[1:])))
+    events = numbers[3:]
+    names = EVENTS + [f"event {i}" for i in range(len(EVENTS), len(events))]
+    return Health(numbers[0], numbers[1], numbers[2], dict(zip(names, events)))
 
 
 class MessageSplitter:

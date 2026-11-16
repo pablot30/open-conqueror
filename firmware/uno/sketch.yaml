@@ -13,12 +13,14 @@ profiles:
       - dir: hal/pinchange
       - dir: devices/button
       - dir: devices/gyro
+      - dir: devices/ir
       - dir: devices/led
       - dir: devices/servos
       - dir: devices/ultrasonic
       - dir: services/battery
       - dir: services/diagnostics
       - dir: services/link
+      - dir: services/motion
       - dir: services/safety
       - dir: services/scheduler
 
