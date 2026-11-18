@@ -121,7 +121,7 @@ Over the robot's network, `conq` talks to the stock camera board's port 100 ([ca
 
 The robot's network is named `ELEGOO-` plus a chip ID, has no password, and gives no internet. To stay online, for example so an agent can keep working during a test, give the computer a second link, such as iPhone USB tethering (Personal Hotspot, then plug in the cable) or Ethernet, and make it the one used for the internet.
 
-**The robot's network is open:** anyone nearby can join it, and then reach your computer as well as the robot. Before joining, turn the computer's firewall on and switch off sharing you don't need (files, screen, internet sharing). On macOS that's System Settings, Network, Firewall, and General, Sharing; on Windows, choose the Public profile when asked; on Linux, your distro's firewall (for example `ufw enable`). Leave the network when the test is over.
+**The robot's network is open** until our camera firmware gives it a password (stage 3): anyone nearby can join it, and then reach your computer as well as the robot. Before joining, turn the computer's firewall on and switch off sharing you don't need (files, screen, internet sharing). The firewall only blocks connections *to* the computer, so `conq`, which connects out to the robot, works the same with it on. On macOS that's System Settings, Network, Firewall, and General, Sharing; on Windows, choose the Public profile when asked; on Linux, your distro's firewall (for example `ufw enable`). Leave the network when the test is over.
 
 1. Switch the robot on, with the Upload-Cam switch on **Cam**.
 2. Connect the second link first, and check the internet works.
