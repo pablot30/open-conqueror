@@ -166,3 +166,10 @@ This isn't a blueprint we designed in advance. It grows from what the project ac
 
 **Why:** a review of the project found three docs that had drifted by hand: a "later" list that CI had already overtaken, a journey four days behind, and a link to a decision a branch didn't have. Pull request review never saw them, because no pull request touched them.
 
+## 21. Keep each issue's checklist true
+
+**When:** whenever a pull request merges or a robot test runs.
+
+**What:** tick the issue's boxes as the work lands, and put the robot results on the issue, with a link to the logs. Keep the raw logs until the increment's test report copies them in.
+
+**Why:** increment 2's IR remote, ultrasonic and heading hold were built, and partly measured on the robot, but the results sat in pull request comments and an ignored `build/` folder, and the issue's boxes stayed empty. Two days later the plan for "next steps" proposed building them again. The maintainer remembered; the records didn't.

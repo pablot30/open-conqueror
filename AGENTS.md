@@ -27,6 +27,7 @@ Stage 2, increment 2. Increment 1, the walking skeleton, passed its robot tests 
 - Commit or push only when asked.
 - Every piece of work has a GitHub issue. Branches are named `<type>/<issue>-<short-description>`, pull requests close their issue with `Closes #<number>`, and commit messages and pull request titles follow Conventional Commits. See `docs/decisions/0009-issues-branches-and-commits.md`.
 - Work on short branches with pull requests. The maintainer merges.
+- Keep the issue's checklist true. Tick a box when its pull request merges or its robot test passes, and link the result (a pull request comment or log) on the issue. A result that only lives in a pull request comment or `build/` is invisible to the next session.
 - When a pull request builds on another, update it from `main` as soon as the first is merged. Never rename a branch that has an open pull request: GitHub closes the pull request.
 - Never force-push, push to `main` directly, or delete `main` or a `release/` branch. `main` changes only through merged pull requests. A GitHub ruleset enforces this, and `.githooks/pre-push` catches mistakes before they reach GitHub.
 - Delete work branches once they're merged, locally and on GitHub, so only live work is left.
