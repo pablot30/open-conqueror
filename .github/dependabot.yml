@@ -1,0 +1,18 @@
+# Weekly checks for newer versions of what we depend on (#67).
+# Security fixes come sooner: Dependabot security updates are on in the repo settings.
+version: 2
+updates:
+  - package-ecosystem: pip
+    directory: /host
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: build
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: ci

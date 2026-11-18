@@ -16,6 +16,8 @@ The pre-push hook refuses direct pushes to `main`, force pushes, and deleting `m
 gh api repos/pablot30/open-conqueror/rulesets --method POST --input .github/rulesets/protect-main.json
 ```
 
+Dependabot watches our dependencies on GitHub: the Python packages in `host/pyproject.toml` and the GitHub Actions in CI. It opens a pull request when one has a known security hole, and once a week when a newer version is out (`.github/dependabot.yml`). Its pull requests go through CI and review like any other. To stop the weekly ones, delete that file; security updates are a switch in the repo's settings, under "Advanced Security".
+
 ## Rules
 
 - Install with the system's package manager: Homebrew on macOS, the distro's on Linux, winget on Windows.
