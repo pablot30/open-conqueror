@@ -26,7 +26,7 @@ Stage 2, increment 2. Increment 1, the walking skeleton, passed its robot tests 
 
 - Commit or push only when asked.
 - Every piece of work has a GitHub issue. Branches are named `<type>/<issue>-<short-description>`, pull requests close their issue with `Closes #<number>`, and commit messages and pull request titles follow Conventional Commits. See `docs/decisions/0009-issues-branches-and-commits.md`.
-- Work on short branches with pull requests. The maintainer merges.
+- Work on short branches with pull requests. The maintainer merges, except Dependabot's pull requests: at the start of a session, ask Codex to review each one (a local Codex session, or an `@codex review` comment, since Codex skips bot pull requests on its own). Merge it when the review is clean and CI passes, and close any that another one replaces.
 - Keep the issue's checklist true. Tick a box when its pull request merges or its robot test passes, and link the result (a pull request comment or log) on the issue. A result that only lives in a pull request comment or `build/` is invisible to the next session.
 - When a pull request builds on another, update it from `main` as soon as the first is merged. Never rename a branch that has an open pull request: GitHub closes the pull request.
 - Never force-push, push to `main` directly, or delete `main` or a `release/` branch. `main` changes only through merged pull requests. A GitHub ruleset enforces this, and `.githooks/pre-push` catches mistakes before they reach GitHub.
@@ -59,6 +59,12 @@ For the reviewer of a pull request. Flag a change that breaks any of these:
 - Code that listens or connects over a network says what it talks to and why; nothing listens on more than it needs.
 - Setup steps that join a network say how the computer stays protected (firewall, sharing, routes).
 - No personal data in code, docs, logs, commit messages or pull request text: names, emails, network names, MAC addresses, chip IDs, home paths.
+
+### Dependencies
+
+- A new or updated dependency is still needed; say so if the project could drop it.
+- It comes from the official source, and breaking changes in its release notes don't affect our code, workflows or supported systems.
+- Everything else that names it (docs, pins in `scripts/dev.py`, other workflows) changes with it.
 
 ### Docs and the repo
 

@@ -16,7 +16,7 @@ The pre-push hook refuses direct pushes to `main`, force pushes, and deleting `m
 gh api repos/pablot30/open-conqueror/rulesets --method POST --input .github/rulesets/protect-main.json
 ```
 
-Dependabot watches our dependencies on GitHub: the Python packages in `host/pyproject.toml` and the GitHub Actions in CI. It opens a pull request when one has a known security hole, and once a week when a newer version is out (`.github/dependabot.yml`). Its pull requests go through CI and review like any other, except the check of branch names and linked issues (decision 0009), which they can't follow. To stop the weekly ones, delete that file; security updates are a switch in the repo's settings, under "Advanced Security".
+Dependabot watches our dependencies on GitHub: the Python packages in `host/pyproject.toml` and the GitHub Actions in CI. It opens a pull request when one has a known security hole, and once a week when a newer version is out (`.github/dependabot.yml`). Its pull requests go through CI like any other, except the check of branch names and linked issues (decision 0009), which they can't follow. Codex doesn't review pull requests opened by a bot, so Claude asks it to at the start of a session, and merges them when the review is clean (`AGENTS.md`, Git). If they become too many to handle that way, we automate the review on GitHub. To stop the weekly ones, delete that file; security updates are a switch in the repo's settings, under "Advanced Security".
 
 ## Rules
 
