@@ -11,7 +11,8 @@ permissions:
 jobs:
   pull-request:
     name: Pull request follows decision 0009
-    if: github.event_name == 'pull_request'
+    # Dependabot's pull requests have their own branch names and no issue (#67).
+    if: github.event_name == 'pull_request' && github.event.pull_request.user.login != 'dependabot[bot]'
     runs-on: ubuntu-24.04
     steps:
       - name: Branch name, title and linked issue
