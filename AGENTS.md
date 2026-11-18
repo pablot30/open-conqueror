@@ -52,6 +52,13 @@ For the reviewer of a pull request. Flag a change that breaks any of these:
 - Tests check behaviour, would fail if the code were wrong, and name the requirement IDs they cover.
 - A unit whose code changes gets a new version in its `library.properties` (decision 0012).
 
+### Security and privacy
+
+- Bytes from outside (the robot, a network, a file) are untrusted: lengths and memory are bounded, and nothing reaches a terminal, shell or path unescaped.
+- Code that listens or connects over a network says what it talks to and why; nothing listens on more than it needs.
+- Setup steps that join a network say how the computer stays protected (firewall, sharing, routes).
+- No personal data in code, docs, logs, commit messages or pull request text: names, emails, network names, MAC addresses, chip IDs, home paths.
+
 ### Docs and the repo
 
 - Hardware facts say how they're known, and whether they were measured on a robot.
