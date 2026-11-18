@@ -77,6 +77,9 @@ class NetworkLink:
         self._body = None
         self._last_rx = time.monotonic()
         with self._lock:
+            if self._closed:  # closed while connecting: nobody would read it
+                sock.close()
+                return "closed"
             self._socket = sock
         return ""
 
@@ -146,8 +149,8 @@ class NetworkLink:
         return bytes(out)
 
     def close(self) -> None:
-        self._closed = True
         with self._lock:
+            self._closed = True
             sock, self._socket = self._socket, None
         if sock is not None:
             sock.close()

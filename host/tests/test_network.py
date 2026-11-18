@@ -162,6 +162,24 @@ class NetworkLinkTests(unittest.TestCase):
         self.assertTrue(wait_until(lambda: protocol.STOP in self.board.received))
 
 
+    def test_a_reconnect_that_ends_after_close_is_discarded(self) -> None:
+        changes = []
+        net = network.NetworkLink(self.board.port, lambda up, reason: changes.append(up))
+        net._lose("test")
+        real = socket.create_connection
+
+        def slow_connect(*args, **kwargs):
+            connection = real(*args, **kwargs)
+            net.close()  # Robot.close() gives up waiting while this reconnect runs
+            return connection
+
+        net._last_attempt = 0.0
+        with mock.patch.object(network.socket, "create_connection", slow_connect):
+            net.read()
+        self.assertIsNone(net._socket)
+        self.assertEqual(changes, [False])
+
+
 class NoRobotTests(unittest.TestCase):
     def test_unreachable_board_says_what_to_check(self) -> None:
         unused = socket.create_server(("127.0.0.1", 0))
