@@ -4,7 +4,7 @@
 #   .venv/bin/pip install -e host          (macOS, Linux)
 #   .venv\Scripts\pip install -e host      (Windows)
 [build-system]
-requires = ["setuptools==80.9.0"]
+requires = ["setuptools==84.1.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
