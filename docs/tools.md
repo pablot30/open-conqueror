@@ -107,6 +107,35 @@ Build and run the firmware's unit tests on the computer. **Needed since:** stage
 
 CI runs it on every pull request, so it doesn't need to be on your computer. Install it only to run `python scripts/dev.py lint` locally: `brew install cppcheck` on macOS, the distro's `cppcheck` package on Linux, or `winget install Cppcheck.Cppcheck` on Windows. Remove it the same way.
 
+## Connecting to the robot
+
+`conq` and the robot tests reach the robot in three ways, chosen with `--port` or `CONQ_PORT`. None needs anything installed beyond `conq`.
+
+| Link | `--port` | Upload-Cam switch | Notes |
+|---|---|---|---|
+| The robot's USB cable | `COM3`, `/dev/ttyUSB0` | Upload | Restarts the robot when opened. The cable is 20 cm, so no floor tests |
+| The robot's own Wi-Fi network | `tcp:192.168.4.1:100` | Cam | The computer joins the robot's network. Tests that check power-on are skipped |
+| The Wi-Fi dongle | its USB port | Cam | Parked: it hangs ([dongle](../firmware/dongle/README.md)) |
+
+Over the robot's network, `conq` talks to the stock camera board's port 100 ([camera board](hardware/camera-board.md)): it answers the board's heartbeat each second and, after 3.5 s without a message from the board, reports the link lost and opens it again every 2 s, as the dongle does. *Not yet tried on the robot ([#63](https://github.com/pablot30/open-conqueror/issues/63)).*
+
+### Joining the robot's network
+
+The robot's network is named `ELEGOO-` plus a chip ID, has no password, and gives no internet. To stay online, for example so an agent can keep working during a test, give the computer a second link, such as iPhone USB tethering (Personal Hotspot, then plug in the cable) or Ethernet, and make it the one used for the internet.
+
+**The robot's network is open** until our camera firmware gives it a password (stage 3): anyone nearby can join it, and then reach your computer as well as the robot. Before joining, turn the computer's firewall on and switch off sharing you don't need (files, screen, internet sharing). The firewall only blocks connections *to* the computer, so `conq`, which connects out to the robot, works the same with it on. On macOS that's System Settings, Network, Firewall, and General, Sharing; on Windows, choose the Public profile when asked; on Linux, your distro's firewall (for example `ufw enable`). Leave the network when the test is over.
+
+1. Switch the robot on, with the Upload-Cam switch on **Cam**.
+2. Connect the second link first, and check the internet works.
+3. Join the `ELEGOO-...` network:
+   - **macOS:** pick it from the Wi-Fi menu. Then in System Settings, Network, the `...` menu, **Set Service Order**, drag iPhone USB or Ethernet above Wi-Fi. Otherwise macOS sends internet traffic to the robot, which has none.
+   - **Linux (NetworkManager):** `nmcli device wifi connect ELEGOO-XXXXXX`, then `nmcli connection modify ELEGOO-XXXXXX ipv4.never-default yes ipv6.method disabled ipv4.ignore-auto-dns yes` and connect again, so the robot's network is never the route to the internet.
+   - **Windows:** pick it from the Wi-Fi list, and answer "No" to finding other devices. Windows prefers a wired link or USB tethering over Wi-Fi for the internet by itself; iPhone USB tethering needs Apple's Apple Devices app for its driver.
+4. Check both links: `ping 192.168.4.1` reaches the robot, and the internet goes through the second link: `route -n get 1.1.1.1` on macOS, `ip route get 1.1.1.1` on Linux, or `Find-NetRoute -RemoteIPAddress 1.1.1.1` in PowerShell names its interface, not Wi-Fi.
+5. Run `conq status --port tcp:192.168.4.1:100`, or set `CONQ_PORT=tcp:192.168.4.1:100` once and leave `--port` out.
+
+To go back, forget the `ELEGOO-...` network, and on macOS put Wi-Fi back at the top of the service order if you want it there.
+
 ## Planned
 
 Nothing yet.

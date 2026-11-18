@@ -44,6 +44,7 @@ DONGLE_VERSION = b"{WV}"
 # The dongle's link to the robot, from {W,state,rssi}.
 LINK_STATES = {0: "looking for the robot's network", 1: "joining the robot's network",
                2: "connecting to the camera board", 3: "connected"}
+LINK_CONNECTING = 2  # also the network link while it opens port 100 again
 LINK_CONNECTED = 3
 
 

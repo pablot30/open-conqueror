@@ -146,7 +146,7 @@ class DongleTests(unittest.TestCase):
     def test_power_on_tests_are_skipped_over_the_dongle(self) -> None:
         test = robottest.load(ROOT / "tests" / "robot" / "version_and_standby.py")
         self.assertTrue(test.needs_fresh_start)
-        fake = mock.Mock(via_dongle=True, link_drops=[])
+        fake = mock.Mock(over_wifi=True, link_drops=[])
         fake.link_summary.return_value = {"via": "dongle"}
         with tempfile.TemporaryDirectory() as folder, mock.patch.object(robottest, "Robot", return_value=fake):
             report = robottest.run_test(test, "x", Path(folder) / "log.jsonl", {}, interactive=False)
@@ -156,7 +156,7 @@ class DongleTests(unittest.TestCase):
 
     def test_a_link_drop_leaves_a_test_incomplete(self) -> None:
         test = robottest.load(ROOT / "tests" / "robot" / "health.py")
-        fake = mock.Mock(via_dongle=True, link_drops=[1.5])
+        fake = mock.Mock(over_wifi=True, link_drops=[1.5])
         fake.link_summary.return_value = {"via": "dongle"}
         with tempfile.TemporaryDirectory() as folder, mock.patch.object(robottest, "Robot", return_value=fake), \
                 mock.patch.object(test, "run", lambda t: t.check("x", True, "", [])):

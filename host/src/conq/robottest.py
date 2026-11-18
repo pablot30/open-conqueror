@@ -11,8 +11,9 @@ Each test is a Python file in tests/robot/ with these names:
 and optionally:
 
     NEEDS_FRESH_START  True if it checks what happens at power-on. Only the USB
-                       cable restarts the robot, so over the Wi-Fi dongle the
-                       test is skipped and the run is incomplete.
+                       cable restarts the robot, so over Wi-Fi (the dongle or
+                       the robot's network) the test is skipped and the run is
+                       incomplete.
 
 The test checks the robot's telemetry itself and asks the person only for what
 a script can't see, such as which way a track turned. Answers can be given in
@@ -144,7 +145,7 @@ def run_test(test: RobotTest, port: str, log_path: Path, answers: dict[str, str]
     try:
         robot.wait_until_ready()
         firmware = robot.version()
-        if test.needs_fresh_start and robot.via_dongle:
+        if test.needs_fresh_start and robot.over_wifi:
             context.results.append({"check": "fresh start", "status": "skipped", "requirements": [],
                                     "detail": "checks power-on, and only the USB cable restarts the robot"})
         else:
@@ -158,7 +159,7 @@ def run_test(test: RobotTest, port: str, log_path: Path, answers: dict[str, str]
         robot.close()
     if robot.link_drops:
         context.results.append({"check": "Wi-Fi link stayed up", "status": "skipped", "requirements": [],
-                                "detail": f"the dongle lost the robot at {robot.link_drops} s; "
+                                "detail": f"the Wi-Fi link lost the robot at {robot.link_drops} s; "
                                           "checks after that may be missing"})
 
     statuses = {r["status"] for r in context.results}

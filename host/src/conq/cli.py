@@ -4,11 +4,12 @@ Every command runs without a prompt (except `shell`), and --json prints one
 JSON object for agents and scripts. The port is found automatically when only
 one USB serial port is connected; otherwise give --port or set CONQ_PORT.
 
-The port is either the robot's own USB cable or the Wi-Fi dongle, an Arduino
-UNO R4 WiFi (firmware/dongle/), which conq recognises by its USB IDs. Opening
-the robot's USB port restarts the UNO, so each command waits about 2 s first.
-Over the dongle the robot doesn't restart, and commands report if the Wi-Fi
-link drops.
+The port is the robot's own USB cable, the Wi-Fi dongle, an Arduino UNO R4
+WiFi (firmware/dongle/) that conq recognises by its USB IDs, or the robot's
+own Wi-Fi network: --port tcp:192.168.4.1:100 once this computer has joined
+the robot's ELEGOO-... network. Opening the robot's USB port restarts the UNO,
+so each command waits about 2 s first. Over Wi-Fi the robot doesn't restart,
+and commands report if the Wi-Fi link drops.
 """
 
 from __future__ import annotations
@@ -21,7 +22,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from . import __version__, protocol, robottest
+from . import __version__, network, protocol, robottest
 from .link import PortError, Robot, choose_port, is_dongle, usb_ports
 
 
@@ -58,7 +59,7 @@ def link_note(robot: Robot) -> str:
     if not robot.link_drops:
         return ""
     times = ", ".join(f"{t:.1f} s" for t in robot.link_drops)
-    return f"\nWarning: the Wi-Fi dongle lost the robot at {times}; some messages may be missing."
+    return f"\nWarning: the Wi-Fi link lost the robot at {times}; some messages may be missing."
 
 
 # --- Commands ---------------------------------------------------------------
@@ -112,7 +113,7 @@ def cmd_status(args: argparse.Namespace) -> int:
         text += "\nSensors: " + last_sensors.describe()
     if last_health:
         text += "\nHealth: " + last_health.describe()
-    if robot.via_dongle and robot.link:
+    if robot.over_wifi and robot.link:
         text += "\nWi-Fi: " + robot.link.describe()
     text += link_note(robot)
     return output(args, data, text)
@@ -236,8 +237,8 @@ def cmd_test(args: argparse.Namespace) -> int:
                       "These tests move the robot: " + ", ".join(moving) + ". Add --confirm-moves.")
 
     port = choose_port(args.port)
-    if is_dongle(port):
-        print("Over the Wi-Fi dongle: Upload-Cam switch on Cam, not Upload, and no cable to the robot. "
+    if network.is_network_port(port) or is_dongle(port):
+        print("Over Wi-Fi: Upload-Cam switch on Cam, not Upload, and no cable to the robot. "
               "Tests that check power-on are skipped.", file=sys.stderr, flush=True)
     answers = parse_answers(args.answer)
     run_dir = Path(args.log_dir) if args.log_dir else (
@@ -276,7 +277,8 @@ def build_parser() -> argparse.ArgumentParser:
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--version", action="version", version=f"conq {__version__}")
     common = argparse.ArgumentParser(add_help=False)
-    common.add_argument("--port", help="serial port, such as COM3 or /dev/ttyUSB0")
+    common.add_argument("--port", help="serial port, such as COM3 or /dev/ttyUSB0, "
+                        "or the robot's network: tcp:192.168.4.1:100")
     common.add_argument("--json", action="store_true", help="print one JSON object")
     sub = parser.add_subparsers(dest="command", required=True)
 
