@@ -1,6 +1,6 @@
 # Wi-Fi dongle
 
-**Parked, 2026-11-16: it hangs.** Three times on its first day the R4's Wi-Fi chip stopped completely, once with nothing changing, and only unplugging it helped. Floor tests use a long USB cable instead. See the [notebook](../../docs/notebook/2026-11-16-wifi-dongle-latency.md) and the update in [decision 0011](../../docs/decisions/0011-wifi-dongle.md).
+**Parked, 2026-11-16: it hangs.** Three times on its first day the R4's Wi-Fi chip stopped completely, once with nothing changing, and only unplugging it helped. Floor tests use a long USB cable instead, or `conq` joins the robot's own Wi-Fi network without a dongle ([Connecting to the robot](../../docs/tools.md#connecting-to-the-robot)). See the [notebook](../../docs/notebook/2026-11-16-wifi-dongle-latency.md) and the update in [decision 0011](../../docs/decisions/0011-wifi-dongle.md).
 
 Firmware for an Arduino UNO R4 WiFi that stays plugged into the computer by USB and links it to the robot over Wi-Fi. The robot's 20 cm USB cable rules out every floor test; with the dongle, `conq` and the robot tests run unchanged with the robot driving free ([#34](https://github.com/pablot30/open-conqueror/issues/34), [decision 0011](../../docs/decisions/0011-wifi-dongle.md)).
 

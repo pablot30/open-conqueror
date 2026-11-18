@@ -1,5 +1,7 @@
-"""The connection to one robot over a serial port: the robot's own USB cable,
-or the Wi-Fi dongle (firmware/dongle/), which conq tells apart by its USB IDs.
+"""The connection to one robot: over a serial port, the robot's own USB cable
+or the Wi-Fi dongle (firmware/dongle/), which conq tells apart by its USB IDs;
+or over the robot's own Wi-Fi network, with a port such as tcp:192.168.4.1:100
+(network.py).
 
 Robot keeps every message it sends and receives, with a timestamp, so
 commands and robot tests can check what happened and save it as a JSON Lines
@@ -16,11 +18,12 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import IO, Any, Callable
 
-from . import protocol
+from . import network, protocol
 from .protocol import Health, IrCode, LinkStatus, Sensors, Telemetry
 
 BOOT_SECONDS = 2.0  # opening the robot's USB port restarts the UNO through the USB chip's DTR line
 DONGLE_READY_S = 30.0  # the dongle may still be finding and joining the robot's network
+NETWORK_READY_S = 5.0  # already connected: telemetry comes within a second
 DONGLE_USB_IDS = {(0x2341, 0x1002)}  # Arduino UNO R4 WiFi
 RESEND_PERIOD_S = 0.1  # well inside the firmware's 300 ms link timeout
 
@@ -41,6 +44,8 @@ def usb_ports() -> list[dict[str, Any]]:
 def is_dongle(port: str) -> bool:
     """Whether a port is the dongle. Aliases such as /dev/serial/by-id/... resolve
     to the device the port list names."""
+    if network.is_network_port(port):
+        return False
     real = os.path.realpath(port)
     return any(p["dongle"] and os.path.realpath(str(p["port"])) == real for p in usb_ports())
 
@@ -72,20 +77,29 @@ class Message:
 
 class Robot:
     def __init__(self, port: str, log_path: Path | None = None, dongle: bool | None = None) -> None:
-        import serial  # imported here so the rest of the package works without pyserial
-
         self.port = port
-        self.via_dongle = is_dongle(port) if dongle is None else dongle
-        self.link: LinkStatus | None = None  # the dongle's latest report
-        self.link_drops: list[float] = []  # times the dongle lost the robot
-        baud = protocol.DONGLE_BAUD if self.via_dongle else protocol.BAUD
-        try:
-            self._serial = serial.Serial(port, baud, timeout=0.05)
-        except serial.SerialException as error:
-            raise PortError(f"Couldn't open {port}: {error}") from error
+        self.via_network = network.is_network_port(port)
+        self.via_dongle = not self.via_network and (is_dongle(port) if dongle is None else dongle)
+        self.link: LinkStatus | None = None  # the dongle's latest report, or the network link's state
+        self.link_drops: list[float] = []  # times the Wi-Fi link lost the robot
         self._start = time.monotonic()
         self._lock = threading.Lock()
         self.messages: list[Message] = []
+        self._serial: Any
+        if self.via_network:
+            try:
+                self._serial = network.NetworkLink(port, self._network_changed)
+            except OSError as error:
+                raise PortError(f"Couldn't open {port}: {error}") from error
+            self.link = LinkStatus(protocol.LINK_CONNECTED, 0)
+        else:
+            import serial  # imported here so the rest of the package works without pyserial
+
+            baud = protocol.DONGLE_BAUD if self.via_dongle else protocol.BAUD
+            try:
+                self._serial = serial.Serial(port, baud, timeout=0.05)
+            except serial.SerialException as error:
+                raise PortError(f"Couldn't open {port}: {error}") from error
         self._log: IO[str] | None = log_path.open("w", encoding="utf-8") if log_path else None
         self.on_message: Callable[[Message], None] | None = None
         self._running = True
@@ -93,6 +107,12 @@ class Robot:
         self._reader.start()
 
     # --- Sending and receiving ---
+
+    @property
+    def over_wifi(self) -> bool:
+        """Through the dongle or the robot's network: the robot doesn't restart
+        when the connection opens, and the link can drop."""
+        return self.via_dongle or self.via_network
 
     def now(self) -> float:
         return time.monotonic() - self._start
@@ -136,6 +156,14 @@ class Robot:
         if was_connected and not status.connected:
             self.link_drops.append(self.now())
             self.note(f"Wi-Fi link lost: {status.describe()}")
+
+    def _network_changed(self, connected: bool, reason: str) -> None:
+        if not connected:
+            self.note(f"Wi-Fi connection lost: {reason}")
+            self._track_link(LinkStatus(protocol.LINK_CONNECTING, 0))
+        else:
+            self.note("Wi-Fi connection open again")
+            self._track_link(LinkStatus(protocol.LINK_CONNECTED, 0))
 
     def _read_loop(self) -> None:
         splitter = protocol.MessageSplitter()
@@ -206,10 +234,17 @@ class Robot:
     def wait_until_ready(self) -> None:
         """Over USB, waits for the restart that opening the port causes and the
         first telemetry. Over the dongle the robot doesn't restart: waits for
-        telemetry, and says why if none comes."""
-        if not self.via_dongle:
+        telemetry, and says why if none comes. Over the robot's network, the
+        same, but it is connected already, so the wait is shorter."""
+        if not self.over_wifi:
             self.wait_for(lambda: self.telemetry(), BOOT_SECONDS + 1.0)
             return
+        if self.via_network:
+            if self.wait_for(lambda: self.telemetry(), NETWORK_READY_S):
+                return
+            raise PortError(f"Connected to {self.port}, but no messages from the robot after "
+                            f"{NETWORK_READY_S:.0f} s. Is the Upload-Cam switch on Cam, and the "
+                            "robot's main power on?")
         if self.wait_for(lambda: self.telemetry(), DONGLE_READY_S):
             return
         state = self.link.describe() if self.link else "the dongle isn't answering"
@@ -218,7 +253,7 @@ class Robot:
                         "Upload-Cam switch on Cam?")
 
     def link_summary(self) -> dict[str, Any]:
-        return {"via": "dongle" if self.via_dongle else "usb",
+        return {"via": "network" if self.via_network else "dongle" if self.via_dongle else "usb",
                 "status": self.link.describe() if self.link else None,
                 "rssi_dbm": self.link.rssi_dbm if self.link else None,
                 "drops": [round(t, 2) for t in self.link_drops]}
