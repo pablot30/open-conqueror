@@ -57,7 +57,7 @@ jobs:
           mkdir -p build
           python3 scripts/dev.py build --json | tee build/build-report.json
       - name: Keep the firmware image
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: firmware-uno-${{ github.sha }}
           path: |
@@ -69,7 +69,7 @@ jobs:
         shell: bash
         run: python3 scripts/dev.py build --target dongle --json | tee build/build-report-dongle.json
       - name: Keep the dongle image
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: firmware-dongle-${{ github.sha }}
           path: |
