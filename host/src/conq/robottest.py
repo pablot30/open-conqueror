@@ -73,6 +73,15 @@ def load(path: Path) -> RobotTest:
                      bool(getattr(module, "NEEDS_FRESH_START", False)))
 
 
+def relative_path(path: Path, base: Path) -> str:
+    """The path relative to base, with forward slashes on every system, or
+    only the file name if it lies outside base, so no home folder is kept."""
+    try:
+        return path.resolve().relative_to(base.resolve()).as_posix()
+    except ValueError:
+        return path.name
+
+
 def find_tests(directory: Path) -> list[Path]:
     return sorted(p for p in directory.glob("*.py") if not p.name.startswith("_"))
 
@@ -180,5 +189,7 @@ def run_test(test: RobotTest, port: str, log_path: Path, answers: dict[str, str]
         "started": started.isoformat(timespec="seconds"),
         "duration_s": round((datetime.now(timezone.utc) - started).total_seconds(), 1),
         "results": context.results,
-        "log": log_path.as_posix(),
+        # No folder, so a report never carries a home folder (#89); `conq test`
+        # replaces it with the path relative to report.json.
+        "log": log_path.name,
     }

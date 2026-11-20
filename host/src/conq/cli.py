@@ -243,7 +243,7 @@ def cmd_test(args: argparse.Namespace) -> int:
     answers = parse_answers(args.answer)
     run_dir = Path(args.log_dir) if args.log_dir else (
         root / "build" / "robot-tests" / datetime.now().strftime("%Y%m%d-%H%M%S"))
-    run_dir.mkdir(parents=True, exist_ok=True)
+    (run_dir / "logs").mkdir(parents=True, exist_ok=True)
 
     reports = []
     for test in tests:
@@ -251,7 +251,11 @@ def cmd_test(args: argparse.Namespace) -> int:
               file=sys.stderr, flush=True)
         if interactive and (test.moves and not args.confirm_moves):
             input("Press Enter when ready, or Ctrl+C to stop. ")
-        report = robottest.run_test(test, port, run_dir / f"{test.name}.jsonl", answers, interactive)
+        log_path = run_dir / "logs" / f"{test.name}.jsonl"
+        report = robottest.run_test(test, port, log_path, answers, interactive)
+        # The same layout as docs/test-reports/: report.json, and logs/ beside it.
+        report["log"] = robottest.relative_path(log_path, run_dir)
+        report["file"] = robottest.relative_path(test.path, root)
         reports.append(report)
         print(f"   -> {report['status']}", file=sys.stderr, flush=True)
 
@@ -261,9 +265,10 @@ def cmd_test(args: argparse.Namespace) -> int:
                    else "failed" if any(r["status"] == "failed" for r in reports) else "incomplete"),
         "conq": __version__,
         "reports": reports,
-        "folder": run_dir.as_posix(),
     }
+    # The file holds no absolute paths (#89); the printed summary also says where it is.
     (run_dir / "report.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
+    summary["folder"] = run_dir.as_posix()
     text = "\n".join(f"{r['test']:<22} {r['status']}" + (f"  ({r['results'][0]['detail']})"
                      if r["results"] and r["results"][0]["check"] == "fresh start" else "")
                      for r in reports) + f"\nReport: {run_dir / 'report.json'}"
