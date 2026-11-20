@@ -117,6 +117,9 @@ class NetworkLink:
             data = sock.recv(size)
         except socket.timeout:
             data = None
+        except (ConnectionResetError, ConnectionAbortedError):
+            # Windows reports the board's close as an abort or reset, not an empty read.
+            data = b""
         except OSError as error:
             self._lose(f"the connection failed: {error}")
             return b""
