@@ -13,7 +13,13 @@ Sources: the shield and camera board schematics, the manual and the stock firmwa
 
 A3 reads Vin through a 10 kΩ and 1.5 kΩ divider, after the diode. The stock firmware scales the reading and adds 8%. It warns below 7.0 V, and one of ELEGOO's tutorials treats above 7.8 V as fully charged.
 
-The 8% may be standing in for the diode's voltage drop, which would be better as a fixed offset. We haven't measured this.
+The 8% may be standing in for the diode's voltage drop, which would be better as a fixed offset.
+
+**Measured on our robot on 2026-11-20** with a multimeter, our firmware running, nothing moving ([notebook](../notebook/2026-11-20-battery-and-ultrasonic-measurements.md)):
+
+- The diode drops about 0.45 V: 7.82 V at the pack, 7.37 V at the UNO's VIN pin.
+- Our reading of VIN is 0.03 V (0.4%) low, under one step of the UNO's converter. It needs no correction.
+- Our thresholds are set on VIN, so at the pack they sit about 0.45 V higher.
 
 ## Signs to investigate
 
