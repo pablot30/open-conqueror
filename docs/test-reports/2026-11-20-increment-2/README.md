@@ -37,7 +37,7 @@
 
 ## Notes
 
-- **`stops` over Wi-Fi:** it failed over the Wi-Fi dongle on 2026-11-16 because of that link's latency ([decision 0011](../../decisions/0011-wifi-dongle.md)). Here it passed over USB, and it hasn't run over the robot's own Wi-Fi yet.
+- **`stops` over Wi-Fi:** it failed over the Wi-Fi dongle on 2026-11-16 because of that link's latency ([decision 0011](../../decisions/0011-wifi-dongle.md)). Here it passed over USB, and then again over the robot's own Wi-Fi: the stop showed 90 ms after the command, and the link timeout stopped the robot 284 ms after the last message, with no link drops. The report keeps the USB run; the Wi-Fi run's log is kept outside the repo.
 - **The battery ran low by the end:** VIN dipped to 7.00 V under load during `directions`, the warning level. Charge before the next session.
 - **Measured on the way** (see the notebook entries linked above):
   - the battery reading is 0.4% low at VIN, and the input diode drops about 0.45 V
