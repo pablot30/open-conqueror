@@ -83,7 +83,7 @@
           ]
         }
       ],
-      "log": "/Users/pablot30/Developer/embedded/open-conqueror/build/robot-tests/20261120-232500/version_and_standby.jsonl"
+      "log": "logs/version_and_standby.jsonl"
     },
     {
       "test": "startup",
@@ -153,7 +153,7 @@
           ]
         }
       ],
-      "log": "/Users/pablot30/Developer/embedded/open-conqueror/build/robot-tests/20261120-232500/startup.jsonl"
+      "log": "logs/startup.jsonl"
     },
     {
       "test": "camera",
@@ -208,7 +208,7 @@
           ]
         }
       ],
-      "log": "/Users/pablot30/Developer/embedded/open-conqueror/build/robot-tests/20261120-232814/camera.jsonl"
+      "log": "logs/camera.jsonl"
     },
     {
       "test": "directions",
@@ -389,7 +389,7 @@
           ]
         }
       ],
-      "log": "/Users/pablot30/Developer/embedded/open-conqueror/build/robot-tests/20261120-232814/directions.jsonl"
+      "log": "logs/directions.jsonl"
     },
     {
       "test": "stops",
@@ -476,7 +476,7 @@
           ]
         }
       ],
-      "log": "/Users/pablot30/Developer/embedded/open-conqueror/build/robot-tests/20261120-232814/stops.jsonl"
+      "log": "logs/stops.jsonl"
     },
     {
       "test": "mode_button",
@@ -533,7 +533,7 @@
           ]
         }
       ],
-      "log": "/Users/pablot30/Developer/embedded/open-conqueror/build/robot-tests/20261120-232814/mode_button.jsonl"
+      "log": "logs/mode_button.jsonl"
     },
     {
       "test": "health",
@@ -618,7 +618,7 @@
           ]
         }
       ],
-      "log": "/Users/pablot30/Developer/embedded/open-conqueror/build/robot-tests/20261120-233231/health.jsonl"
+      "log": "logs/health.jsonl"
     },
     {
       "test": "gyro_turn",
@@ -661,7 +661,7 @@
           ]
         }
       ],
-      "log": "/Users/pablot30/Developer/embedded/open-conqueror/build/robot-tests/20261120-233231/gyro_turn.jsonl"
+      "log": "logs/gyro_turn.jsonl"
     },
     {
       "test": "ir_drive",
@@ -833,7 +833,7 @@
           ]
         }
       ],
-      "log": "/Users/pablot30/Developer/embedded/open-conqueror/build/robot-tests/20261120-233305/ir_drive.jsonl"
+      "log": "logs/ir_drive.jsonl"
     },
     {
       "test": "heading_hold",
@@ -925,7 +925,7 @@
           ]
         }
       ],
-      "log": "/Users/pablot30/Developer/embedded/open-conqueror/build/robot-tests/20261120-212805/heading_hold.jsonl"
+      "log": "logs/heading_hold.jsonl"
     },
     {
       "test": "ultrasonic_ruler",
@@ -998,7 +998,7 @@
           ]
         }
       ],
-      "log": "/Users/pablot30/Developer/embedded/open-conqueror/build/robot-tests/20261120-214350/ultrasonic_ruler.jsonl"
+      "log": "logs/ultrasonic_ruler.jsonl"
     }
   ]
 }
