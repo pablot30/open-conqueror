@@ -4,7 +4,9 @@ REQUIREMENTS = ["F1", "T4"]
 MOVES = True
 SETUP = """Robot on a flat floor with a clear lane at least 3.5 m long and 0.5 m
 wide, battery charged. Connected over the robot's own Wi-Fi (--port
-tcp:192.168.4.1), Upload-Cam switch on Cam; a long USB cable (4 m or more)
+tcp:192.168.4.1), Upload-Cam switch on Cam, after the steps that protect the
+computer in docs/tools.md, "Joining the robot's network" (firewall on,
+sharing off, routes checked); a long USB cable (4 m or more)
 laid along the lane with slack also works. A tape measure laid along the
 lane, and a strip of tape across the floor under the robot's middle as a
 start mark."""
