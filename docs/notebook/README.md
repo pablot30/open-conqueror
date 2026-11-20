@@ -12,3 +12,4 @@ Each entry should say how we know something: measured on the robot, compiled, or
 - [2026-11-09: First flash of our firmware](2026-11-09-first-flash-of-our-firmware.md)
 - [2026-11-16: The Wi-Fi dongle's first runs: latency, freezes and hangs](2026-11-16-wifi-dongle-latency.md)
 - [2026-11-20: Heading hold on the floor](2026-11-20-heading-hold-on-the-floor.md)
+- [2026-11-20: Battery reading and ultrasonic, against a multimeter and a tape](2026-11-20-battery-and-ultrasonic-measurements.md)
