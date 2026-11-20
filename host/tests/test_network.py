@@ -220,6 +220,21 @@ class CommandTests(unittest.TestCase):
         self.assertEqual(report["results"][0]["check"], "fresh start")
         self.assertEqual(report["firmware"]["version"], "0.1.0")
 
+    def test_report_holds_no_absolute_paths(self) -> None:
+        """#89: report.json can be copied into docs/test-reports/ as it is."""
+        test_file = ROOT / "tests" / "robot" / "version_and_standby.py"
+        with tempfile.TemporaryDirectory() as folder, mock.patch("builtins.print"):
+            code = cli.main(["test", str(test_file), "--port", self.board.port, "--log-dir", folder, "--json"])
+            text = (Path(folder) / "report.json").read_text(encoding="utf-8")
+            report = json.loads(text)["reports"][0]
+            self.assertTrue((Path(folder) / report["log"]).is_file())
+        self.assertEqual(code, 1)  # incomplete over the network, as above
+        self.assertEqual(report["log"], "logs/version_and_standby.jsonl")
+        self.assertEqual(report["file"], "tests/robot/version_and_standby.py")
+        for absolute in (str(Path.home()), Path.home().as_posix(), folder, Path(folder).as_posix(), str(ROOT)):
+            self.assertNotIn(absolute.replace("\\", "\\\\"), text)
+        self.assertNotIn('"folder"', text)
+
 
 if __name__ == "__main__":
     unittest.main()
