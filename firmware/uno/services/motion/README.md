@@ -10,7 +10,7 @@ Heading hold. While both tracks are commanded equal, at 15% or faster, the robot
 | **Interface** | `HeadingHold::update(HoldInput)` returns a `HoldOutput` (correction in tenths of a percent, positive turns left, and a `HoldState`); `headingError(to, from)`. The constants are in `config::` in `motion.h` |
 | **Unit tests** | `tests/test_motion.cpp`, with a simple simulated robot that turns at a rate set by its track difference plus a steady drift |
 | **Monitors** | None of its own. It reacts to the gyro's: see below |
-| **Robot tests** | `tests/robot/heading_hold.py` (floor, 2 m, the long USB cable) |
+| **Robot tests** | `tests/robot/heading_hold.py` (floor, 2 m, over the robot's Wi-Fi or a long USB cable) |
 
 ## What it does with the gyro's status
 
