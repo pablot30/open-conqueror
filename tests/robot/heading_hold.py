@@ -1,26 +1,32 @@
-"""Driving straight stays straight: heading hold keeps the heading within a couple of degrees over about 2 m."""
+"""Driving straight stays straight: heading hold keeps the heading within a couple of degrees and 10 cm over 2 m."""
 
 REQUIREMENTS = ["F1", "T4"]
 MOVES = True
-SETUP = """Robot on a flat floor with a clear lane at least 3 m long and 0.5 m wide,
-battery charged. A LONG USB cable (3 m or more) laid along the lane with
-slack, Upload-Cam switch on Upload. (The Wi-Fi dongle also works, with the
-switch on Cam, but it's parked because it hangs: see decision 0011.) A tape
-measure, and a strip of tape across the floor under the robot's middle as a
+SETUP = """Robot on a flat floor with a clear lane at least 3.5 m long and 0.5 m
+wide, battery charged. Connected over the robot's own Wi-Fi (--port
+tcp:192.168.4.1), Upload-Cam switch on Cam, after the steps that protect the
+computer in docs/tools.md, "Joining the robot's network" (firewall on,
+sharing off, routes checked); a long USB cable (4 m or more)
+laid along the lane with slack also works. A tape measure laid along the
+lane, and a strip of tape across the floor under the robot's middle as a
 start mark."""
-BRIEF = """The tracks move: the robot drives forward for 5 seconds at 40% and stops.
-Forward is roughly 2 m depending on the battery. The test then asks you
-to measure, and waits for your answer: how far to the side of a straight
-line from its start mark the robot ended up. Leave it where it is until
-you've answered. Then it drives backward for 5 seconds at 40% and stops. Stand beside the lane, not in front of it, and
-keep a hand free to stop the robot with the MODE button (and, over USB, to
-catch the cable). Over USB, let the robot sit still for the first 3 seconds
-after you start the test: opening the port restarts it and the gyro
-calibrates then, and the robot must not be touched. Lay the tape
-measure along the lane before the test. Watch for the robot veering, and over USB for the cable pulling it. About 1 minute."""
+BRIEF = """The tracks move: the robot drives forward for 14 seconds at 40% and
+stops. That's about 2 m: on carpet it covered about 14 cm/s (measured on
+2026-11-20); a hard floor may be faster, up to about 3 m. The test then
+asks for two measurements and waits for each: how far the robot's middle
+travelled along the lane, and how far it is to the side of the lane's
+centre line. Leave it where it is until you've answered. Then it drives
+backward for 14 seconds at 40% and stops. Stand beside the lane, not in
+front of it, and keep a hand free to stop the robot with the MODE button
+(and, over USB, to catch the cable). Over USB, let the robot sit still for
+the first 3 seconds after you start the test: opening the port restarts it
+and the gyro calibrates then, and the robot must not be touched. Watch for
+the robot veering, and over USB for the cable pulling it. About 2 minutes."""
 
-DRIVE_S = 5.0
+DRIVE_S = 14.0
 SPEED = 40
+MIN_FORWARD_CM = 200   # F1: drive 2 m
+MAX_SIDEWAYS_CM = 10
 MAX_HEADING_CHANGE_CDEG = 300  # 3 degrees over the run
 HOLDING_SHARE = 0.8
 
@@ -69,6 +75,14 @@ def run(t):
         t.check(f"{name}: correction stayed small", all(abs(c) <= 50 for c in corrections),
                 "", ["F1"])
         if name == "forward":
-            t.confirm("sideways_within_10cm",
-                      "Measured from the start mark, did the robot stop within 10 cm of a straight line "
-                      "(about 2 m forward)? Leave it where it is until you answer.", ["F1"])
+            forward = t.measure("forward_cm", "Leave the robot where it is. Along the lane, how far did its "
+                                "middle travel from the start mark?")
+            sideways = t.measure("sideways_cm", "And how far is its middle to the side of the lane's "
+                                 "centre line? (0 if you can't see any)")
+            if forward is not None:
+                t.check("forward: drove at least 2 m", forward >= MIN_FORWARD_CM,
+                        f"{forward:.0f} cm in {DRIVE_S:.0f} s, about {forward / DRIVE_S:.0f} cm/s",
+                        ["F1"])
+            if sideways is not None:
+                t.check("forward: stayed within 10 cm of a straight line",
+                        abs(sideways) <= MAX_SIDEWAYS_CM, f"{sideways:.1f} cm to the side", ["F1"])
