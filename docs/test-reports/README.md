@@ -5,3 +5,4 @@ One report for each increment, written when its robot tests pass ([0007](../deci
 | Report | Firmware | Result |
 |---|---|---|
 | [Increment 1, the walking skeleton](2026-11-12-increment-1/README.md) | `0.1.0-dev`, `64e636d` | Passed |
+| [Increment 2, sensors and status](2026-11-20-increment-2/README.md) | `0.1.0-dev`, `bf9a708` | Passed, T3 by judgement; F15 not covered |

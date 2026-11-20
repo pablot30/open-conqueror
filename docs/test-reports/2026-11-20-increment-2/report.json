@@ -1,0 +1,1004 @@
+{
+  "ok": false,
+  "status": "failed",
+  "conq": "0.1.0.dev0",
+  "reports": [
+    {
+      "test": "version_and_standby",
+      "file": "tests/robot/version_and_standby.py",
+      "requirements": [
+        "D4",
+        "S5",
+        "T1",
+        "T2"
+      ],
+      "status": "passed",
+      "firmware": {
+        "version": "0.1.0-dev",
+        "commit": "bf9a708",
+        "protocol": "8"
+      },
+      "port": "/dev/cu.usbserial-1310",
+      "link": {
+        "via": "usb",
+        "status": null,
+        "rssi_dbm": null,
+        "drops": []
+      },
+      "started": "2026-11-20T22:25:00+00:00",
+      "duration_s": 4.0,
+      "results": [
+        {
+          "check": "version reported",
+          "status": "passed",
+          "detail": "{'version': '0.1.0-dev', 'commit': 'bf9a708', 'protocol': '8'}",
+          "requirements": [
+            "D4"
+          ]
+        },
+        {
+          "check": "protocol version reported",
+          "status": "passed",
+          "detail": "protocol 8",
+          "requirements": [
+            "D4"
+          ]
+        },
+        {
+          "check": "version matches the VERSION file",
+          "status": "passed",
+          "detail": "robot 0.1.0-dev, VERSION 0.1.0-dev",
+          "requirements": [
+            "D4"
+          ]
+        },
+        {
+          "check": "telemetry arrives 10 times a second",
+          "status": "passed",
+          "detail": "20 in 2 s",
+          "requirements": [
+            "T1"
+          ]
+        },
+        {
+          "check": "standby with no motor output",
+          "status": "passed",
+          "detail": "",
+          "requirements": [
+            "S5"
+          ]
+        },
+        {
+          "check": "battery reading plausible with main power on",
+          "status": "passed",
+          "detail": "7241 mV",
+          "requirements": []
+        },
+        {
+          "check": "longest frame's work under 5 ms",
+          "status": "passed",
+          "detail": "1660 us",
+          "requirements": [
+            "T2"
+          ]
+        }
+      ],
+      "log": "logs/version_and_standby.jsonl"
+    },
+    {
+      "test": "startup",
+      "file": "tests/robot/startup.py",
+      "requirements": [
+        "F5",
+        "F13",
+        "F14",
+        "T6",
+        "T4"
+      ],
+      "status": "passed",
+      "firmware": {
+        "version": "0.1.0-dev",
+        "commit": "bf9a708",
+        "protocol": "8"
+      },
+      "port": "/dev/cu.usbserial-1310",
+      "link": {
+        "via": "usb",
+        "status": null,
+        "rssi_dbm": null,
+        "drops": []
+      },
+      "started": "2026-11-20T22:25:04+00:00",
+      "duration_s": 15.8,
+      "results": [
+        {
+          "check": "gyro calibrated and valid within 3 s of power-on",
+          "status": "passed",
+          "detail": "valid 1.06 s after power-on",
+          "requirements": [
+            "F13",
+            "T6"
+          ]
+        },
+        {
+          "check": "rate near zero while still",
+          "status": "passed",
+          "detail": "largest 0.06 deg/s",
+          "requirements": [
+            "T4"
+          ]
+        },
+        {
+          "check": "heading steady while still",
+          "status": "passed",
+          "detail": "moved 0.01 deg in about 10 s",
+          "requirements": [
+            "T4"
+          ]
+        },
+        {
+          "check": "camera_centred",
+          "status": "passed",
+          "detail": "Did the camera turn to its centre and end up facing straight ahead? Answer: y",
+          "requirements": [
+            "F14"
+          ]
+        },
+        {
+          "check": "led_breathing",
+          "status": "passed",
+          "detail": "Did the LED on top breathe violet, slowly brighter and dimmer? Answer: y",
+          "requirements": [
+            "F5"
+          ]
+        }
+      ],
+      "log": "logs/startup.jsonl"
+    },
+    {
+      "test": "camera",
+      "file": "tests/robot/camera.py",
+      "requirements": [
+        "F14"
+      ],
+      "status": "passed",
+      "firmware": {
+        "version": "0.1.0-dev",
+        "commit": "bf9a708",
+        "protocol": "8"
+      },
+      "port": "/dev/cu.usbserial-1310",
+      "link": {
+        "via": "usb",
+        "status": null,
+        "rssi_dbm": null,
+        "drops": []
+      },
+      "started": "2026-11-20T22:28:14+00:00",
+      "duration_s": 43.4,
+      "results": [
+        {
+          "check": "commands understood",
+          "status": "passed",
+          "detail": "0 errors",
+          "requirements": []
+        },
+        {
+          "check": "camera_moved",
+          "status": "passed",
+          "detail": "Did the camera pan left, right and back, then tilt both ways and back? Answer: y",
+          "requirements": [
+            "F14"
+          ]
+        },
+        {
+          "check": "camera_smooth",
+          "status": "passed",
+          "detail": "Were the default-speed moves smooth? Answer: y",
+          "requirements": [
+            "F14"
+          ]
+        },
+        {
+          "check": "camera_centred",
+          "status": "passed",
+          "detail": "Did it end up facing straight ahead? Answer: y",
+          "requirements": [
+            "F14"
+          ]
+        }
+      ],
+      "log": "logs/camera.jsonl"
+    },
+    {
+      "test": "directions",
+      "file": "tests/robot/directions.py",
+      "requirements": [
+        "F2",
+        "F3",
+        "F4",
+        "S10"
+      ],
+      "status": "passed",
+      "firmware": {
+        "version": "0.1.0-dev",
+        "commit": "bf9a708",
+        "protocol": "8"
+      },
+      "port": "/dev/cu.usbserial-1310",
+      "link": {
+        "via": "usb",
+        "status": null,
+        "rssi_dbm": null,
+        "drops": []
+      },
+      "started": "2026-11-20T22:29:08+00:00",
+      "duration_s": 26.9,
+      "results": [
+        {
+          "check": "f: motor output",
+          "status": "passed",
+          "detail": "PWM 65, 65; expected about 65, 65 at 6998 mV",
+          "requirements": [
+            "F2",
+            "F3",
+            "S10"
+          ]
+        },
+        {
+          "check": "f: stopped after",
+          "status": "passed",
+          "detail": "",
+          "requirements": [
+            "F4"
+          ]
+        },
+        {
+          "check": "b: motor output",
+          "status": "passed",
+          "detail": "PWM -63, -63; expected about -63, -63 at 7179 mV",
+          "requirements": [
+            "F2",
+            "F3",
+            "S10"
+          ]
+        },
+        {
+          "check": "b: stopped after",
+          "status": "passed",
+          "detail": "",
+          "requirements": [
+            "F4"
+          ]
+        },
+        {
+          "check": "l: motor output",
+          "status": "passed",
+          "detail": "PWM -63, 63; expected about -63, 63 at 7150 mV",
+          "requirements": [
+            "F2",
+            "F3",
+            "S10"
+          ]
+        },
+        {
+          "check": "l: stopped after",
+          "status": "passed",
+          "detail": "",
+          "requirements": [
+            "F4"
+          ]
+        },
+        {
+          "check": "r: motor output",
+          "status": "passed",
+          "detail": "PWM 63, -63; expected about 63, -63 at 7156 mV",
+          "requirements": [
+            "F2",
+            "F3",
+            "S10"
+          ]
+        },
+        {
+          "check": "r: stopped after",
+          "status": "passed",
+          "detail": "",
+          "requirements": [
+            "F4"
+          ]
+        },
+        {
+          "check": "fl: motor output",
+          "status": "passed",
+          "detail": "PWM 31, 63; expected about 31, 63 at 7178 mV",
+          "requirements": [
+            "F2",
+            "F3",
+            "S10"
+          ]
+        },
+        {
+          "check": "fl: stopped after",
+          "status": "passed",
+          "detail": "",
+          "requirements": [
+            "F4"
+          ]
+        },
+        {
+          "check": "bl: motor output",
+          "status": "passed",
+          "detail": "PWM -31, -63; expected about -31, -63 at 7191 mV",
+          "requirements": [
+            "F2",
+            "F3",
+            "S10"
+          ]
+        },
+        {
+          "check": "bl: stopped after",
+          "status": "passed",
+          "detail": "",
+          "requirements": [
+            "F4"
+          ]
+        },
+        {
+          "check": "fr: motor output",
+          "status": "passed",
+          "detail": "PWM 63, 31; expected about 63, 31 at 7192 mV",
+          "requirements": [
+            "F2",
+            "F3",
+            "S10"
+          ]
+        },
+        {
+          "check": "fr: stopped after",
+          "status": "passed",
+          "detail": "",
+          "requirements": [
+            "F4"
+          ]
+        },
+        {
+          "check": "br: motor output",
+          "status": "passed",
+          "detail": "PWM -63, -31; expected about -63, -31 at 7170 mV",
+          "requirements": [
+            "F2",
+            "F3",
+            "S10"
+          ]
+        },
+        {
+          "check": "br: stopped after",
+          "status": "passed",
+          "detail": "",
+          "requirements": [
+            "F4"
+          ]
+        },
+        {
+          "check": "tracks_correct",
+          "status": "passed",
+          "detail": "Did every move turn the tracks the way its name says? Answer: y",
+          "requirements": [
+            "F2",
+            "F3"
+          ]
+        }
+      ],
+      "log": "logs/directions.jsonl"
+    },
+    {
+      "test": "stops",
+      "file": "tests/robot/stops.py",
+      "requirements": [
+        "F4",
+        "S1",
+        "S3",
+        "S4",
+        "S5"
+      ],
+      "status": "passed",
+      "firmware": {
+        "version": "0.1.0-dev",
+        "commit": "bf9a708",
+        "protocol": "8"
+      },
+      "port": "/dev/cu.usbserial-1310",
+      "link": {
+        "via": "usb",
+        "status": null,
+        "rssi_dbm": null,
+        "drops": []
+      },
+      "started": "2026-11-20T22:29:38+00:00",
+      "duration_s": 9.6,
+      "results": [
+        {
+          "check": "ignored until a neutral command",
+          "status": "passed",
+          "detail": "robot standby",
+          "requirements": [
+            "S4",
+            "S5"
+          ]
+        },
+        {
+          "check": "stop command brakes",
+          "status": "passed",
+          "detail": "stopped telemetry 69 ms after the command",
+          "requirements": [
+            "F4",
+            "S1"
+          ]
+        },
+        {
+          "check": "stop holds while drive commands keep coming",
+          "status": "passed",
+          "detail": "",
+          "requirements": [
+            "S1"
+          ]
+        },
+        {
+          "check": "link timeout stops after about 300 ms",
+          "status": "passed",
+          "detail": "stopped telemetry 308 ms after the last message",
+          "requirements": [
+            "S3"
+          ]
+        },
+        {
+          "check": "link timeout fault reported",
+          "status": "passed",
+          "detail": "faults 1",
+          "requirements": [
+            "S3"
+          ]
+        },
+        {
+          "check": "timeout stop holds when messages return",
+          "status": "passed",
+          "detail": "",
+          "requirements": [
+            "S3"
+          ]
+        },
+        {
+          "check": "drives again after neutral",
+          "status": "passed",
+          "detail": "",
+          "requirements": [
+            "S1"
+          ]
+        }
+      ],
+      "log": "logs/stops.jsonl"
+    },
+    {
+      "test": "mode_button",
+      "file": "tests/robot/mode_button.py",
+      "requirements": [
+        "S1"
+      ],
+      "status": "passed",
+      "firmware": {
+        "version": "0.1.0-dev",
+        "commit": "bf9a708",
+        "protocol": "8"
+      },
+      "port": "/dev/cu.usbserial-1310",
+      "link": {
+        "via": "usb",
+        "status": null,
+        "rssi_dbm": null,
+        "drops": []
+      },
+      "started": "2026-11-20T22:29:48+00:00",
+      "duration_s": 57.4,
+      "results": [
+        {
+          "check": "press 1 stops and holds",
+          "status": "passed",
+          "detail": "held for 1.5 s of drive commands",
+          "requirements": [
+            "S1"
+          ]
+        },
+        {
+          "check": "press 2 stops and holds",
+          "status": "passed",
+          "detail": "held for 1.5 s of drive commands",
+          "requirements": [
+            "S1"
+          ]
+        },
+        {
+          "check": "press 3 stops and holds",
+          "status": "passed",
+          "detail": "held for 1.5 s of drive commands",
+          "requirements": [
+            "S1"
+          ]
+        },
+        {
+          "check": "presses seen",
+          "status": "passed",
+          "detail": "3 of 3 within 120 s",
+          "requirements": [
+            "S1"
+          ]
+        }
+      ],
+      "log": "logs/mode_button.jsonl"
+    },
+    {
+      "test": "health",
+      "file": "tests/robot/health.py",
+      "requirements": [
+        "T1",
+        "T2",
+        "S9"
+      ],
+      "status": "passed",
+      "firmware": {
+        "version": "0.1.0-dev",
+        "commit": "bf9a708",
+        "protocol": "8"
+      },
+      "port": "/dev/cu.usbserial-1310",
+      "link": {
+        "via": "usb",
+        "status": null,
+        "rssi_dbm": null,
+        "drops": []
+      },
+      "started": "2026-11-20T22:32:31+00:00",
+      "duration_s": 6.9,
+      "results": [
+        {
+          "check": "health message once a second",
+          "status": "passed",
+          "detail": "5 in 5 s",
+          "requirements": []
+        },
+        {
+          "check": "every event listed",
+          "status": "passed",
+          "detail": "{'battery sensor': 'passed', 'frame overrun': 'passed', 'link timeout': 'passed', 'gyro comms': 'passed', 'ultrasonic echo': 'passed'}",
+          "requirements": []
+        },
+        {
+          "check": "battery sensor passed",
+          "status": "passed",
+          "detail": "",
+          "requirements": [
+            "S9"
+          ]
+        },
+        {
+          "check": "no frame overruns",
+          "status": "passed",
+          "detail": "",
+          "requirements": [
+            "T2"
+          ]
+        },
+        {
+          "check": "no frames skipped",
+          "status": "passed",
+          "detail": "0 skipped",
+          "requirements": [
+            "T1"
+          ]
+        },
+        {
+          "check": "link timeout not failed while idle",
+          "status": "passed",
+          "detail": "",
+          "requirements": []
+        },
+        {
+          "check": "battery reading valid",
+          "status": "passed",
+          "detail": "status valid",
+          "requirements": [
+            "S9"
+          ]
+        },
+        {
+          "check": "longest frame's work under 5 ms",
+          "status": "passed",
+          "detail": "1664 us",
+          "requirements": [
+            "T2"
+          ]
+        }
+      ],
+      "log": "logs/health.jsonl"
+    },
+    {
+      "test": "gyro_turn",
+      "file": "tests/robot/gyro_turn.py",
+      "requirements": [
+        "F1",
+        "T4"
+      ],
+      "status": "passed",
+      "firmware": {
+        "version": "0.1.0-dev",
+        "commit": "bf9a708",
+        "protocol": "8"
+      },
+      "port": "/dev/cu.usbserial-1310",
+      "link": {
+        "via": "usb",
+        "status": null,
+        "rssi_dbm": null,
+        "drops": []
+      },
+      "started": "2026-11-20T22:32:38+00:00",
+      "duration_s": 10.1,
+      "results": [
+        {
+          "check": "heading changed by about 90 degrees",
+          "status": "passed",
+          "detail": "changed 80.1 deg",
+          "requirements": [
+            "F1",
+            "T4"
+          ]
+        },
+        {
+          "check": "a left turn counts as positive",
+          "status": "passed",
+          "detail": "positive means counterclockwise seen from above; if negative, the chip is mounted upside down and the sign must be flipped",
+          "requirements": [
+            "F1"
+          ]
+        }
+      ],
+      "log": "logs/gyro_turn.jsonl"
+    },
+    {
+      "test": "ir_drive",
+      "file": "tests/robot/ir_drive.py",
+      "requirements": [
+        "F10",
+        "S2",
+        "S3"
+      ],
+      "status": "passed",
+      "firmware": {
+        "version": "0.1.0-dev",
+        "commit": "bf9a708",
+        "protocol": "8"
+      },
+      "port": "/dev/cu.usbserial-1310",
+      "link": {
+        "via": "usb",
+        "status": null,
+        "rssi_dbm": null,
+        "drops": []
+      },
+      "started": "2026-11-20T22:33:10+00:00",
+      "duration_s": 37.3,
+      "results": [
+        {
+          "check": "UP drives while held",
+          "status": "passed",
+          "detail": "11 samples driving",
+          "requirements": [
+            "F10"
+          ]
+        },
+        {
+          "check": "UP stops when the key is released",
+          "status": "passed",
+          "detail": "",
+          "requirements": [
+            "F10"
+          ]
+        },
+        {
+          "check": "UP release is not a link fault",
+          "status": "passed",
+          "detail": "",
+          "requirements": [
+            "S3"
+          ]
+        },
+        {
+          "check": "up_stopped_quickly",
+          "status": "passed",
+          "detail": "Did the robot stop within about a third of a second of letting go of UP? Answer: y",
+          "requirements": [
+            "F10"
+          ]
+        },
+        {
+          "check": "DOWN drives while held",
+          "status": "passed",
+          "detail": "4 samples driving",
+          "requirements": [
+            "F10"
+          ]
+        },
+        {
+          "check": "DOWN stops when the key is released",
+          "status": "passed",
+          "detail": "",
+          "requirements": [
+            "F10"
+          ]
+        },
+        {
+          "check": "DOWN release is not a link fault",
+          "status": "passed",
+          "detail": "",
+          "requirements": [
+            "S3"
+          ]
+        },
+        {
+          "check": "down_stopped_quickly",
+          "status": "passed",
+          "detail": "Did the robot stop within about a third of a second of letting go of DOWN? Answer: y",
+          "requirements": [
+            "F10"
+          ]
+        },
+        {
+          "check": "LEFT drives while held",
+          "status": "passed",
+          "detail": "11 samples driving",
+          "requirements": [
+            "F10"
+          ]
+        },
+        {
+          "check": "LEFT stops when the key is released",
+          "status": "passed",
+          "detail": "",
+          "requirements": [
+            "F10"
+          ]
+        },
+        {
+          "check": "LEFT release is not a link fault",
+          "status": "passed",
+          "detail": "",
+          "requirements": [
+            "S3"
+          ]
+        },
+        {
+          "check": "left_stopped_quickly",
+          "status": "passed",
+          "detail": "Did the robot stop within about a third of a second of letting go of LEFT? Answer: y",
+          "requirements": [
+            "F10"
+          ]
+        },
+        {
+          "check": "RIGHT drives while held",
+          "status": "passed",
+          "detail": "4 samples driving",
+          "requirements": [
+            "F10"
+          ]
+        },
+        {
+          "check": "RIGHT stops when the key is released",
+          "status": "passed",
+          "detail": "",
+          "requirements": [
+            "F10"
+          ]
+        },
+        {
+          "check": "RIGHT release is not a link fault",
+          "status": "passed",
+          "detail": "",
+          "requirements": [
+            "S3"
+          ]
+        },
+        {
+          "check": "right_stopped_quickly",
+          "status": "passed",
+          "detail": "Did the robot stop within about a third of a second of letting go of RIGHT? Answer: y",
+          "requirements": [
+            "F10"
+          ]
+        },
+        {
+          "check": "OK stops the robot",
+          "status": "passed",
+          "detail": "",
+          "requirements": [
+            "F10",
+            "S2"
+          ]
+        },
+        {
+          "check": "the stop holds",
+          "status": "passed",
+          "detail": "",
+          "requirements": [
+            "S2"
+          ]
+        }
+      ],
+      "log": "logs/ir_drive.jsonl"
+    },
+    {
+      "test": "heading_hold",
+      "file": "tests/robot/heading_hold.py",
+      "requirements": [
+        "F1",
+        "T4"
+      ],
+      "status": "passed",
+      "firmware": {
+        "version": "0.1.0-dev",
+        "commit": "bf9a708",
+        "protocol": "8"
+      },
+      "port": "tcp:192.168.4.1:100",
+      "link": {
+        "via": "network",
+        "status": "connected",
+        "rssi_dbm": 0,
+        "drops": []
+      },
+      "started": "2026-11-20T20:28:07+00:00",
+      "duration_s": 152.7,
+      "results": [
+        {
+          "check": "forward: heading hold was working",
+          "status": "passed",
+          "detail": "holding in 55 of 55 messages; states seen: ['holding']",
+          "requirements": [
+            "F1"
+          ]
+        },
+        {
+          "check": "forward: heading changed little",
+          "status": "passed",
+          "detail": "changed -0.4 deg (limit 3); corrections -3.3% to -0.2%",
+          "requirements": [
+            "F1",
+            "T4"
+          ]
+        },
+        {
+          "check": "forward: correction stayed small",
+          "status": "passed",
+          "detail": "",
+          "requirements": [
+            "F1"
+          ]
+        },
+        {
+          "check": "forward: drove at least 2 m",
+          "status": "passed",
+          "detail": "214 cm in 14 s, about 15 cm/s",
+          "requirements": [
+            "F1"
+          ]
+        },
+        {
+          "check": "forward: stayed within 10 cm of a straight line",
+          "status": "passed",
+          "detail": "3.5 cm to the side",
+          "requirements": [
+            "F1"
+          ]
+        },
+        {
+          "check": "backward: heading hold was working",
+          "status": "passed",
+          "detail": "holding in 55 of 55 messages; states seen: ['holding']",
+          "requirements": [
+            "F1"
+          ]
+        },
+        {
+          "check": "backward: heading changed little",
+          "status": "passed",
+          "detail": "changed +0.3 deg (limit 3); corrections +0.2% to +4.2%",
+          "requirements": [
+            "F1",
+            "T4"
+          ]
+        },
+        {
+          "check": "backward: correction stayed small",
+          "status": "passed",
+          "detail": "",
+          "requirements": [
+            "F1"
+          ]
+        }
+      ],
+      "log": "logs/heading_hold.jsonl"
+    },
+    {
+      "test": "ultrasonic_ruler",
+      "file": "tests/robot/ultrasonic_ruler.py",
+      "requirements": [
+        "T3"
+      ],
+      "status": "failed",
+      "firmware": {
+        "version": "0.1.0-dev",
+        "commit": "bf9a708",
+        "protocol": "8"
+      },
+      "port": "tcp:192.168.4.1:100",
+      "link": {
+        "via": "network",
+        "status": "connected",
+        "rssi_dbm": 0,
+        "drops": []
+      },
+      "started": "2026-11-20T20:43:50+00:00",
+      "duration_s": 551.2,
+      "results": [
+        {
+          "check": "reading near 5 cm",
+          "status": "passed",
+          "detail": "read 4.9 cm, tape 5.0 cm, error -0.1 cm (-2.0%)",
+          "requirements": [
+            "T3"
+          ]
+        },
+        {
+          "check": "reading near 10 cm",
+          "status": "passed",
+          "detail": "read 10.2 cm, tape 10.0 cm, error +0.2 cm (+2.4%)",
+          "requirements": [
+            "T3"
+          ]
+        },
+        {
+          "check": "reading near 30 cm",
+          "status": "passed",
+          "detail": "read 29.4 cm, tape 30.0 cm, error -0.6 cm (-2.0%)",
+          "requirements": [
+            "T3"
+          ]
+        },
+        {
+          "check": "reading near 60 cm",
+          "status": "failed",
+          "detail": "read 58.0 cm, tape 60.0 cm, error -2.0 cm (-3.3%)",
+          "requirements": [
+            "T3"
+          ]
+        },
+        {
+          "check": "reading near 100 cm",
+          "status": "failed",
+          "detail": "read 98.1 cm, tape 100.0 cm, error -1.9 cm (-1.9%)",
+          "requirements": [
+            "T3"
+          ]
+        },
+        {
+          "check": "reading near 150 cm",
+          "status": "failed",
+          "detail": "read 147.4 cm, tape 150.0 cm, error -2.6 cm (-1.8%)",
+          "requirements": [
+            "T3"
+          ]
+        }
+      ],
+      "log": "logs/ultrasonic_ruler.jsonl"
+    }
+  ]
+}

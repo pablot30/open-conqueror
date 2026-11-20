@@ -8,3 +8,6 @@
 *.gif binary
 *.pdf binary
 *.zip binary
+
+# Robot test logs: data, collapsed in pull request diffs
+docs/test-reports/*/logs/*.jsonl linguist-generated=true
