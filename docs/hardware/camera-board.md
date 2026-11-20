@@ -23,6 +23,8 @@ For the ESP32-S3-WROOM-1 version. Sources: its schematic, the stock firmware sou
 
 **To measure in stage 1:** the voltage on GPIO3 with the UART idle. Well below 5 V would mean a protection diode inside the ESP32 is clamping the pin and carrying current. A fix would be a hardware change, so we'll decide once we've measured it.
 
+**A first try, on our robot on 2026-11-20, unexplained:** a multimeter at the camera board's 4-pin connector, against its ground pin, read 4.966 V on 5 V, at most about 1.65 V on RXD (the UNO's TX into GPIO3) and at most about 2.08 V on TXD, with both readings jumping. Our firmware sends telemetry all the time, so the line is never idle and a meter only shows a changing average. Both readings are lower than either a clamped or an unclamped line would give, so they don't answer the question. A clean answer needs an oscilloscope, or a way to pause telemetry so the line sits idle.
+
 ## Stock firmware behaviour
 
 | Item | Behaviour |
