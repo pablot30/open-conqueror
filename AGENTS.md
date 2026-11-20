@@ -64,7 +64,7 @@ For the reviewer of a pull request. Flag a change that breaks any of these:
 
 - A new or updated dependency is still needed; say so if the project could drop it.
 - It comes from the official source, and breaking changes in its release notes don't affect our code, workflows or supported systems.
-- Everything else that names it (docs, pins in `scripts/dev.py`, other workflows) changes with it.
+- Pins and current docs that it makes wrong (versions in `scripts/dev.py`, other workflows, setup steps) change with it. Dated records stay as they are.
 
 ### Docs and the repo
 
