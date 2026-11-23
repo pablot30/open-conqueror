@@ -2,7 +2,7 @@
 
 How ELEGOO's EleRobot app talks to the stock UNO firmware. **This is reference only, not a target.** Our firmware [uses its own protocol](../decisions/0004-own-protocol-and-control-page.md). We keep this page because stage 1 uses these commands to read sensors and run motors on the stock firmware from a computer, without writing any firmware.
 
-**Source:** the stock firmware's command handler, version TB6612 2024-06-05. ELEGOO's protocol PDF disagrees with the firmware in several places, so we treat the firmware as the reference. None of this has been tested on a robot yet.
+**Source:** the stock firmware's command handler, version TB6612 2024-06-05. ELEGOO's protocol PDF disagrees with the firmware in several places, so we treat the firmware as the reference. Only the sensor reads N:21, N:22 and N:23 have been used on our robot ([first sensor readings](../notebook/2026-11-06-first-sensor-readings.md)); the rest hasn't been tested.
 
 ## Format
 

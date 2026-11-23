@@ -1,6 +1,6 @@
 # Firmware
 
-Our firmware for the robot's UNO, in stage 2, increment 2 ([roadmap](../docs/roadmap.md)). It drives both tracks from a computer or the IR remote, stops when it should, and reads the gyro, ultrasonic and battery. It doesn't use the line sensors yet; they come with the modes in increment 3. A second firmware, for the parked Wi-Fi dongle, lives in `dongle/`.
+Our firmware for the robot's UNO, in stage 2, as it passed increment 2 ([roadmap](../docs/roadmap.md)). It drives both tracks from a computer or the IR remote, stops when it should, and reads the gyro, ultrasonic and battery. It doesn't use the line sensors yet; they come with the modes in increment 3. A second firmware, for the parked Wi-Fi dongle, lives in `dongle/`.
 
 ## Layout
 
@@ -35,7 +35,7 @@ CI builds the same image on every pull request and keeps it, with the build repo
 
 ## Protocol
 
-This is protocol version 8. Messages are short text inside braces, at 9600 baud. That's what the stock camera firmware's bridge forwards, so the same messages work over Wi-Fi: they did through the [Wi-Fi dongle](dongle/README.md), now parked, and they're planned for increment 4. The firmware ignores anything outside braces.
+This is protocol version 8. Messages are short text inside braces, at 9600 baud. That's what the stock camera firmware's bridge forwards, so the same messages work over Wi-Fi: over the robot's own network since 2026-11-18, and before that through the [Wi-Fi dongle](dongle/README.md), now parked. The firmware ignores anything outside braces.
 
 **From the computer:**
 
@@ -82,11 +82,11 @@ Our code is Apache-2.0. The firmware image also contains the Arduino AVR core, i
 | S9 | Under 7.0 V it reports a low battery. Under 6.4 V it brakes and won't drive until the battery is back above 6.8 V. The reading is filtered over about 0.3 s |
 | S10 | PWM is limited so the motors' average voltage stays at or below 6 V |
 
-The battery reading has no correction yet. It hasn't been compared with a multimeter, so the thresholds may be off by a few hundred millivolts.
+The battery reading has no correction, and needs none: against a multimeter on 2026-11-20 it read 0.4% low at VIN ([power](../docs/hardware/power.md)).
 
 ## Driving and testing from the host computer
 
-`conq`, from the [host package](../host/pyproject.toml), talks to the robot over its USB cable or through the [Wi-Fi dongle](dongle/README.md), parked for now, which it recognises by its USB IDs. Every command also takes `--json`. Over the dongle, put the Upload-Cam switch on Cam; the robot doesn't restart when the port opens, so tests that check power-on are skipped, and commands report if the Wi-Fi link drops.
+`conq`, from the [host package](../host/pyproject.toml), talks to the robot over its USB cable, over the robot's own Wi-Fi network (`--port tcp:192.168.4.1:100`, see [tools](../docs/tools.md#connecting-to-the-robot)), or through the [Wi-Fi dongle](dongle/README.md), parked for now, which it recognises by its USB IDs. Every command also takes `--json`. Over Wi-Fi, put the Upload-Cam switch on Cam; the robot doesn't restart when the port opens, so tests that check power-on are skipped, and commands report if the Wi-Fi link drops.
 
 ```
 conq version                  # firmware version and commit

@@ -1,6 +1,6 @@
 # motion
 
-**Layer:** services. **Version:** in `library.properties`. **Not run on the robot yet.**
+**Layer:** services. **Version:** in `library.properties`. **Tested on the robot on 2026-11-20,** with `heading_hold`, in the [increment 2 test report](../../../../docs/test-reports/2026-11-20-increment-2/README.md).
 
 Heading hold. While both tracks are commanded equal, at 15% or faster, the robot should drive straight, so this holds the heading it had when the run began. A small PI controller on the gyro's heading asks for a correction: a few percent added to one track and taken from the other. Speed holding and the modes come later.
 
@@ -26,7 +26,7 @@ The state goes out in the sensor message: 0 off (not a straight run), 1 holding,
 ## How it works
 
 - **Straight run.** Both tracks equal and at least 15% either way. Anything else (a turn, an arc, a stop) clears the controller. Changing speed on a straight run keeps the hold; going from forward to backward starts a new one.
-- **Controller.** The error is the shortest way round from the target to the heading. The output is `Kp × error + Ki × ∫error`, limited to ±5%, with no wind-up: the integral stops growing while the output is at its limit. `Kp` is 1% for each degree and `Ki` 1% for each degree held for a second. **These two numbers are first guesses** and the floor test is where they get tuned; so are the 15% minimum and the 5% limit.
+- **Controller.** The error is the shortest way round from the target to the heading. The output is `Kp × error + Ki × ∫error`, limited to ±5%, with no wind-up: the integral stops growing while the output is at its limit. `Kp` is 1% for each degree and `Ki` 1% for each degree held for a second. **These two numbers began as guesses.** The floor test of 2026-11-20 kept them, and the 15% minimum and the 5% limit, as they were: corrections stayed under 4.2% and the heading within about 1° ([notebook](../../../../docs/notebook/2026-11-20-heading-hold-on-the-floor.md)).
 - **Sign.** A positive heading is counterclockwise, as in the gyro unit. Drifting left (heading rises) gives a negative correction, which slows the right track and speeds up the left. A robot turns the same way for a given track difference whether it drives forward or backward.
 - **The correction is a trim, not a command.** `SafetySupervisor::setTrim` applies it to the motors only while driving, limits it to 6% itself, and doesn't count it as a command: it can't keep the link timeout from firing (S3), arm the supervisor or restart a stopped robot (S1, S5). The supervisor remains the only code that sets the motors.
 

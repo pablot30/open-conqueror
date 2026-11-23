@@ -4,7 +4,7 @@ Open-source software for the ELEGOO Conqueror tank, rebuilt from scratch through
 
 ## Current stage
 
-Stage 2, increment 2. Increment 1, the walking skeleton, passed its robot tests on 2026-11-12 (`docs/test-reports/`). The architecture is agreed (`docs/architecture.md`, decision 0008), and the repo matches it. Increment 2 was built in parts, each a pull request: the 10 ms frame and diagnostics, the devices (gyro, servos, LED, ultrasonic, IR receiver), then IR driving and heading hold. All are merged, and heading hold passed its floor test over the robot's Wi-Fi on 2026-11-20. The increment ends with the ultrasonic retest and its test report. We build in small increments that each run on the robot, and add tools and process only when an increment needs them. See `docs/decisions/0006-walking-skeleton-first.md` and the build order in `docs/requirements.md`.
+Stage 2, after increment 2. Increment 1, the walking skeleton, passed its robot tests on 2026-11-12, and increment 2, sensors and status, on 2026-11-20 (`docs/test-reports/`). In increment 2, T3 passed by judgement, and F15 and S4's watchdog reset aren't covered yet. The architecture is agreed (`docs/architecture.md`, decision 0008), and the repo matches it. Next is increment 3, the modes. We build in small increments that each run on the robot, and add tools and process only when an increment needs them. See `docs/decisions/0006-walking-skeleton-first.md` and the build order in `docs/requirements.md`.
 
 ## Rules
 

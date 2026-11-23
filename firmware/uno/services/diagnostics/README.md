@@ -1,6 +1,6 @@
 # diagnostics
 
-**Layer:** services. **Version:** in `library.properties`. **Not run on the robot yet.**
+**Layer:** services. **Version:** in `library.properties`. **Tested on the robot on 2026-11-20,** with `health`, in the [increment 2 test report](../../../../docs/test-reports/2026-11-20-increment-2/README.md).
 
 Diagnostics, first iteration ([architecture](../../../../docs/architecture.md), A5). Units' monitors report passed or failed; this unit debounces the reports into diagnostic events (not tested, prefailed, failed, prepassed, passed), applies reactions, and gives every sensor value a signal status (valid, init, substitute, error, not available).
 

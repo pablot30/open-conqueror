@@ -33,7 +33,7 @@ The UNO's USB port and the camera board share its only UART, so set the **Upload
 These don't block stage 2:
 
 - What are the motors' voltage and current ratings? ELEGOO doesn't publish them. See [Motors](motor-driver.md#motors).
-- What voltage does the ESP32's GPIO3 really see from the UNO's TX pin? See [5 V on the UART](camera-board.md#5-v-on-the-uart). Waiting for a multimeter.
+- What voltage does the ESP32's GPIO3 really see from the UNO's TX pin? See [5 V on the UART](camera-board.md#5-v-on-the-uart). A first multimeter reading on 2026-11-20 didn't answer it; it needs an oscilloscope, or a way to keep the line idle.
 - How noisy are the 5 V rail and I2C bus while the motors run? The stock firmware pauses the motors around gyro and ultrasonic readings. This one waits for an oscilloscope, as the [roadmap](../roadmap.md#stage-1-order) explains.
 - What is the battery's capacity? This is low priority, and we won't open the case just to find out.
 - Do the predictions in the [first look at the stock firmware](../notebook/2026-11-03-first-look-at-stock-firmware.md) hold on the robot?

@@ -1,6 +1,6 @@
 # scheduler
 
-**Layer:** services. **Version:** in `library.properties`. **Not run on the robot yet.**
+**Layer:** services. **Version:** in `library.properties`. **Tested on the robot on 2026-11-20,** with `health`, in the [increment 2 test report](../../../../docs/test-reports/2026-11-20-increment-2/README.md).
 
 The time-triggered frame: the firmware's work runs once every 10 ms, and each frame's work is timed.
 
