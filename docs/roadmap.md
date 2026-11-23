@@ -1,6 +1,6 @@
 # Roadmap
 
-**Current stage: 2, increment 2.** Stages 0 and 1 are done. Increment 1 passed its robot tests on 2026-11-12 ([test report](test-reports/2026-11-12-increment-1/README.md)). The [architecture](architecture.md) is agreed ([0008](decisions/0008-architecture.md)) and the repo matches it. We finish a stage before starting the next.
+**Current stage: 2, after increment 2.** Stages 0 and 1 are done. Increment 1 passed its robot tests on 2026-11-12 ([test report](test-reports/2026-11-12-increment-1/README.md)), and increment 2 on 2026-11-20, with F15 and S4's watchdog reset not covered yet ([test report](test-reports/2026-11-20-increment-2/README.md)). Next is increment 3, the modes. The [architecture](architecture.md) is agreed ([0008](decisions/0008-architecture.md)) and the repo matches it. We finish a stage before starting the next.
 
 | Stage | Work | Done when |
 |---|---|---|

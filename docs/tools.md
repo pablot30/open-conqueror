@@ -117,7 +117,7 @@ CI runs it on every pull request, so it doesn't need to be on your computer. Ins
 | The robot's own Wi-Fi network | `tcp:192.168.4.1:100` | Cam | The computer joins the robot's network. Tests that check power-on are skipped |
 | The Wi-Fi dongle | its USB port | Cam | Parked: it hangs ([dongle](../firmware/dongle/README.md)) |
 
-Over the robot's network, `conq` talks to the stock camera board's port 100 ([camera board](hardware/camera-board.md)): it answers the board's heartbeat each second and, after 3.5 s without a message from the board, reports the link lost and opens it again every 2 s, as the dongle does. *Not yet tried on the robot ([#63](https://github.com/pablot30/open-conqueror/issues/63)).*
+Over the robot's network, `conq` talks to the stock camera board's port 100 ([camera board](hardware/camera-board.md)): it answers the board's heartbeat each second and, after 3.5 s without a message from the board, reports the link lost and opens it again every 2 s, as the dongle does. First used on the robot on 2026-11-18 ([#63](https://github.com/pablot30/open-conqueror/issues/63)), and for the floor tests of the [increment 2 test report](test-reports/2026-11-20-increment-2/README.md).
 
 ### Joining the robot's network
 

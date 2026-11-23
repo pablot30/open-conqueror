@@ -1,6 +1,6 @@
 # servos
 
-**Layer:** devices. **Version:** in `library.properties`. **Not run on the robot yet.**
+**Layer:** devices. **Version:** in `library.properties`. **Tested on the robot on 2026-11-20,** with `startup` and `camera`, in the [increment 2 test report](../../../../docs/test-reports/2026-11-20-increment-2/README.md).
 
 The camera's pan (D10) and tilt (D11) servos. Centred at power-on. Moves ramp: each 10 ms frame the angle steps towards the target at a set speed (100 degrees a second unless a move says otherwise; speed 0 jumps). Half a second after both servos arrive they are released, so they don't hum or jitter; they hold by friction.
 

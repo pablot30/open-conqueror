@@ -1,6 +1,6 @@
 # led
 
-**Layer:** devices. **Version:** in `library.properties`. **Not run on the robot yet.**
+**Layer:** devices. **Version:** in `library.properties`. **Tested on the robot on 2026-11-20,** with `version_and_standby` and `startup` (F5; F15 isn't covered yet), in the [increment 2 test report](../../../../docs/test-reports/2026-11-20-increment-2/README.md).
 
 The status LED, one WS2812 on D4: violet breathing in standby, steady violet while driving, red flashing on a low battery (1 Hz) and faster on a critical one (4 Hz). At most 64 of 255 per colour.
 

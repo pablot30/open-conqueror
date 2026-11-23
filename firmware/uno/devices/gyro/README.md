@@ -1,6 +1,6 @@
 # gyro
 
-**Layer:** devices. **Version:** in `library.properties`. **Not run on the robot yet.**
+**Layer:** devices. **Version:** in `library.properties`. **Tested on the robot on 2026-11-20,** with `startup`, `gyro_turn` and `heading_hold`, in the [increment 2 test report](../../../../docs/test-reports/2026-11-20-increment-2/README.md).
 
 Turn rate and heading from the MPU6050's Z axis. Calibrates its zero rate over the first second at power-on, starting again if the robot moves, then integrates the heading every frame.
 
